@@ -22,6 +22,18 @@ dependency "iam_policy" {
   }
 }
 
+generate "import"  {
+  disable = values.import_arn == ""
+  path = "import.tf"
+  if_exists = "overwrite_terragrunt"
+  contents = <<EOF
+import {
+  to = aws_iam_role_policy_attachment.arn_policy_attachments_for_role
+  id = "${values.import_arn}"
+}
+EOF
+}
+
 inputs = {
   role_name  = dependency.iam_role.outputs.name
   policy_arn = dependency.iam_policy.outputs.arn

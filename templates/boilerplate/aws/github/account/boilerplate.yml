@@ -36,3 +36,45 @@ variables:
     description: The issuer URL for the OIDC provider (is computed dynamically from the SCM provider if not specified).
     default: ""
     order: 6
+
+  - name: OIDCProviderImportARN
+    type: string
+    description: ARN of an existing OIDC provider to import.
+    default: ""
+    order: 7
+
+  - name: PlanIAMRoleImportExisting
+    type: bool
+    description: Whether to import an existing plan IAM role.
+    default: false
+    order: 8
+
+  - name: PlanIAMPolicyImportARN
+    type: string
+    description: ARN of an existing plan IAM policy to import.
+    default: ""
+    order: 9
+
+  - name: PlanIAMRolePolicyAttachmentImportARN
+    type: string
+    description: ARN of an existing plan IAM role policy attachment to import.
+    default: ""
+    order: 10
+
+  - name: ApplyIAMRoleImportExisting
+    type: bool
+    description: Whether to import an existing apply IAM role.
+    default: false
+    order: 11
+
+  - name: ApplyIAMPolicyImportARN
+    type: string
+    description: ARN of an existing apply IAM policy to import.
+    default: ""
+    order: 12
+
+  - name: ApplyIAMRolePolicyAttachmentImportARN
+    type: string
+    description: ARN of an existing apply IAM role policy attachment to import.
+    default: ""
+    order: 13
