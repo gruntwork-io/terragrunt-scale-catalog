@@ -248,30 +248,6 @@
       "Resource": "*"
     },
     {
-      "Sid": "SimpleEmailServiceAccess",
-      "Effect": "Allow",
-      "Action": [
-        "ses:*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "RDSAccess",
-      "Effect": "Allow",
-      "Action": [
-        "rds:*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "ElasticacheAccess",
-      "Effect": "Allow",
-      "Action": [
-        "elasticache:*"
-      ],
-      "Resource": "*"
-    },
-    {
       "Sid": "ApplicationAutoScalingAccess",
       "Effect": "Allow",
       "Action": [
@@ -289,3 +265,4 @@
     }
   ]
 }
+

@@ -21,36 +21,6 @@
       "Resource": "*"
     },
     {
-      "Sid": "SimpleEmailServiceAccess",
-      "Effect": "Allow",
-      "Action": [
-        "ses:Get*",
-        "ses:List*",
-        "ses:Describe*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "RDSAccess",
-      "Effect": "Allow",
-      "Action": [
-        "rds:Get*",
-        "rds:List*",
-        "rds:Describe*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "ElasticacheAccess",
-      "Effect": "Allow",
-      "Action": [
-        "elasticache:Get*",
-        "elasticache:Describe*",
-        "elasticache:List*"
-      ],
-      "Resource": "*"
-    },
-    {
       "Sid": "ECSReadOnlyAccess",
       "Effect": "Allow",
       "Action": [
@@ -317,3 +287,4 @@
     }
   ]
 }
+

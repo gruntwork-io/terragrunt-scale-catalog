@@ -51,12 +51,20 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | `sub_key` | Subject claim key | `gitlab.com:sub` |
 | `sub_plan_value` | Subject for plan role (wildcard) | `project_path:GROUP/PROJECT:*` |
 | `sub_apply_value` | Subject for apply role (specific) | `project_path:GROUP/PROJECT:ref_type:branch:ref:main` |
+| `bootstrap_iam_policy` | Policy profile to load (`default` or `restrictive`) | `default` |
 | `plan_iam_policy` | Custom plan policy JSON | See default below |
 | `apply_iam_policy` | Custom apply policy JSON | See default below |
 
 ### Default IAM Policies
 
-Both plan and apply roles get access to the state bucket by default:
+The stack ships with two IAM policy profiles:
+
+- `default` (more permissive): `default_plan_iam_policy.json` and `default_apply_iam_policy.json`
+- `restrictive` (S3 state access only): `restrictive_plan_iam_policy.json` and `restrictive_apply_iam_policy.json`
+
+Set `bootstrap_iam_policy = "restrictive"` if you only want S3 state access. Override `plan_iam_policy` or `apply_iam_policy` values to supply custom JSON if needed.
+
+Both policy profiles automatically template the `state_bucket_name`, for example in the restrictive plan policy:
 
 ```json
 {
@@ -99,7 +107,7 @@ Both plan and apply roles get access to the state bucket by default:
 }
 ```
 
-**Note**: You'll need to add additional permissions for managing your actual infrastructure.
+**Note**: The `default` profile grants broad access suitable for bootstrapping infrastructure. Carefully review and scope these permissions before enabling in production.
 
 ## GitLab Subject Claim Formats
 

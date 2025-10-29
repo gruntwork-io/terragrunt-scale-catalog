@@ -31,98 +31,16 @@ locals {
 
   state_bucket_name = values.state_bucket_name
 
-  default_plan_iam_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowCreateAndListS3ActionsOnSpecifiedBucket"
-        Effect = "Allow"
-        Action = [
-          "s3:ListBucket",
-          "s3:GetBucketVersioning",
-          "s3:GetBucketAcl",
-          "s3:GetBucketLogging",
-          "s3:CreateBucket",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutBucketTagging",
-          "s3:PutBucketPolicy",
-          "s3:PutBucketVersioning",
-          "s3:PutEncryptionConfiguration",
-          "s3:PutBucketAcl",
-          "s3:PutBucketLogging",
-          "s3:GetEncryptionConfiguration",
-          "s3:GetBucketPolicy",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:PutLifecycleConfiguration",
-          "s3:PutBucketOwnershipControls"
-        ]
-        Resource = "arn:aws:s3:::${local.state_bucket_name}"
-      },
-      {
-        Sid    = "AllowGetAndPutS3ActionsOnSpecifiedBucketPath"
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:GetObject",
-        ]
-        Resource = "arn:aws:s3:::${local.state_bucket_name}/*"
-      },
-      {
-        Sid    = "AllowReadOnlyS3ActionsOnTestBuckets"
-        Effect = "Allow"
-        Action = [
-          "s3:List*",
-          "s3:Get*",
-        ]
-        Resource = "arn:aws:s3:::test-pipelines-*"
-      },
-    ]
+  bootstrap_iam_policy_prefix = try(values.bootstrap_iam_policy, "default")
+
+  plan_iam_policy_template_path  = "${get_parent_terragrunt_dir()}/${local.bootstrap_iam_policy_prefix}_plan_iam_policy.json"
+  apply_iam_policy_template_path = "${get_parent_terragrunt_dir()}/${local.bootstrap_iam_policy_prefix}_apply_iam_policy.json"
+
+  default_plan_iam_policy = templatefile(local.plan_iam_policy_template_path, {
+    state_bucket_name = local.state_bucket_name
   })
-  default_apply_iam_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowCreateAndListS3ActionsOnSpecifiedBucket"
-        Effect = "Allow"
-        Action = [
-          "s3:ListBucket",
-          "s3:GetBucketVersioning",
-          "s3:GetBucketAcl",
-          "s3:GetBucketLogging",
-          "s3:CreateBucket",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutBucketTagging",
-          "s3:PutBucketPolicy",
-          "s3:PutBucketVersioning",
-          "s3:PutEncryptionConfiguration",
-          "s3:PutBucketAcl",
-          "s3:PutBucketLogging",
-          "s3:GetEncryptionConfiguration",
-          "s3:GetBucketPolicy",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:PutLifecycleConfiguration",
-          "s3:PutBucketOwnershipControls"
-        ]
-        Resource = "arn:aws:s3:::${local.state_bucket_name}"
-      },
-      {
-        Sid    = "AllowGetAndPutS3ActionsOnSpecifiedBucketPath"
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:GetObject",
-        ]
-        Resource = "arn:aws:s3:::${local.state_bucket_name}/*"
-      },
-      {
-        Sid    = "AllowFullS3ActionsOnTestBuckets"
-        Effect = "Allow"
-        Action = [
-          "s3:*",
-        ]
-        Resource = "arn:aws:s3:::test-pipelines-*"
-      },
-    ]
+  default_apply_iam_policy = templatefile(local.apply_iam_policy_template_path, {
+    state_bucket_name = local.state_bucket_name
   })
 
   plan_iam_policy  = try(values.plan_iam_policy, local.default_plan_iam_policy)
