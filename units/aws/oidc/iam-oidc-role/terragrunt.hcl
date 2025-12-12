@@ -6,6 +6,18 @@ terraform {
   source = "${values.base_url}//modules/aws/iam-oidc-role?ref=${values.ref}"
 }
 
+generate "import" {
+  disable = values.import_existing ? false : true
+  path = "import.tf"
+  if_exists = "overwrite_terragrunt"
+  contents = <<EOF
+import {
+  to = aws_iam_role.role
+  id = var.name
+}
+EOF
+}
+
 dependency "iam_openid_connect_provider" {
   config_path = values.iam_openid_connect_provider_config_path
 
