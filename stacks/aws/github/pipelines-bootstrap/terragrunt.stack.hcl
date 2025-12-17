@@ -62,6 +62,8 @@ locals {
   apply_iam_role_import_existing = try(values.apply_iam_role_import_existing, false)
   apply_iam_policy_import_arn = try(values.apply_iam_policy_import_arn, "")
   apply_iam_role_policy_attachment_import_arn = try(values.apply_iam_role_policy_attachment_import_arn, "")
+
+  oidc_provider_tags = try(values.oidc_provider_tags, {})
 }
 
 // State units
@@ -79,6 +81,8 @@ unit "oidc_provider" {
     client_id_list = local.client_id_list
 
     import_arn = local.oidc_provider_import_arn
+
+    tags = local.oidc_provider_tags
 
     exclude_if     = local.exclude_oidc_provider
     exclude_no_run = local.exclude_oidc_provider

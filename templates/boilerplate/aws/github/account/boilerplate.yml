@@ -60,38 +60,44 @@ variables:
     default: false
     order: 10
 
+  - name: OIDCProviderTags
+    type: map
+    description: Tags to apply to the OIDC provider (useful when importing an existing provider with tags).
+    default: {}
+    order: 11
+
   - name: PlanIAMRoleImportExisting
     type: bool
     description: Whether to import an existing plan IAM role.
     default: false
-    order: 11
+    order: 12
 
   - name: PlanIamPolicyImportExisting
     type: bool
     description: Whether to import an existing plan IAM policy.
     default: false
-    order: 12
+    order: 13
 
   - name: PlanIAMRolePolicyAttachmentImportExisting
     type: bool
     description: Whether to import an existing plan IAM role policy attachment.
     default: false
-    order: 13
+    order: 14
 
   - name: ApplyIAMRoleImportExisting
     type: bool
     description: Whether to import an existing apply IAM role.
     default: false
-    order: 14
+    order: 15
 
   - name: ApplyIamPolicyImportExisting
     type: bool
     description: Whether to import an existing apply IAM policy.
     default: false
-    order: 15
+    order: 16
 
   - name: ApplyIAMRolePolicyAttachmentImportExisting
     type: bool
     description: Whether to import an existing apply IAM role policy attachment.
     default: false
-    order: 16
+    order: 17

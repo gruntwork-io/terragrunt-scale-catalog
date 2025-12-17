@@ -63,5 +63,9 @@ stack "bootstrap" {
     {{- if .ApplyIAMRolePolicyAttachmentImportExisting }}
     apply_iam_role_policy_attachment_import_arn = "{{ .OIDCResourcePrefix }}-apply/arn:aws:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
     {{- end }}
+
+    {{- if .OIDCProviderTags }}
+    oidc_provider_tags = {{ toJson .OIDCProviderTags }}
+    {{- end }}
   }
 }
