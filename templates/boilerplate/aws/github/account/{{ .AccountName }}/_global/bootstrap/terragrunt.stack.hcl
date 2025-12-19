@@ -11,6 +11,8 @@ stack "bootstrap" {
   values = {
     terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
 
+    aws_account_id = "{{ .AWSAccountID }}"
+
     oidc_resource_prefix = "{{ .OIDCResourcePrefix }}"
 
     github_org_name  = "{{ .GitHubOrgName }}"
