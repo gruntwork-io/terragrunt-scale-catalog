@@ -3,6 +3,9 @@ locals {
   terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
   terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.3.1")
 
+  // AWS account values
+  aws_account_id = values.aws_account_id
+
   // OIDC values
   oidc_resource_prefix = try(values.oidc_resource_prefix, "pipelines")
 
@@ -73,6 +76,9 @@ unit "plan_iam_role" {
 
     iam_openid_connect_provider_config_path = "../../oidc-provider"
 
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_iam_openid_connect_provider_arn = "arn:aws:iam::${local.aws_account_id}:oidc-provider/${local.gitlab_server_domain}"
+
     name = "${local.oidc_resource_prefix}-plan"
 
     condition_operator = "StringLike"
@@ -106,6 +112,10 @@ unit "plan_iam_role_policy_attachment" {
 
     iam_role_config_path   = "../iam-role"
     iam_policy_config_path = "../iam-policy"
+
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_iam_role_name   = "${local.oidc_resource_prefix}-plan"
+    mock_iam_policy_arn  = "arn:aws:iam::${local.aws_account_id}:policy/${local.oidc_resource_prefix}-plan"
   }
 }
 
@@ -118,6 +128,9 @@ unit "apply_iam_role" {
     ref      = local.terragrunt_scale_catalog_ref
 
     iam_openid_connect_provider_config_path = "../../oidc-provider"
+
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_iam_openid_connect_provider_arn = "arn:aws:iam::${local.aws_account_id}:oidc-provider/${local.gitlab_server_domain}"
 
     name = "${local.oidc_resource_prefix}-apply"
 
@@ -152,5 +165,9 @@ unit "apply_iam_role_policy_attachment" {
 
     iam_role_config_path   = "../iam-role"
     iam_policy_config_path = "../iam-policy"
+
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_iam_role_name   = "${local.oidc_resource_prefix}-apply"
+    mock_iam_policy_arn  = "arn:aws:iam::${local.aws_account_id}:policy/${local.oidc_resource_prefix}-apply"
   }
 }

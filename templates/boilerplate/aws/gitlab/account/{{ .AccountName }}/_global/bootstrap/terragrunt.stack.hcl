@@ -9,6 +9,8 @@ stack "bootstrap" {
   path   = "bootstrap"
 
   values = {
+    aws_account_id = "{{ .AWSAccountID }}"
+
     oidc_resource_prefix = "{{ .OIDCResourcePrefix }}"
 
     gitlab_group_name   = "{{ .GitLabGroupName }}"

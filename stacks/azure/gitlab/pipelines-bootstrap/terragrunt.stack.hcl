@@ -291,4 +291,3 @@ unit "apply_service_principal_to_apply_custom_role_assignment" {
     description          = "Assign custom apply role to service principal at the subscription scope"
   }
 }
-

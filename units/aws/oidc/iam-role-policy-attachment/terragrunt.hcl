@@ -10,7 +10,7 @@ dependency "iam_role" {
   config_path = values.iam_role_config_path
 
   mock_outputs = {
-    name = "mock-role"
+    name = try(values.mock_iam_role_name, "mock-role")
   }
 }
 
@@ -18,7 +18,7 @@ dependency "iam_policy" {
   config_path = values.iam_policy_config_path
 
   mock_outputs = {
-    arn = "arn:aws:iam::123456789012:policy/mock-policy"
+    arn = try(values.mock_iam_policy_arn, "arn:aws:iam::123456789012:policy/mock-policy")
   }
 }
 

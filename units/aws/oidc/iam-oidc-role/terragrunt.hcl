@@ -22,7 +22,7 @@ dependency "iam_openid_connect_provider" {
   config_path = values.iam_openid_connect_provider_config_path
 
   mock_outputs = {
-    arn = "arn:aws:iam::123456789012:oidc-provider/mock-oidc-provider"
+    arn = try(values.mock_iam_openid_connect_provider_arn, "arn:aws:iam::123456789012:oidc-provider/mock-oidc-provider")
   }
 }
 
