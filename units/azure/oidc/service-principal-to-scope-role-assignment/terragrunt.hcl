@@ -23,6 +23,15 @@ dependency "storage_account" {
   }
 }
 
+errors {
+  retry "role_creation_in_progress" {
+    // Role creation is eventually consistent in Azure, so it's worth retrying if we hit this error.
+    retryable_errors   = [".*Error: listing role definitions: could not find role .*"]
+    max_attempts       = 5
+    sleep_interval_sec = 1
+  }
+}
+
 inputs = {
   principal_id = dependency.service_principal.outputs.object_id
   scope        = dependency.storage_account.outputs.id
