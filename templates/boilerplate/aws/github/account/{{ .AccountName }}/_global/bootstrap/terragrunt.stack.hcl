@@ -32,6 +32,19 @@ stack "bootstrap" {
 
     state_bucket_name = local.account_hcl.locals.state_bucket_name
 
+    {{- if .OIDCProviderTags }}
+    oidc_provider_tags = {{ toJson .OIDCProviderTags }}
+    {{- end }}
+
+
+
+    // =========================================================================
+    // Import Variables
+    //
+    // The following variables are used to import existing AWS resources into
+    // OpenTofu/Terraform state. Once the stack has been applied and resources
+    // have been successfully imported, it is safe to remove this entire section.
+    // =========================================================================
     {{- if .OIDCProviderImportExisting }}
     oidc_provider_import_arn = "arn:aws:iam::{{ .AWSAccountID }}:oidc-provider/
       {{- if .Issuer -}}
@@ -65,9 +78,9 @@ stack "bootstrap" {
     {{- if .ApplyIAMRolePolicyAttachmentImportExisting }}
     apply_iam_role_policy_attachment_import_arn = "{{ .OIDCResourcePrefix }}-apply/arn:aws:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
     {{- end }}
+    // =========================================================================
+    // End Import Variables
+    // =========================================================================
 
-    {{- if .OIDCProviderTags }}
-    oidc_provider_tags = {{ toJson .OIDCProviderTags }}
-    {{- end }}
   }
 }
