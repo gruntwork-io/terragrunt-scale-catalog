@@ -1,0 +1,5 @@
+variables:
+  - name: PipelinesWorkflowsRef
+    type: string
+    description: The Git reference for the Pipelines GitHub Actions workflow.
+    default: "v4"

@@ -3,3 +3,8 @@ variables:
     type: string
     description: The Git reference for the Pipelines GitLab CI/CD pipeline.
     default: "v2"
+
+  - name: IncludeDriftDetection
+    type: bool
+    description: Whether to include the drift detection workflow.
+    default: true

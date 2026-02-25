@@ -1,3 +1,10 @@
+variables:
+  - name: IncludeDriftDetection
+    type: bool
+    description: Whether to include the drift detection workflow.
+    default: true
+    order: 1
+
 dependencies:
   - name: common
     template-url: ../../../.dependencies/common
@@ -5,6 +12,10 @@ dependencies:
   - name: github
     template-url: ../../../.dependencies/github
     output-folder: .
+  - name: github-drift-detection
+    template-url: ../../../.dependencies/github-drift-detection
+    output-folder: .
+    skip: "{{ not .IncludeDriftDetection }}"
   # The azure dependency actually overrides content from the common dependency,
   # so we need to depend on it after the common dependency.
   - name: azure-base
