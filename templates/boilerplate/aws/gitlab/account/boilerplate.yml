@@ -19,20 +19,26 @@ variables:
     description: The name of the GitLab project you are bootstrapping Pipelines in.
     order: 3
 
+  - name: DeployBranch
+    type: string
+    description: The name of the branch where Pipelines will deploy changes, this branch will be granted the Apply IAM role.
+    default: "main"
+    order: 4
+
   - name: TerragruntScaleCatalogRef
     type: string
     description: The Git reference of the Terragrunt catalog to use.
     default: "v1.0.0"
-    order: 4
+    order: 5
 
   - name: OIDCResourcePrefix
     type: string
     description: The prefix for the OIDC resources you using to bootstrap Pipelines.
     default: "pipelines"
-    order: 5
+    order: 6
 
   - name: Issuer
     type: string
     description: The issuer URL for the OIDC provider (is computed dynamically from the SCM provider if not specified).
     default: ""
-    order: 6
+    order: 7

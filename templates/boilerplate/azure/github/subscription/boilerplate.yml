@@ -19,25 +19,31 @@ variables:
     description: The name of the GitHub repository you are bootstrapping Pipelines in.
     order: 3
 
+  - name: DeployBranch
+    type: string
+    description: The name of the branch where Pipelines will deploy changes, this branch will be granted the Apply custom role.
+    default: "main"
+    order: 4
+
   - name: AzureLocation
     type: string
     description: The Azure region you are bootstrapping Pipelines in.
-    order: 4
+    order: 5
 
   - name: TerragruntScaleCatalogRef
     type: string
     description: The Git reference of the Terragrunt Scale catalog to use.
-    order: 5
+    order: 6
     default: "v1.0.0"
 
   - name: OIDCResourcePrefix
     type: string
     description: The prefix for the OIDC resources you using to bootstrap Pipelines.
     default: "pipelines"
-    order: 6
+    order: 7
 
   - name: Issuer
     type: string
     description: The issuer URL for the OIDC provider (is computed dynamically from the SCM provider if not specified).
     default: ""
-    order: 7
+    order: 8

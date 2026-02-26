@@ -16,6 +16,10 @@ stack "bootstrap" {
     gitlab_group_name   = "{{ .GitLabGroupName }}"
     gitlab_project_name = "{{ .GitLabProjectName }}"
 
+    {{- if .DeployBranch }}
+    deploy_branch = "{{ .DeployBranch }}"
+    {{- end }}
+
     {{- if .Issuer }}
     issuer = "{{ .Issuer }}"
     {{- end }}

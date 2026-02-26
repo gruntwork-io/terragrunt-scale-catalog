@@ -23,81 +23,87 @@ variables:
     type: string
     description: The name of the GitHub repository you are bootstrapping Pipelines in.
     order: 4
+  
+  - name: DeployBranch
+    type: string
+    description: The name of the branch where Pipelines will deploy changes, this branch will be granted the Apply IAM role.
+    default: "main"
+    order: 5
 
   - name: TerragruntScaleCatalogRef
     type: string
     description: The Git reference of the Terragrunt catalog to use.
     default: "v1.0.0"
-    order: 5
+    order: 6
 
   - name: OIDCResourcePrefix
     type: string
     description: The prefix for the OIDC resources you using to bootstrap Pipelines.
     default: "pipelines"
-    order: 6
+    order: 7
 
   - name: Issuer
     type: string
     description: The issuer URL for the OIDC provider (is computed dynamically from the SCM provider if not specified).
     default: ""
-    order: 7
+    order: 8
 
   - name: AdditionalAudiences
     type: list
     description: Additional audiences to append to the default audience (sts.amazonaws.com).
     default: []
-    order: 8
+    order: 9
 
   - name: ExcludeOIDCProvider
     type: bool
     description: Whether to exclude the OIDC provider from the bootstrap stack.
     default: false
-    order: 9
+    order: 10
 
   - name: OIDCProviderImportExisting
     type: bool
     description: Whether to import an existing OIDC provider.
     default: false
-    order: 10
+    order: 11
 
   - name: OIDCProviderTags
     type: map
     description: Tags to apply to the OIDC provider (useful when importing an existing provider with tags).
     default: {}
-    order: 11
+    order: 12
 
   - name: PlanIAMRoleImportExisting
     type: bool
     description: Whether to import an existing plan IAM role.
     default: false
-    order: 12
+    order: 13
 
   - name: PlanIamPolicyImportExisting
     type: bool
     description: Whether to import an existing plan IAM policy.
     default: false
-    order: 13
+    order: 14
 
   - name: PlanIAMRolePolicyAttachmentImportExisting
     type: bool
     description: Whether to import an existing plan IAM role policy attachment.
     default: false
-    order: 14
+    order: 15
 
   - name: ApplyIAMRoleImportExisting
     type: bool
     description: Whether to import an existing apply IAM role.
     default: false
-    order: 15
+    order: 16
 
   - name: ApplyIamPolicyImportExisting
     type: bool
     description: Whether to import an existing apply IAM policy.
     default: false
-    order: 16
+    order: 17
 
   - name: ApplyIAMRolePolicyAttachmentImportExisting
     type: bool
     description: Whether to import an existing apply IAM role policy attachment.
     default: false
-    order: 17
+    order: 18

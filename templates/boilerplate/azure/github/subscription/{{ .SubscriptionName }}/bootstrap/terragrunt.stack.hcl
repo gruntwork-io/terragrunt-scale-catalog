@@ -14,6 +14,10 @@ stack "bootstrap" {
     github_org_name  = "{{ .GitHubOrgName }}"
     github_repo_name = "{{ .GitHubRepoName }}"
 
+    {{- if .DeployBranch }}
+    deploy_branch = "{{ .DeployBranch }}"
+    {{- end }}
+
     {{- if .Issuer }}
     issuer = "{{ .Issuer }}"
     {{- end }}
