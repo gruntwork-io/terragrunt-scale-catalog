@@ -3,7 +3,7 @@
 // Docs: https://docs.gruntwork.io/2.0/docs/pipelines/configuration/settings
 
 environment "{{ .AccountName }}" {
-  // Matches all units under {{ .AccountName }}/ to the auth config below.
+  // Defines the environment as matching all units under {{ .AccountName }}/.
   filter {
     paths = ["{{ .AccountName }}/*"]
   }

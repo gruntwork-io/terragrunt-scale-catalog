@@ -1,6 +1,6 @@
-// Root Terragrunt config inherited by every unit via `find_in_parent_folders("root.hcl")`.
+// Root Terragrunt config included by every unit via `find_in_parent_folders("root.hcl")`.
 // Configures S3 remote state and generates the AWS provider for all units.
-// Docs: https://terragrunt.gruntwork.io/docs/reference/config-blocks-and-attributes/#remote_state
+// Docs: https://docs.terragrunt.com/reference/config-blocks-and-attributes/#remote_state
 
 // Read environment-level config from the nearest parent files.
 locals {

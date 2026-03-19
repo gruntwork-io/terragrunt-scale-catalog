@@ -1,6 +1,6 @@
-// Root Terragrunt config inherited by every unit via `find_in_parent_folders("root.hcl")`.
+// Root Terragrunt config included by every unit via `find_in_parent_folders("root.hcl")`.
 // Generates the Azure provider for all units. Remote state is commented out until after bootstrap.
-// Docs: https://terragrunt.gruntwork.io/docs/reference/config-blocks-and-attributes/#remote_state
+// Docs: https://docs.terragrunt.com/reference/config-blocks-and-attributes/#remote_state
 
 // Read environment-level config from the nearest parent files.
 locals {
@@ -29,7 +29,7 @@ locals {
 
 // Generates provider.tf in each unit at plan/apply time.
 // `resource_provider_registrations = "none"` prevents the provider from auto-registering resource providers, which needs elevated permissions.
-// Docs: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs
+// Docs: https://search.opentofu.org/provider/terraform-providers/azurerm/latest
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
