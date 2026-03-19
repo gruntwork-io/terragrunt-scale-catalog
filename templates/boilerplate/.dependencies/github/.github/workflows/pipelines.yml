@@ -17,6 +17,7 @@ on:
     paths-ignore:
       - ".github/**"
 
+# Permissions to assume roles and create pull requests
 permissions:
   id-token: write
   contents: write
