@@ -28,7 +28,7 @@ locals {
 # }
 
 // Generates provider.tf in each unit at plan/apply time.
-// `resource_provider_registrations = "none"` avoids needing elevated permissions for auto-registration.
+// `resource_provider_registrations = "none"` prevents the provider from auto-registering resource providers, which needs elevated permissions.
 // Docs: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs
 generate "provider" {
   path      = "provider.tf"

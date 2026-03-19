@@ -1,9 +1,9 @@
 // Pipelines environment config for the {{ .SubscriptionName }} Azure subscription.
-// Pipelines reads all .hcl files in .gruntwork/. Add a new file here to register a new subscription.
+// Pipelines reads all .hcl files in .gruntwork/. Add a new file here to register a new environment.
 // Docs: https://docs.gruntwork.io/2.0/docs/pipelines/configuration/settings
 
 environment "{{ .SubscriptionName }}" {
-  // Routes changes under {{ .SubscriptionName }}/ to the auth config below.
+  // Matches all units under {{ .SubscriptionName }}/ to the auth config below.
   filter {
     paths = ["{{ .SubscriptionName }}/*"]
   }

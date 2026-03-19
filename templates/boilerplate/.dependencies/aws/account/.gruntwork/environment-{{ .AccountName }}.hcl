@@ -1,9 +1,9 @@
 // Pipelines environment config for the {{ .AccountName }} AWS account.
-// Pipelines reads all .hcl files in .gruntwork/. Add a new file here to register a new account.
+// Pipelines reads all .hcl files in .gruntwork/. Add a new file here to register a new environment.
 // Docs: https://docs.gruntwork.io/2.0/docs/pipelines/configuration/settings
 
 environment "{{ .AccountName }}" {
-  // Routes changes under {{ .AccountName }}/ to the auth config below.
+  // Matches all units under {{ .AccountName }}/ to the auth config below.
   filter {
     paths = ["{{ .AccountName }}/*"]
   }
