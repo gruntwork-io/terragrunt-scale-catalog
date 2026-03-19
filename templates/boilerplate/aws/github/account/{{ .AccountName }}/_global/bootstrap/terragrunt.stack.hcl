@@ -1,3 +1,6 @@
+// Bootstrap stack: provisions the GitHub OIDC provider, plan/apply IAM roles, and S3 state bucket in this environment.
+// Terragrunt Stacks: https://terragrunt.gruntwork.io/docs/features/stacks/
+
 locals {
   // Read from parent configurations instead of defining these values locally
   // so that other stacks and units in this directory can reuse the same configurations.
@@ -5,16 +8,20 @@ locals {
 }
 
 stack "bootstrap" {
+  // To upgrade: update the ?ref= tag and review https://github.com/gruntwork-io/terragrunt-scale-catalog/releases
   source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/aws/github/pipelines-bootstrap?ref={{ .TerragruntScaleCatalogRef }}"
   path   = "bootstrap"
 
   values = {
+    // Should match the ?ref= above so nested catalog references stay consistent.
     terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
 
     aws_account_id = "{{ .AWSAccountID }}"
 
+    // Prefix for the IAM roles created: <prefix>-plan and <prefix>-apply.
     oidc_resource_prefix = "{{ .OIDCResourcePrefix }}"
 
+    // Only Actions workflows in this org/repo can assume the IAM roles.
     github_org_name  = "{{ .GitHubOrgName }}"
     github_repo_name = "{{ .GitHubRepoName }}"
 

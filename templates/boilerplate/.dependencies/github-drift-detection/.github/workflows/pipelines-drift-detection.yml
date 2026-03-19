@@ -1,3 +1,6 @@
+# Gruntwork Pipelines Drift Detection — runs `terragrunt plan` across units and opens PRs for any drift found.
+# Enable scheduled runs by uncommenting the cron below. Docs: https://docs.gruntwork.io/2.0/docs/pipelines/guides/running-drift-detection
+
 name: Pipelines Drift Detection
 run-name: "[GWP]: Pipelines Drift Detection"
 on:

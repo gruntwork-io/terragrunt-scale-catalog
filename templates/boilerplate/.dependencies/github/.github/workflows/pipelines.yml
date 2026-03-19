@@ -1,3 +1,6 @@
+# Gruntwork Pipelines — runs `terragrunt plan` on PRs and `terragrunt apply` on merge to {{ .DeployBranch }}.
+# To upgrade Pipelines, update the @ref below. Docs: https://docs.gruntwork.io/2.0/docs/pipelines/concepts/overview
+
 name: Pipelines
 run-name: "[GWP]: ${{ "{{" }} github.event.commits[0].message || github.event.pull_request.title || 'No commit message' {{ "}}" }}"
 on:
@@ -14,7 +17,6 @@ on:
     paths-ignore:
       - ".github/**"
 
-# Permissions to assume roles and create pull requests
 permissions:
   id-token: write
   contents: write

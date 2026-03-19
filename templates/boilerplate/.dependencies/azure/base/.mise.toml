@@ -1,5 +1,8 @@
+# Pins tool versions for local development and CI. Install mise: https://mise.jdx.dev
+# Run `mise install` in the repo root to activate these versions locally.
 [tools]
 terragrunt = "{{ .TerragruntVersion }}"
 opentofu = "{{ .OpenTofuVersion }}"
 azure-cli = "{{ .AzureCLIVersion }}"
+# Required by some Azure CLI extensions.
 python = "{{ .PythonVersion }}"

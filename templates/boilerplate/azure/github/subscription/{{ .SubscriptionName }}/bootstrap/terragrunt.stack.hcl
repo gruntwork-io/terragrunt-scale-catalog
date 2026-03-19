@@ -1,3 +1,6 @@
+// Bootstrap stack: provisions plan/apply App Registrations (Federated Identity) and Azure Blob state storage.
+// Terragrunt Stacks: https://terragrunt.gruntwork.io/docs/features/stacks/
+
 locals {
   // Read from parent configurations instead of defining these values locally
   // so that other stacks and units in this directory can reuse the same configurations.
@@ -5,12 +8,15 @@ locals {
 }
 
 stack "bootstrap" {
+  // To upgrade: update the ?ref= tag and review https://github.com/gruntwork-io/terragrunt-scale-catalog/releases
   source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/azure/github/pipelines-bootstrap?ref={{ .TerragruntScaleCatalogRef }}"
   path   = "bootstrap"
 
   values = {
+    // Prefix for the App Registrations created: <prefix>-plan and <prefix>-apply.
     oidc_resource_prefix = "{{ .OIDCResourcePrefix }}"
 
+    // Only Actions workflows in this org/repo can authenticate via the App Registrations.
     github_org_name  = "{{ .GitHubOrgName }}"
     github_repo_name = "{{ .GitHubRepoName }}"
 

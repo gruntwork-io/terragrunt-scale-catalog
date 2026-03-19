@@ -1,3 +1,8 @@
+// Root Terragrunt config inherited by every unit via `find_in_parent_folders("root.hcl")`.
+// Configures S3 remote state and generates the AWS provider for all units.
+// Docs: https://terragrunt.gruntwork.io/docs/reference/config-blocks-and-attributes/#remote_state
+
+// Read environment-level config from the nearest parent files.
 locals {
   account_hcl       = read_terragrunt_config(find_in_parent_folders("account.hcl"))
   state_bucket_name = local.account_hcl.locals.state_bucket_name
@@ -21,6 +26,7 @@ remote_state {
   }
 }
 
+// Generates provider.tf in each unit at plan/apply time.
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"

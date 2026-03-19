@@ -1,5 +1,9 @@
+# Gruntwork Pipelines — runs plan on MRs, apply on merge to default branch, and supports drift detection and unlock.
+# To upgrade Pipelines, update the @ref below. Docs: https://docs.gruntwork.io/2.0/docs/pipelines/concepts/overview
+
 spec:
   inputs:
+    # Selects the workflow: infrachanges (default), drift-detection, unlock-unit, or unlock-all.
     pipelines_workflow:
       default: "infrachanges"
 {{- if .IncludeDriftDetection }}
@@ -49,4 +53,5 @@ include:
       pipelines_unlock_unit_stack_path: $[[ inputs.pipelines_unlock_unit_stack_path ]]
 
 variables:
+  # Full git history required for Pipelines to accurately detect which units changed.
   GIT_DEPTH: 0

@@ -1,15 +1,5 @@
-######################################################################################################################
-# Gruntwork Pipelines Unlock Workflow
-#
-# This workflow implements a mechanism to allow engineers to manually unlock a state file. This is helpful as
-# there are several real world scenarios where state files can be erroneously left locked in a CI-managed pipeline, such
-# as when an operator cancels a CI job mid-execution.
-#
-#
-# This workflow uses the same authentication mechanisms as pipelines to access the state file lock and
-# run the force-unlock command.
-#
-######################################################################################################################
+# Gruntwork Pipelines Unlock Workflow — manually unlock a state file left locked by a cancelled or crashed run.
+# Trigger from Actions → Pipelines Unlock → Run workflow. Docs: https://docs.gruntwork.io/2.0/docs/pipelines/guides/unlocking-state
 
 name: Pipelines Unlock
 run-name: "[GWP]: Pipelines Unlock"
