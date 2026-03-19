@@ -1,5 +1,4 @@
 // Bootstrap stack: provisions plan/apply App Registrations (Federated Identity) and Azure Blob state storage.
-// Run this first before any other units. Docs: https://docs.gruntwork.io/2.0/docs/pipelines/installation/overview
 // Terragrunt Stacks: https://docs.terragrunt.com/features/stacks/
 
 locals {
