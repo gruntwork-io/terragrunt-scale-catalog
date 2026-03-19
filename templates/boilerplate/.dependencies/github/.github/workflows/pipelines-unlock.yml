@@ -1,4 +1,4 @@
-# Gruntwork Pipelines Unlock Workflow — manually unlock a state file left locked by a cancelled or crashed run.
+# Gruntwork Pipelines Unlock Workflow - manually unlock a state file left locked by a cancelled or crashed run.
 # Trigger from Actions → Pipelines Unlock → Run workflow. Docs: https://docs.gruntwork.io/2.0/docs/pipelines/guides/unlocking-state
 
 name: Pipelines Unlock

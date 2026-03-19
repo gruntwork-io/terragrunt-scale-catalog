@@ -3,6 +3,6 @@
 
 locals {
   // The _global/ directory holds environment-wide resources (IAM, OIDC providers, etc.).
-  // Even global resources need a region for the AWS API — this value serves that purpose.
+  // Even global resources need a region for the AWS API - this value serves that purpose.
   aws_region = "{{ .AWSRegion }}"
 }
