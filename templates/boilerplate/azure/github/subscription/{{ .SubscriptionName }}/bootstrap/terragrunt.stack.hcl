@@ -1,5 +1,5 @@
 // Bootstrap stack: provisions plan/apply App Registrations (Federated Identity) and Azure Blob state storage.
-// Terragrunt Stacks: https://terragrunt.gruntwork.io/docs/features/stacks/
+// Terragrunt Stacks: https://docs.terragrunt.com/features/stacks/
 
 locals {
   // Read from parent configurations instead of defining these values locally

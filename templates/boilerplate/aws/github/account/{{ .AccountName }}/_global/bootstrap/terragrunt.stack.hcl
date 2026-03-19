@@ -1,5 +1,5 @@
-// Bootstrap stack: provisions the GitHub OIDC provider, plan/apply IAM roles, and S3 state bucket in this environment.
-// Terragrunt Stacks: https://terragrunt.gruntwork.io/docs/features/stacks/
+// Bootstrap stack: provisions the GitHub OIDC provider and plan/apply IAM roles in this environment.
+// Terragrunt Stacks: https://docs.terragrunt.com/features/stacks/
 
 locals {
   // Read from parent configurations instead of defining these values locally
