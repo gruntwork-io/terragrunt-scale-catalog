@@ -14,6 +14,9 @@ variable "message" {
 }
 
 resource "null_resource" "test" {
+  triggers = {
+    message = var.message
+  }
   provisioner "local-exec" {
     interpreter = ["/usr/bin/env", "bash", "-c"]
     command     = "echo \"${var.message}\""
