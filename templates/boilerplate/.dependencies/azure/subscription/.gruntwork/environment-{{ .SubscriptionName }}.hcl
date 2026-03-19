@@ -1,5 +1,5 @@
 // Pipelines environment config for the {{ .SubscriptionName }} Azure subscription.
-// Pipelines reads all .hcl files in .gruntwork/ - add a new file here to register a new subscription.
+// Pipelines reads all .hcl files in .gruntwork/. Add a new file here to register a new subscription.
 // Docs: https://docs.gruntwork.io/2.0/docs/pipelines/configuration/settings
 
 environment "{{ .SubscriptionName }}" {
@@ -9,7 +9,7 @@ environment "{{ .SubscriptionName }}" {
   }
 
   authentication {
-    // Pipelines authenticates via Azure Federated Identity (OIDC) - no client secrets stored.
+    // Pipelines authenticates via Azure Federated Identity (OIDC). No client secrets are stored.
     // plan client: read-only, used on MRs. apply client: write, used on merge to deploy branch.
     // Both App Registrations are created by the bootstrap stack in bootstrap/.
     azure_oidc {

@@ -1,4 +1,4 @@
-# Gruntwork Pipelines - runs `terragrunt plan` on PRs and `terragrunt apply` on merge to {{ .DeployBranch }}.
+# Gruntwork Pipelines workflow. Runs `terragrunt plan` on PRs and `terragrunt apply` on merge to {{ .DeployBranch }}.
 # To upgrade Pipelines, update the @ref below. Docs: https://docs.gruntwork.io/2.0/docs/pipelines/concepts/overview
 
 name: Pipelines
