@@ -2,19 +2,19 @@ variables:
   - name: TerragruntVersion
     type: string
     description: The version of Terragrunt to use.
-    default: "0.88.0"
+    default: "1.0.0"
 
   - name: OpenTofuVersion
     type: string
     description: The version of OpenTofu to use.
-    default: "1.10.6"
+    default: "1.11.5"
 
   - name: AzureCLIVersion
     type: string
     description: The version of Azure CLI to use.
-    default: "2.77.0"
+    default: "2.84.0"
 
   - name: PythonVersion
     type: string
     description: The version of Python to use.
-    default: "3.10.11"
+    default: "3.14.3"
