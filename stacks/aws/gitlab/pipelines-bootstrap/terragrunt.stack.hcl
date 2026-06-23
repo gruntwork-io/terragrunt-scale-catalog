@@ -1,7 +1,7 @@
 locals {
   // Source resolution
   terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
-  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.11.0")
+  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.13.0")
 
   // AWS account values
   aws_account_id = values.aws_account_id
@@ -35,18 +35,22 @@ locals {
 
   state_bucket_name = values.state_bucket_name
 
+  terraform_locks_table_name = try(values.terraform_locks_table_name, "terraform-locks")
+
   bootstrap_iam_policy_prefix = try(values.bootstrap_iam_policy, "default")
 
   plan_iam_policy_template_path  = "${get_parent_terragrunt_dir()}/${local.bootstrap_iam_policy_prefix}_plan_iam_policy.json"
   apply_iam_policy_template_path = "${get_parent_terragrunt_dir()}/${local.bootstrap_iam_policy_prefix}_apply_iam_policy.json"
 
   default_plan_iam_policy = templatefile(local.plan_iam_policy_template_path, {
-    state_bucket_name = local.state_bucket_name
-    aws_partition     = local.aws_partition
+    state_bucket_name          = local.state_bucket_name
+    aws_partition              = local.aws_partition
+    terraform_locks_table_name = local.terraform_locks_table_name
   })
   default_apply_iam_policy = templatefile(local.apply_iam_policy_template_path, {
-    state_bucket_name = local.state_bucket_name
-    aws_partition     = local.aws_partition
+    state_bucket_name          = local.state_bucket_name
+    aws_partition              = local.aws_partition
+    terraform_locks_table_name = local.terraform_locks_table_name
   })
 
   plan_iam_policy  = try(values.plan_iam_policy, local.default_plan_iam_policy)

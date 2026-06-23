@@ -1,7 +1,7 @@
 locals {
   // Source resolution
   terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
-  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.11.0")
+  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.13.0")
 
   // Project values
   project_id     = values.project_id

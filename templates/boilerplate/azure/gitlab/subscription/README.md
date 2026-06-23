@@ -27,7 +27,7 @@ boilerplate \
 | `GitLabProjectName` | yes | | Project name; only CI jobs in this project may authenticate. |
 | `AzureLocation` | yes | | Azure region for the subscription's state-backend resources. |
 | `DeployBranch` | no | `main` | Branch granted the apply role. |
-| `TerragruntScaleCatalogRef` | no | `v1.11.0` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.13.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix applied to the Entra ID resources. |
 | `Issuer` | no | computed | Override for the OIDC issuer URL (useful for self-hosted GitLab). |
 

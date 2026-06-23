@@ -27,7 +27,7 @@ boilerplate \
 | `GitHubOrgName` | yes | | GitHub organization that owns the repository. |
 | `GitHubRepoName` | yes | | Repository name; only workflows in this repo may assume the IAM roles. |
 | `DeployBranch` | no | `main` | Branch granted the apply role. |
-| `TerragruntScaleCatalogRef` | no | `v1.11.0` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.13.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix for the IAM role names (`<prefix>-plan`, `<prefix>-apply`). |
 | `Issuer` | no | computed | Override for the OIDC issuer URL. |
 | `AdditionalAudiences` | no | `[]` | Extra audiences appended to `sts.amazonaws.com`. |

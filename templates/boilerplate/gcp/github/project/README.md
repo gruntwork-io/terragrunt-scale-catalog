@@ -33,7 +33,7 @@ boilerplate \
 | `GCPRegion` | yes | | GCP region used to configure the Google provider and GCS state backend. |
 | `StateBucketName` | yes | | Name of the GCS bucket used for storing OpenTofu state. Must be globally unique. Also used to grant the plan service account `roles/storage.objectUser` scoped to this bucket for state locking. |
 | `DeployBranch` | no | `main` | Branch granted the apply service account binding. |
-| `TerragruntScaleCatalogRef` | no | `v1.11.0` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.13.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix applied to Workload Identity Pool and service account resources. |
 | `Issuer` | no | computed | Override for the OIDC issuer URL; defaults to `https://token.actions.githubusercontent.com`. |
 | `WorkloadIdentityPoolID` | no | computed | ID of the Workload Identity Pool; computed from `OIDCResourcePrefix` if not specified. |
