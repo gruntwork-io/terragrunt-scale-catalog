@@ -25,7 +25,7 @@ boilerplate \
 | `GitLabGroupName` | yes | | GitLab group that owns the project. |
 | `GitLabProjectName` | yes | | Project name; only CI jobs in this project may assume the IAM roles. |
 | `DeployBranch` | no | `main` | Branch granted the apply role. |
-| `TerragruntScaleCatalogRef` | no | `v1.11.0` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.13.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix for the IAM role names. |
 | `Issuer` | no | computed | Override for the OIDC issuer URL (useful for self-hosted GitLab). |
 
