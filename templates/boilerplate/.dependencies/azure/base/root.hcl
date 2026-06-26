@@ -29,6 +29,7 @@ locals {
 
 // Generates provider.tf in each unit at plan/apply time.
 // `resource_provider_registrations = "none"` prevents the provider from auto-registering resource providers, which needs elevated permissions.
+// `environment` selects the Azure cloud (e.g. "public", "usgovernment") so local Terragrunt runs target the same cloud as Pipelines.
 // Docs: https://search.opentofu.org/provider/terraform-providers/azurerm/latest
 generate "provider" {
   path      = "provider.tf"
@@ -37,9 +38,12 @@ generate "provider" {
 provider "azurerm" {
   features {}
 
+  environment                     = "{{ .CloudEnvironment }}"
   resource_provider_registrations = "none"
 }
 
-provider "azuread" {}
+provider "azuread" {
+  environment = "{{ .CloudEnvironment }}"
+}
 EOF
 }

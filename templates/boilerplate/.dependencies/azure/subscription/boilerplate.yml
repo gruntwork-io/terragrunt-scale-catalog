@@ -14,17 +14,25 @@ variables:
     description: The Azure subscription ID for the subscription you are bootstrapping Pipelines in.
     order: 3
 
+  - name: CloudEnvironment
+    type: string
+    description: |
+      The Azure cloud environment to target. Accepted values match the azurerm provider exactly
+      (lowercase): "public", "usgovernment", "china", "german", "stack". Defaults to "public".
+    default: "public"
+    order: 4
+
   - name: StateResourceGroupName
     type: string
     description: The name of the Azure resource group to use for storing OpenTofu state.
-    order: 4
+    order: 5
 
   - name: StateStorageAccountName
     type: string
     description: The name of the Azure storage account to use for storing OpenTofu state.
-    order: 5
+    order: 6
 
   - name: StateStorageContainerName
     type: string
     description: The name of the Azure storage container to use for storing OpenTofu state.
-    order: 6
+    order: 7

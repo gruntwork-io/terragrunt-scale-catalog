@@ -30,6 +30,7 @@ boilerplate \
 | `TerragruntScaleCatalogRef` | no | `v1.13.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix applied to the Entra ID resources. |
 | `Issuer` | no | computed | Override for the OIDC issuer URL. |
+| `CloudEnvironment` | no | `public` | Azure cloud to target. Set to `usgovernment` for Azure Government, or `china` / `german` / `stack` for other sovereign clouds. Threaded into both the Pipelines HCL (`cloud_environment`) and the generated `azurerm` / `azuread` provider blocks. See the [Connecting to Azure Government](https://docs.gruntwork.io/2.0/docs/pipelines/tutorials/deploying-to-azure-government) tutorial. |
 
 ## How It Works
 

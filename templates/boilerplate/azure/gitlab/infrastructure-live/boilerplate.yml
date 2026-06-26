@@ -2,6 +2,15 @@ skip_files:
   - path: "README.md"
     if: "true"
 
+variables:
+  - name: CloudEnvironment
+    type: string
+    description: |
+      The Azure cloud environment to target. Accepted values match the azurerm provider exactly
+      (lowercase): "public", "usgovernment", "china", "german", "stack". Defaults to "public".
+    default: "public"
+    order: 1
+
 dependencies:
   - name: common
     template-url: ../../../.dependencies/common

@@ -52,3 +52,11 @@ variables:
     default: ""
     order: 8
 
+  - name: CloudEnvironment
+    type: string
+    description: |
+      The Azure cloud environment to target. Accepted values match the azurerm provider exactly
+      (lowercase): "public", "usgovernment", "china", "german", "stack". Defaults to "public".
+    default: "public"
+    order: 9
+
