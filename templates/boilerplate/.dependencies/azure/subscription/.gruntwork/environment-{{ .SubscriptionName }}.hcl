@@ -18,6 +18,11 @@ environment "{{ .SubscriptionName }}" {
 
       plan_client_id  = "" # FIXME: Fill in the client ID for the plan application after bootstrapping
       apply_client_id = "" # FIXME: Fill in the client ID for the apply application after bootstrapping
+
+      // Azure cloud to target. "public" (default) targets the public Azure cloud.
+      // Set to "usgovernment" for Azure Government, or "china" / "german" / "stack" for other sovereign clouds.
+      // See https://docs.gruntwork.io/2.0/docs/pipelines/tutorials/deploying-to-azure-government for the Azure Government walkthrough.
+      cloud_environment = "{{ .CloudEnvironment }}"
     }
   }
 }
