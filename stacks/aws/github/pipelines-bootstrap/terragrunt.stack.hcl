@@ -21,6 +21,17 @@ locals {
   github_org_name  = try(values.github_org_name, "")
   github_repo_name = try(values.github_repo_name, "")
 
+  // Numeric GitHub org/repo IDs. When both are set, the sub claim is built using GitHub's immutable
+  // subject-claim format (repo:org@org_id/repo@repo_id:...) instead of the legacy name-only format.
+  // See https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/
+  github_org_id  = try(values.github_org_id, "")
+  github_repo_id = try(values.github_repo_id, "")
+
+  use_immutable_subject = local.github_org_id != "" && local.github_repo_id != ""
+
+  github_org_ref  = local.use_immutable_subject ? "${local.github_org_name}@${local.github_org_id}" : local.github_org_name
+  github_repo_ref = local.use_immutable_subject ? "${local.github_repo_name}@${local.github_repo_id}" : local.github_repo_name
+
   aud_value = try(values.aud_value, "sts.amazonaws.com")
 
   additional_audiences = try(values.additional_audiences, [])
@@ -35,8 +46,8 @@ locals {
   deploy_branch = try(values.deploy_branch, "main")
 
   sub_key         = try(values.sub_key, "${local.github_token_actions_domain}:sub")
-  sub_plan_value  = try(values.sub_plan_value, "repo:${local.github_org_name}/${local.github_repo_name}:*")
-  sub_apply_value = try(values.sub_apply_value, "repo:${local.github_org_name}/${local.github_repo_name}:ref:refs/heads/${local.deploy_branch}")
+  sub_plan_value  = try(values.sub_plan_value, "repo:${local.github_org_ref}/${local.github_repo_ref}:*")
+  sub_apply_value = try(values.sub_apply_value, "repo:${local.github_org_ref}/${local.github_repo_ref}:ref:refs/heads/${local.deploy_branch}")
 
   // OIDC condition operator for the apply role. Defaults to "StringEquals" (exact repo+branch match,
   // the secure default). Set to "StringLike" to allow a wildcard sub_apply_value — e.g. trusting many

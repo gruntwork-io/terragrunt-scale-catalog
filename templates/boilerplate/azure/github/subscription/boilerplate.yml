@@ -23,31 +23,49 @@ variables:
     description: The name of the GitHub repository you are bootstrapping Pipelines in.
     order: 3
 
+  - name: GitHubOrgID
+    type: string
+    description: >-
+      Numeric GitHub organization/user ID. Required for all repos created on or after 2026-07-15,
+      since GitHub enforces immutable subject claims for Actions OIDC tokens on new repos from that
+      date forward (https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/).
+      For repos created before that date, leave blank unless the repo has separately opted in. When
+      both GitHubOrgID and GitHubRepoID are set, the trust policy's `sub` claim uses the immutable
+      "org@org_id/repo@repo_id" format instead of "org/repo".
+    default: ""
+    order: 4
+
+  - name: GitHubRepoID
+    type: string
+    description: Numeric GitHub repository ID. See GitHubOrgID.
+    default: ""
+    order: 5
+
   - name: DeployBranch
     type: string
     description: The name of the branch where Pipelines will deploy changes, this branch will be granted the Apply custom role.
     default: "main"
-    order: 4
+    order: 6
 
   - name: AzureLocation
     type: string
     description: The Azure region you are bootstrapping Pipelines in.
-    order: 5
+    order: 7
 
   - name: TerragruntScaleCatalogRef
     type: string
     description: The Git reference of the Terragrunt Scale catalog to use.
-    order: 6
+    order: 8
     default: "v1.13.0"
 
   - name: OIDCResourcePrefix
     type: string
     description: The prefix for the OIDC resources you using to bootstrap Pipelines.
     default: "pipelines"
-    order: 7
+    order: 9
 
   - name: Issuer
     type: string
     description: The issuer URL for the OIDC provider (is computed dynamically from the SCM provider if not specified).
     default: ""
-    order: 8
+    order: 10

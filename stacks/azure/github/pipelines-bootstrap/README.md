@@ -54,6 +54,8 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | `state_storage_container_name` | Container name for state files | `tfstate` |
 | `oidc_resource_prefix` | Prefix for Entra ID resources | `pipelines` |
 | `github_token_actions_domain` | GitHub Actions token domain | `token.actions.githubusercontent.com` |
+| `github_org_id` | Numeric GitHub organization/user ID. Required for all repos created on or after 2026-07-15 (see [Immutable Subject Claims](#immutable-subject-claims) below); leave blank for existing repos that haven't opted in. Must be set together with `github_repo_id`. | `1234567` |
+| `github_repo_id` | Numeric GitHub repository ID. Must be set together with `github_org_id`. | `987654321` |
 | `audiences` | OIDC audiences | `["api://AzureADTokenExchange"]` |
 | `issuer` | OIDC issuer URL | `https://token.actions.githubusercontent.com` |
 | `deploy_branch` | Branch allowed for applies | `main` |
@@ -111,6 +113,31 @@ subject: repo:my-org/my-repo:ref:refs/heads/main
 ```
 
 This only allows applies from the `main` branch.
+
+## Immutable Subject Claims
+
+GitHub is rolling out an [immutable subject-claim format](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/) for Actions OIDC tokens, which embeds numeric, immutable org/repo IDs in the `sub` claim (`repo:org@org_id/repo@repo_id:...`) instead of names alone. **Starting 2026-07-15, this format is required for all newly created GitHub repositories.**
+
+Both the flexible (plan) and static (apply) federated identity credentials above are keyed off the `sub` claim, so both switch to the immutable format together.
+
+To opt in (or if your repo is subject to the new requirement), set both `github_org_id` and `github_repo_id`:
+
+```hcl
+values = {
+  github_org_name  = "my-org"
+  github_repo_name = "infrastructure"
+  github_org_id    = "1234567"
+  github_repo_id   = "987654321"
+}
+```
+
+You can look up the numeric IDs with:
+
+```bash
+gh api repos/{owner}/{repo} --jq '{owner_id: .owner.id, repo_id: .id}'
+```
+
+Leave both values unset to keep the legacy `repo:org/repo:...` format. Both must be set together — setting only one falls back to the legacy format.
 
 ## Custom Role Permissions
 
