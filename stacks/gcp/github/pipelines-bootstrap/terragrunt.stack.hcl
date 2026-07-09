@@ -15,6 +15,19 @@ locals {
   github_org_name  = values.github_org_name
   github_repo_name = values.github_repo_name
 
+  // Numeric GitHub org/repo IDs. When both are set, the sub claim (used only in the apply role's
+  // workload-identity subject, not the attribute.repository condition) is built using GitHub's
+  // immutable subject-claim format (repo:org@org_id/repo@repo_id:...) instead of the legacy
+  // name-only format. See
+  // https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/
+  github_org_id  = try(values.github_org_id, "")
+  github_repo_id = try(values.github_repo_id, "")
+
+  use_immutable_subject = local.github_org_id != "" && local.github_repo_id != ""
+
+  github_org_ref  = local.use_immutable_subject ? "${local.github_org_name}@${local.github_org_id}" : local.github_org_name
+  github_repo_ref = local.use_immutable_subject ? "${local.github_repo_name}@${local.github_repo_id}" : local.github_repo_name
+
   issuer        = try(values.issuer, "https://${local.github_token_actions_domain}")
   deploy_branch = try(values.deploy_branch, "main")
 
@@ -82,11 +95,14 @@ locals {
   state_bucket_custom_role_id = replace("${local.oidc_resource_prefix}_state_bucket", "-", "_")
 
   // Workload Identity principal formats
-  // For plan: allow any workflow from the repository (principalSet with attribute filter)
+  // For plan: allow any workflow from the repository (principalSet with attribute filter). This
+  // filters on attribute.repository, which maps from assertion.repository and is unaffected by the
+  // immutable subject-claim opt-in, so it always uses the plain org/repo names.
   plan_member = "principalSet://iam.googleapis.com/projects/${local.project_number}/locations/global/workloadIdentityPools/${local.workload_identity_pool_id}/attribute.repository/${local.github_org_name}/${local.github_repo_name}"
 
-  // For apply: restrict to specific branch (principal with subject)
-  apply_member = "principal://iam.googleapis.com/projects/${local.project_number}/locations/global/workloadIdentityPools/${local.workload_identity_pool_id}/subject/repo:${local.github_org_name}/${local.github_repo_name}:ref:refs/heads/${local.deploy_branch}"
+  // For apply: restrict to specific branch (principal with subject). This filters on the sub claim
+  // itself, so it uses the immutable org@id/repo@id format when github_org_id/github_repo_id are set.
+  apply_member = "principal://iam.googleapis.com/projects/${local.project_number}/locations/global/workloadIdentityPools/${local.workload_identity_pool_id}/subject/repo:${local.github_org_ref}/${local.github_repo_ref}:ref:refs/heads/${local.deploy_branch}"
 }
 
 // Workload Identity Pool (shared by plan and apply)

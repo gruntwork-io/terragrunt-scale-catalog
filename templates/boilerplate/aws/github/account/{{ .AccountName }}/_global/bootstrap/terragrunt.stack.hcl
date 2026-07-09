@@ -26,6 +26,12 @@ stack "bootstrap" {
     github_org_name  = "{{ .GitHubOrgName }}"
     github_repo_name = "{{ .GitHubRepoName }}"
 
+    {{- if and .GitHubOrgID .GitHubRepoID }}
+    // Numeric GitHub org/repo IDs: switches the sub claim to GitHub's immutable subject-claim format.
+    github_org_id  = "{{ .GitHubOrgID }}"
+    github_repo_id = "{{ .GitHubRepoID }}"
+    {{- end }}
+
     {{- if .DeployBranch }}
     deploy_branch = "{{ .DeployBranch }}"
     {{- end }}
