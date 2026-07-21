@@ -1,0 +1,16 @@
+#!/bin/bash
+# Plan the bootstrap stack: the Workload Identity Pool/provider and the plan/apply service accounts.
+# References the GCP auth check output so this stays gated until authentication succeeds.
+set -euo pipefail
+
+if [ -z "${REPO_FILES:-}" ]; then
+  log_error "No cloned repository found. Complete the earlier steps first."
+  exit 1
+fi
+
+log_info "GCP access ready: {{ .outputs.gcp_auth_check.gcp_ready }}"
+
+cd "$REPO_FILES/{{ .inputs.ProjectName }}/bootstrap"
+
+log_info "Planning the bootstrap stack in {{ .inputs.ProjectName }}/bootstrap ..."
+terragrunt run --all --non-interactive --provider-cache --backend-bootstrap plan

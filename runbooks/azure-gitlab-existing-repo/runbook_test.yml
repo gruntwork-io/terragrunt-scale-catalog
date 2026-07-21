@@ -1,0 +1,66 @@
+version: 1
+
+# Template-validation tier test. The auth, clone, derive, generate, provision, and MR blocks all
+# require live GitLab/Azure access, so they are skipped here; this test guards that the runbook parses,
+# the input schema is valid, and block IDs resolve. Run a full integration pass manually with real
+# credentials. See https://runbooks.gruntwork.io/authoring/testing/
+settings:
+  use_temp_working_dir: true
+  timeout: 5m
+  parallelizable: true
+
+tests:
+  - name: parse-and-inputs
+    description: Validates the runbook loads and accepts the documented inputs.
+    inputs:
+      config.SubscriptionName: "prod"
+      config.AzureLocation: "eastus"
+      config.GitLabGroupName: "acme"
+      config.GitLabProjectName: "infrastructure-live"
+      config.StateResourceGroupName: "acme-prod-tofu-state-rg"
+      config.StateStorageAccountName: "acmeprodtfstate001"
+      config.StateStorageContainerName: "tfstate"
+      config.OIDCResourcePrefix: "pipelines"
+      config.DeployBranch: "main"
+      config.TerragruntScaleCatalogRef: "v1.13.1"
+    steps:
+      - block: check-prerequisites
+        expect: skip
+      - block: resolve-catalog-ref
+        expect: skip
+      - block: install-deps
+        expect: skip
+      - block: gitlab-auth
+        expect: skip
+      - block: azure-login
+        expect: skip
+      - block: clone
+        expect: skip
+      - block: check-root-hcl
+        expect: skip
+      - block: derive-azure
+        expect: skip
+      - block: generate-bootstrap
+        expect: skip
+      - block: root-hcl-preview
+        expect: skip
+      - block: ensure-root-hcl
+        expect: skip
+      - block: gitlab-ci
+        expect: skip
+      - block: bootstrap-plan
+        expect: skip
+      - block: bootstrap-apply
+        expect: skip
+      - block: capture-client-ids
+        expect: skip
+      - block: enable-remote-state
+        expect: skip
+      - block: migrate-state
+        expect: skip
+      - block: merge-request
+        expect: skip
+      - block: verify-oidc-apps
+        expect: skip
+      - block: verify-config
+        expect: skip

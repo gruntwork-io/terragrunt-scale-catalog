@@ -1,0 +1,318 @@
+# Bootstrap Gruntwork Pipelines — GCP + GitLab (new repository)
+
+This runbook creates a **new** `infrastructure-live` repository on **GitLab** and installs
+[Gruntwork Pipelines](https://docs.gruntwork.io/2.0/docs/pipelines/concepts/overview) (Terragrunt Scale)
+into it, targeting one **GCP** project.
+
+It provisions, in that project, the Workload Identity Federation trust that lets your GitLab CI pipelines
+authenticate to GCP with no long-lived service-account keys:
+
+- a Workload Identity Pool and an OIDC provider for GitLab CI,
+- a `plan` service account (read-only, used on merge requests), and
+- an `apply` service account (used on merges to your deploy branch).
+
+Wherever a value can be discovered automatically, this runbook does it for you — your GCP **project
+number** is resolved from your project ID with `gcloud`, and the full repository scaffold (including the
+`.gitlab-ci.yml` pipeline and the `.gruntwork/` environment config) is generated for you. You only fill
+in what genuinely cannot be derived.
+
+<Admonition
+  type="warning"
+  title="This provisions real cloud resources"
+  description="The bootstrap step creates a Workload Identity Pool, an OIDC provider, plan/apply service accounts, and a GCS state bucket in the GCP project you authenticate to. Run this only against a project you own and intend to manage with Pipelines."
+/>
+
+<Admonition
+  type="note"
+  title="Prerequisite: configure SCM access for Pipelines"
+  description="Gruntwork Pipelines needs access to your GitLab project to fetch your IaC code, reusable CI/CD code, and the Pipelines binary itself. Before you begin, set this up by configuring [machine users](https://docs.gruntwork.io/2.0/docs/pipelines/installation/viamachineusers) with Personal Access Tokens (PATs). This is separate from the GitLab sign-in this runbook uses to clone the project and open the merge request."
+/>
+
+## 1. Pre-flight checks
+
+Make sure the tools this runbook drives are installed.
+
+<Check
+  id="check-prerequisites"
+  title="Check required CLIs"
+  description="Verifies **git**, **mise**, the **Google Cloud CLI** (`gcloud`), and the **GitLab CLI** (`glab`) are installed and on your PATH."
+  path="checks/check-prerequisites.sh"
+/>
+
+<Admonition
+  type="note"
+  title="Restart after installing prerequisites"
+  description="If any tool above was missing and you installed it just now, restart this runbook (reopen it) so it picks up the newly installed tools on your PATH."
+/>
+
+## 2. Authenticate to GitLab
+
+<GitLabAuth
+  id="gitlab-auth"
+  title="GitLab authentication"
+  description="Used to create your new repository, push the generated configuration, and open the setup merge request."
+/>
+
+## 3. Configure the bootstrap
+
+Fill in the values that cannot be derived automatically. Everything else — the GCP project number, the
+repository scaffold, and the CI pipeline — is generated for you from the steps that follow.
+
+<Inputs id="config" title="Bootstrap settings">
+```yaml
+variables:
+  - name: ProjectName
+    type: string
+    description: A short, human-readable name for this GCP project (e.g. "dev", "prod"). Becomes the top-level directory and the Pipelines environment name.
+    validations:
+      - required
+    x-section: Project
+
+  - name: GCPProjectID
+    type: string
+    description: The GCP project ID you are bootstrapping Pipelines in (the string identifier, e.g. "acme-prod-1a2b").
+    validations:
+      - required
+    x-section: Project
+
+  - name: GCPRegion
+    type: string
+    description: The GCP region used to configure the Google provider and the GCS state backend.
+    default: us-central1
+    validations:
+      - required
+    x-section: Project
+
+  - name: StateBucketName
+    type: string
+    description: Name of the GCS bucket for OpenTofu state. Must be globally unique and obey GCS naming rules.
+    validations:
+      - required
+    x-section: State
+
+  - name: GitLabGroupName
+    type: string
+    description: The GitLab group (namespace) that will own the new repository, e.g. "acme". Cannot be derived — GitLab has no way to guess which group you mean.
+    validations:
+      - required
+    x-section: GitLab
+
+  - name: GitLabProjectName
+    type: string
+    description: The name of the new GitLab project (repository) to create, e.g. "infrastructure-live".
+    default: infrastructure-live
+    validations:
+      - required
+    x-section: GitLab
+
+  - name: Visibility
+    type: string
+    description: 'Visibility of the new GitLab project: private, internal, or public.'
+    default: private
+    validations:
+      - required
+    x-section: GitLab
+
+  - name: GitLabServerDomain
+    type: string
+    description: Domain of your GitLab server. Leave empty to use gitlab.com; set this for self-hosted GitLab instances (e.g. "gitlab.example.com").
+    default: ""
+    x-section: GitLab
+
+  - name: OIDCResourcePrefix
+    type: string
+    description: Prefix for the OIDC resources. Creates <prefix>-pool, <prefix>-provider, and <prefix>-plan / <prefix>-apply service accounts.
+    default: pipelines
+    validations:
+      - required
+    x-section: OIDC
+
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply service account. Also becomes the new repository's default branch.
+    default: main
+    validations:
+      - required
+    x-section: OIDC
+
+  - name: IncludeDriftDetection
+    type: bool
+    description: Whether to include the drift-detection workflow in the generated GitLab CI pipeline.
+    default: true
+    x-section: Advanced
+
+  - name: TerragruntScaleCatalogRef
+    type: string
+    description: 'Optional: pin a specific Terragrunt Scale catalog ref (e.g. v1.13.1). Leave blank to use the latest release, resolved automatically before the generate step.'
+    default: ""
+    x-section: Advanced
+
+  - name: TerragruntVersion
+    type: string
+    description: Terragrunt version to pin in the repository's .mise.toml. Optional — leave as the default unless you need a specific version.
+    default: "1.0.0"
+    x-section: Advanced
+
+  - name: OpenTofuVersion
+    type: string
+    description: OpenTofu version to pin in the repository's .mise.toml. Optional.
+    default: "1.11.5"
+    x-section: Advanced
+```
+</Inputs>
+
+## 4. Authenticate to GCP
+
+There is no dedicated GCP auth block, so this runbook authenticates with the `gcloud` CLI. The command
+logs you in, updates your Application Default Credentials (which Terragrunt and OpenTofu use), and sets
+your active project.
+
+<Command
+  id="gcp-auth"
+  title="Authenticate with gcloud"
+  description="Runs `gcloud auth login --update-adc` and sets the active project to your GCPProjectID."
+  inputsId="config"
+  path="scripts/gcp-auth.sh"
+/>
+
+<Check
+  id="check-gcp-auth"
+  title="Verify GCP authentication"
+  description="Confirms you have an active gcloud account, working Application Default Credentials, and the expected active project."
+  inputsId="config"
+  path="checks/check-gcp-auth.sh"
+/>
+
+## 5. Create the GitLab repository
+
+Create the new, empty `infrastructure-live` repository in your GitLab group. It is initialized with a
+README so the deploy branch exists and can be the target of the setup merge request.
+
+<Command
+  id="create-repo"
+  title="Create the GitLab project"
+  description="Runs `glab repo create` for <group>/<project> with the chosen visibility and deploy branch."
+  gitlabAuthId="gitlab-auth"
+  inputsId="config"
+  path="scripts/create-repo.sh"
+/>
+
+## 6. Clone the new repository
+
+Clone the repository you just created (its URL is prefilled from the previous step).
+
+<GitClone
+  id="clone"
+  title="Clone the repository"
+  description="Clones the newly created GitLab repository (URL prefilled from the create step) so the generated files can be written into it."
+  gitlabAuthId="gitlab-auth"
+  prefilledUrl="{{ .outputs.create_repo.repo_url }}"
+  prefilledLocalPath="{{ .inputs.GitLabProjectName }}"
+/>
+
+## 7. Auto-derive the GCP project number
+
+This resolves the numeric project number (used by the Workload Identity Federation trust) from your
+project ID, so you don't have to look it up by hand.
+
+<Command
+  id="derive-gcp"
+  title="Resolve the GCP project number"
+  description="Runs `gcloud projects describe` to fetch the numeric project number for your GCPProjectID."
+  inputsId="config"
+  path="scripts/derive-gcp.sh"
+/>
+
+## 8. Generate the repository configuration
+
+Render the `gcp/gitlab/infrastructure-live` template into the cloned repository. This scaffolds the whole
+repo: `root.hcl`, `.gitignore`, `.mise.toml`, the `.gitlab-ci.yml` pipeline, `.gruntwork/repository.hcl`,
+`.gruntwork/environment-{{ .inputs.ProjectName }}.hcl`, `{{ .inputs.ProjectName }}/project.hcl`, and
+`{{ .inputs.ProjectName }}/bootstrap/terragrunt.stack.hcl`.
+
+Before generating, resolve the latest catalog release so the bootstrap pins the newest version
+automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
+
+<Command
+  id="resolve-catalog-ref"
+  title="Resolve the latest catalog release"
+  description="Runs `git ls-remote` to find the newest terragrunt-scale-catalog release tag, used as the catalog ref for the generate step unless you pinned one."
+  path="scripts/resolve-catalog-ref.sh"
+/>
+
+<Command
+  id="generate-bootstrap"
+  title="Render the infrastructure-live template"
+  description="Runs `boilerplate` non-interactively with your form values and the auto-derived project number."
+  inputsId="config"
+  path="scripts/generate-bootstrap.sh"
+/>
+
+Now install the Terragrunt and OpenTofu versions pinned for the repository:
+
+<Command
+  id="install-deps"
+  title="Install Tool Dependencies"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
+  inputsId="config"
+  path="scripts/install-deps.sh"
+/>
+
+## 9. Provision the GCP resources
+
+Plan first, review the output, then apply. Apply creates real resources (the Workload Identity Pool and
+provider, the plan/apply service accounts with their IAM bindings, and the GCS state bucket via
+`--backend-bootstrap`).
+
+<Command
+  id="bootstrap-plan"
+  title="Plan the bootstrap stack"
+  description="Runs `terragrunt run --all ... --backend-bootstrap plan` in the {{ .inputs.ProjectName }}/bootstrap directory."
+  inputsId="config"
+  path="scripts/bootstrap-plan.sh"
+  timeoutMs={1800000}
+/>
+
+<Command
+  id="bootstrap-apply"
+  title="Apply the bootstrap stack"
+  description="Runs `terragrunt run --all ... apply`. Creates the Workload Identity Pool/provider, plan/apply service accounts, and state bucket."
+  inputsId="config"
+  path="scripts/bootstrap-apply.sh"
+  timeoutMs={1800000}
+/>
+
+## 10. Push and open a merge request
+
+Commit the generated configuration on a feature branch, push it, and open a merge request against your
+deploy branch. Opening the MR does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
+
+<Command
+  id="open-mr"
+  title="Push and open the setup merge request"
+  description="Commits the generated files on a branch, pushes, and runs `glab mr create` against your deploy branch."
+  gitlabAuthId="gitlab-auth"
+  inputsId="config"
+  path="scripts/open-mr.sh"
+/>
+
+## 11. Post-flight checks
+
+<Check
+  id="verify-service-accounts"
+  title="Verify the service accounts exist"
+  description="Confirms the <prefix>-plan and <prefix>-apply service accounts were created in the project."
+  inputsId="config"
+  path="checks/verify-service-accounts.sh"
+/>
+
+<Check
+  id="verify-generated-files"
+  title="Verify generated files"
+  description="Confirms the .gitlab-ci.yml pipeline, root.hcl, environment HCL, and bootstrap stack files are present in the repo."
+  inputsId="config"
+  path="checks/verify-generated-files.sh"
+/>
+
+**You're done.** The setup merge request was committed with `[skip ci]`, so opening it does **not** kick off a Pipelines run — you applied this bootstrap locally on purpose, so Pipelines never runs against half-configured infrastructure. Once you **merge** it to `{{ .inputs.DeployBranch }}`, Gruntwork Pipelines is activated: from then on it runs `plan` on merge requests and `apply` on merges to `{{ .inputs.DeployBranch }}` for changes under `{{ .inputs.ProjectName }}/`. To add another project later, re-run this runbook
+against the same repository and choose a new `ProjectName`.

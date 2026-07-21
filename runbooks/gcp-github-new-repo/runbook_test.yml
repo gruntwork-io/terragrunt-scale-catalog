@@ -1,0 +1,59 @@
+version: 1
+
+# Template-validation tier test. The auth, repo-create, clone, derive, generate, provision, and PR
+# blocks all require live GitHub/GCP access, so they are skipped here; this test guards that the runbook
+# parses, the input schema is valid, and block IDs resolve. Run a full integration pass manually with
+# real credentials. See https://runbooks.gruntwork.io/authoring/testing/
+settings:
+  use_temp_working_dir: true
+  timeout: 5m
+  parallelizable: true
+
+tests:
+  - name: parse-and-inputs
+    description: Validates the runbook loads and accepts the documented inputs.
+    inputs:
+      repo.GitHubOrgName: "acme"
+      repo.GitHubRepoName: "infrastructure-live"
+      repo.Visibility: "private"
+      config.ProjectName: "prod"
+      config.GCPProjectID: "acme-prod-123456"
+      config.GCPRegion: "us-central1"
+      config.StateBucketName: "acme-prod-tofu-state"
+      config.OIDCResourcePrefix: "pipelines"
+      config.DeployBranch: "main"
+      config.IncludeDriftDetection: true
+      config.TerragruntScaleCatalogRef: "v1.13.1"
+    steps:
+      - block: check-prerequisites
+        expect: skip
+      - block: resolve-catalog-ref
+        expect: skip
+      - block: install-deps
+        expect: skip
+      - block: github-auth
+        expect: skip
+      - block: gcp-auth
+        expect: skip
+      - block: gcp-check
+        expect: skip
+      - block: create-repo
+        expect: skip
+      - block: clone
+        expect: skip
+      - block: derive-github-ids
+        expect: skip
+      - block: derive-gcp
+        expect: skip
+      - block: generate-bootstrap
+        expect: skip
+      - block: bootstrap-plan
+        expect: skip
+      - block: bootstrap-apply
+        expect: skip
+      - block: open-pr
+        expect: skip
+      - block: verify-service-accounts
+        expect: skip
+      - block: verify-config
+        expect: skip

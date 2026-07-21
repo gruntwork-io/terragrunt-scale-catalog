@@ -1,0 +1,61 @@
+version: 1
+
+# Template-validation tier test. The auth, repo-create, clone, derive, generate, provision, migrate,
+# and merge-request blocks all require live GitLab/Azure access, so they are skipped here; this test
+# guards that the runbook parses, the input schema is valid, and block IDs resolve. Run a full
+# integration pass manually with real credentials. See https://runbooks.gruntwork.io/authoring/testing/
+settings:
+  use_temp_working_dir: true
+  timeout: 5m
+  parallelizable: true
+
+tests:
+  - name: parse-and-inputs
+    description: Validates the runbook loads and accepts the documented inputs.
+    inputs:
+      config.GitLabGroupName: "acme"
+      config.GitLabProjectName: "infrastructure-live"
+      config.Visibility: "private"
+      config.SubscriptionName: "dev"
+      config.AzureLocation: "eastus"
+      config.StateResourceGroupName: "acme-dev-tofu-state-rg"
+      config.StateStorageAccountName: "acmedevtofustate01"
+      config.StateStorageContainerName: "tfstate"
+      config.OIDCResourcePrefix: "pipelines"
+      config.DeployBranch: "main"
+      config.Issuer: ""
+      config.TerragruntScaleCatalogRef: "v1.13.1"
+      config.IncludeDriftDetection: true
+    steps:
+      - block: check-prerequisites
+        expect: skip
+      - block: resolve-catalog-ref
+        expect: skip
+      - block: install-deps
+        expect: skip
+      - block: gitlab-auth
+        expect: skip
+      - block: create-repo
+        expect: skip
+      - block: clone
+        expect: skip
+      - block: azure-auth
+        expect: skip
+      - block: derive-azure
+        expect: skip
+      - block: generate-bootstrap
+        expect: skip
+      - block: bootstrap-plan
+        expect: skip
+      - block: bootstrap-apply
+        expect: skip
+      - block: capture-client-ids
+        expect: skip
+      - block: enable-remote-state
+        expect: skip
+      - block: open-merge-request
+        expect: skip
+      - block: verify-oidc-apps
+        expect: skip
+      - block: verify-config
+        expect: skip

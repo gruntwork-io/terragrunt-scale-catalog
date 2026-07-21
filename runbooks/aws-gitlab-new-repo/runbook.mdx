@@ -1,0 +1,323 @@
+# Bootstrap Gruntwork Pipelines — AWS + GitLab (new repository)
+
+This runbook creates a **new** `infrastructure-live` repository on **GitLab**, scaffolds it as a full
+[Gruntwork Pipelines](https://docs.gruntwork.io/2.0/docs/pipelines/concepts/overview) (Terragrunt Scale)
+repository, and bootstraps Pipelines against one **AWS** account.
+
+Because the repository starts empty, this runbook renders the entire repository layout for you — the root
+`root.hcl`, `.mise.toml`, `.gitignore`, `.gruntwork/repository.hcl`, the `.gitlab-ci.yml` Pipelines CI
+pipeline, and the first account's bootstrap stack.
+
+It then provisions, for that account, the OIDC trust that lets your GitLab CI/CD jobs authenticate to AWS
+with no long-lived credentials:
+
+- an IAM OpenID Connect provider for GitLab CI,
+- an IAM role for `terragrunt plan` (read-only, used on merge requests), and
+- an IAM role for `terragrunt apply` (used on merges to your deploy branch).
+
+Wherever a value can be discovered automatically, this runbook does it for you — your AWS account ID and
+partition come from your authenticated identity. GitLab has no numeric immutable-claim mechanism, so the
+OIDC trust is scoped by **group** and **project** name; you supply those (and the other non-derivable
+settings) in the form.
+
+<Admonition
+  type="warning"
+  title="This creates a repository and provisions real cloud resources"
+  description="This runbook creates a new GitLab project in your group, and the bootstrap step creates IAM roles, an OIDC provider, and an S3 state bucket in the AWS account you authenticate to. Run this only against a group and account you own and intend to manage with Pipelines."
+/>
+
+<Admonition
+  type="note"
+  title="Prerequisite: configure SCM access for Pipelines"
+  description="Gruntwork Pipelines needs access to your GitLab project to fetch your IaC code, reusable CI/CD code, and the Pipelines binary itself. Before you begin, set this up by configuring [machine users](https://docs.gruntwork.io/2.0/docs/pipelines/installation/viamachineusers) with Personal Access Tokens (PATs). This is separate from the GitLab sign-in this runbook uses to clone the project and open the merge request."
+/>
+
+## 1. Pre-flight checks
+
+Make sure the tools this runbook drives are installed.
+
+<Check
+  id="check-prerequisites"
+  title="Check required CLIs"
+  description="Verifies **git**, **mise**, the **AWS CLI**, and the **GitLab CLI** (`glab`) are installed and on your PATH."
+  path="checks/check-prerequisites.sh"
+/>
+
+<Admonition
+  type="note"
+  title="Restart after installing prerequisites"
+  description="If any tool above was missing and you installed it just now, restart this runbook (reopen it) so it picks up the newly installed tools on your PATH."
+/>
+
+## 2. Authenticate to GitLab
+
+<GitLabAuth
+  id="gitlab-auth"
+  title="GitLab authentication"
+  description="Used to create your repository, clone it, push the setup branch, and open the merge request. Establishes the session GITLAB_TOKEN that `glab` and `git` reuse."
+/>
+
+## 3. Authenticate to AWS
+
+Authenticate to the **AWS account you are bootstrapping**. Confirm the account shown is the one you
+intend to manage — the bootstrap step will create resources there.
+
+<AwsAuth
+  id="aws-auth"
+  title="AWS authentication"
+  description="Credentials for the account that will host the OIDC provider and the plan/apply IAM roles."
+/>
+
+## 4. Configure the bootstrap
+
+Fill in the values that cannot be derived automatically. Your GitLab group and project names cannot be
+reliably derived, so you provide those here; everything else that can be discovered is supplied for you
+from the steps above and below.
+
+<Inputs id="config" title="Bootstrap settings">
+```yaml
+variables:
+  - name: AccountName
+    type: string
+    description: A short name for this AWS account (e.g. "dev", "prod"). Becomes the top-level directory and the Pipelines environment name.
+    validations:
+      - required
+    x-section: Account
+
+  - name: AWSRegion
+    type: string
+    description: The AWS region used for provider configuration and API calls when managing global resources.
+    default: us-east-1
+    validations:
+      - required
+    x-section: Account
+
+  - name: GitLabGroupName
+    type: string
+    description: The GitLab group (or top-level namespace) that will own the new project. Only CI jobs in this group/project may assume the IAM roles.
+    validations:
+      - required
+    x-section: GitLab
+
+  - name: GitLabProjectName
+    type: string
+    description: Name for the new infrastructure-live project to create (the repository's path within the group).
+    default: infrastructure-live
+    validations:
+      - required
+    x-section: GitLab
+
+  - name: Visibility
+    type: enum
+    description: Visibility of the new GitLab project. "internal" is visible to any authenticated user on the instance; "private" is restricted to members.
+    options:
+      - private
+      - internal
+    default: private
+    validations:
+      - required
+    x-section: GitLab
+
+  - name: StateBucketName
+    type: string
+    description: Name of the S3 bucket for OpenTofu state. Must be globally unique and obey S3 naming rules.
+    validations:
+      - required
+    x-section: State
+
+  - name: OIDCResourcePrefix
+    type: string
+    description: Prefix for the OIDC IAM resources. Creates <prefix>-plan and <prefix>-apply roles.
+    default: pipelines
+    validations:
+      - required
+    x-section: OIDC
+
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+    x-section: OIDC
+
+  - name: Issuer
+    type: string
+    description: OIDC issuer URL override. Leave blank for gitlab.com; set this to your instance URL only for self-hosted GitLab (e.g. https://gitlab.example.com).
+    default: ""
+    x-section: Advanced
+
+  - name: TerragruntScaleCatalogRef
+    type: string
+    description: 'Optional: pin a specific Terragrunt Scale catalog ref (e.g. v1.13.1). Leave blank to use the latest release, resolved automatically before the generate step.'
+    default: ""
+    x-section: Advanced
+
+  - name: TerragruntVersion
+    type: string
+    description: Terragrunt version to pin in the repository's .mise.toml. Optional — leave as the default unless you need a specific version.
+    default: "1.0.0"
+    x-section: Advanced
+
+  - name: OpenTofuVersion
+    type: string
+    description: OpenTofu version to pin in the repository's .mise.toml. Optional.
+    default: "1.11.5"
+    x-section: Advanced
+```
+</Inputs>
+
+## 5. Create the GitLab project
+
+Create the new, empty `infrastructure-live` project in your group. The following steps fill it with the
+Pipelines scaffold.
+
+<Command
+  id="create-project"
+  title="Create the GitLab project"
+  description="Runs `glab repo create <group>/<project>` with the chosen visibility. Skips creation if the project already exists."
+  inputsId="config"
+  gitlabAuthId="gitlab-auth"
+  path="scripts/create-project.sh"
+/>
+
+Clone the project you just created so the scaffold can be rendered into its working tree.
+
+<GitClone
+  id="clone"
+  title="Clone the new repository"
+  description="Clones the empty project created above; its working tree is where the scaffold is rendered."
+  gitlabAuthId="gitlab-auth"
+  prefilledUrl="{{ .outputs.create_project.repo_url }}"
+  prefilledLocalPath="{{ .outputs.create_project.project_name }}"
+/>
+
+## 6. Auto-derive your AWS account identifiers
+
+This step discovers your AWS account ID and partition so you don't have to enter them by hand.
+
+<Command
+  id="derive-aws"
+  title="Resolve AWS account ID & partition"
+  description="Reads your confirmed AWS identity to derive the account ID and partition (aws / aws-us-gov / aws-cn)."
+  awsAuthId="aws-auth"
+  path="scripts/derive-aws.sh"
+/>
+
+## 7. Generate the repository scaffold
+
+Render the `aws/gitlab/infrastructure-live` template into the empty repository. This writes the full
+repository layout: `root.hcl`, `.mise.toml`, `.gitignore`, `.gruntwork/repository.hcl`, the
+`.gitlab-ci.yml` Pipelines CI pipeline, `.gruntwork/environment-<AccountName>.hcl`,
+`<AccountName>/account.hcl`, `<AccountName>/_global/region.hcl`, and the first account's bootstrap stack at
+`<AccountName>/_global/bootstrap/terragrunt.stack.hcl`.
+
+Before generating, resolve the latest catalog release so the bootstrap pins the newest version
+automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
+
+<Command
+  id="resolve-catalog-ref"
+  title="Resolve the latest catalog release"
+  description="Runs `git ls-remote` to find the newest terragrunt-scale-catalog release tag, used as the catalog ref for the generate step unless you pinned one."
+  path="scripts/resolve-catalog-ref.sh"
+/>
+
+<Command
+  id="generate-scaffold"
+  title="Render the infrastructure-live template"
+  description="Runs `boilerplate` non-interactively with your form values and the auto-derived AWS identifiers to scaffold the whole repository."
+  inputsId="config"
+  path="scripts/generate-scaffold.sh"
+/>
+
+Now install the Terragrunt and OpenTofu versions pinned for the repository:
+
+<Command
+  id="install-deps"
+  title="Install Tool Dependencies"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
+  inputsId="config"
+  path="scripts/install-deps.sh"
+/>
+
+## 8. Provision the AWS resources
+
+Plan first, review the output, then apply. Apply creates real resources (OIDC provider, IAM roles, and
+the S3 state bucket via `--backend-bootstrap`).
+
+<Command
+  id="bootstrap-plan"
+  title="Plan the bootstrap stack"
+  description="Runs `terragrunt run --all ... --backend-bootstrap plan` in the bootstrap directory."
+  inputsId="config"
+  awsAuthId="aws-auth"
+  path="scripts/bootstrap-plan.sh"
+  timeoutMs={1800000}
+/>
+
+<Command
+  id="bootstrap-apply"
+  title="Apply the bootstrap stack"
+  description="Runs `terragrunt run --all ... apply`. Creates the OIDC provider, plan/apply IAM roles, and state bucket."
+  inputsId="config"
+  awsAuthId="aws-auth"
+  path="scripts/bootstrap-apply.sh"
+  timeoutMs={1800000}
+/>
+
+## 9. Open a merge request
+
+Commit the generated scaffold, push a setup branch, and open a merge request against your new repository.
+Because the repository started empty, this seeds it with the Pipelines configuration; opening the merge
+request does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
+
+<Admonition
+  type="info"
+  title="Seeding an empty repository"
+  description="The new repository has no history yet. This step first seeds an empty deploy branch so the merge request has a target, then opens the merge request from the setup branch that carries the Pipelines scaffold. Once it merges, Pipelines runs apply for changes under your account directory."
+/>
+
+<Command
+  id="merge-request"
+  title="Open the setup merge request"
+  description="Seeds the deploy branch, creates a setup branch, commits the generated files, pushes, and opens a merge request via `glab`."
+  inputsId="config"
+  gitlabAuthId="gitlab-auth"
+  path="scripts/open-merge-request.sh"
+/>
+
+<Admonition
+  type="note"
+  title="If glab isn't available"
+  description="The script pushes the setup branch either way. If `glab` cannot open the merge request automatically, just open one in the GitLab UI from the pushed branch — pushing the branch is all that's required to trigger the Pipelines plan."
+/>
+
+## 10. Post-flight checks
+
+<Check
+  id="verify-gitlab-ci"
+  title="Verify the GitLab CI pipeline was generated"
+  description="Confirms the `.gitlab-ci.yml` Pipelines pipeline was rendered by the infrastructure-live template."
+  inputsId="config"
+  path="checks/verify-gitlab-ci.sh"
+/>
+
+<Check
+  id="verify-oidc-roles"
+  title="Verify the IAM roles exist"
+  description="Confirms the <prefix>-plan and <prefix>-apply IAM roles were created in the account."
+  inputsId="config"
+  awsAuthId="aws-auth"
+  path="checks/verify-oidc-roles.sh"
+/>
+
+<Check
+  id="verify-config"
+  title="Verify generated files"
+  description="Confirms the root config, environment HCL, and bootstrap stack files are present in the repo."
+  inputsId="config"
+  path="checks/verify-config.sh"
+/>
+
+**You're done.** The setup merge request was committed with `[skip ci]`, so opening it does **not** kick off a Pipelines run — you applied this bootstrap locally on purpose, so Pipelines never runs against half-configured infrastructure. Once you **merge** it to `{{ .inputs.DeployBranch }}`, Gruntwork Pipelines is activated: from then on it runs `plan` on merge requests and `apply` on merges to `{{ .inputs.DeployBranch }}` for changes under `{{ .inputs.AccountName }}/`. To add another account later, use the
+add-account runbook and choose a new `AccountName`.
