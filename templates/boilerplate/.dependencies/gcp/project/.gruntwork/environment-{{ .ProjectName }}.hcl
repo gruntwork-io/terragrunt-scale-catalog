@@ -14,8 +14,8 @@ environment "{{ .ProjectName }}" {
     // Both Service Accounts are created by the bootstrap stack in bootstrap/.
     gcp_oidc {
 		  workload_identity_provider_id = "projects/{{ .GCPProjectNumber }}/locations/global/workloadIdentityPools/{{ .OIDCResourcePrefix }}-pool/providers/{{ .OIDCResourcePrefix }}-provider"
-		  plan_service_account_email    = "{{ .OIDCResourcePrefix }}-plan@{{ .ProjectName }}.iam.gserviceaccount.com"
-		  apply_service_account_email   = "{{ .OIDCResourcePrefix }}-apply@{{ .ProjectName }}.iam.gserviceaccount.com"
+		  plan_service_account_email    = "{{ .OIDCResourcePrefix }}-plan@{{ .GCPProjectID }}.iam.gserviceaccount.com"
+		  apply_service_account_email   = "{{ .OIDCResourcePrefix }}-apply@{{ .GCPProjectID }}.iam.gserviceaccount.com"
 	  }
   }
 }
