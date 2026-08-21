@@ -12,10 +12,15 @@ environment "{{ .ProjectName }}" {
     // Pipelines authenticates via GCP Federated Workload Identity Provider (OIDC). No static credentials are needed.
     // plan service account: read-only, used on MRs. apply service account: write, used on merge to deploy branch.
     // Both Service Accounts are created by the bootstrap stack in bootstrap/.
+    //
+    // These three values are single references, never compositions. Each identity string is derived
+    // once in this template's boilerplate.yml so that this file cannot drift from what the bootstrap
+    // stack actually creates. Do not rebuild them from OIDCResourcePrefix, ProjectName or the pool
+    // IDs here -- that is exactly how both previous drift bugs were introduced.
     gcp_oidc {
-		  workload_identity_provider_id = "projects/{{ .GCPProjectNumber }}/locations/global/workloadIdentityPools/{{ .OIDCResourcePrefix }}-pool/providers/{{ .OIDCResourcePrefix }}-provider"
-		  plan_service_account_email    = "{{ .OIDCResourcePrefix }}-plan@{{ .GCPProjectID }}.iam.gserviceaccount.com"
-		  apply_service_account_email   = "{{ .OIDCResourcePrefix }}-apply@{{ .GCPProjectID }}.iam.gserviceaccount.com"
-	  }
+      workload_identity_provider_id = "{{ .WorkloadIdentityProviderResourceID }}"
+      plan_service_account_email    = "{{ .PlanServiceAccountEmail }}"
+      apply_service_account_email   = "{{ .ApplyServiceAccountEmail }}"
+    }
   }
 }
