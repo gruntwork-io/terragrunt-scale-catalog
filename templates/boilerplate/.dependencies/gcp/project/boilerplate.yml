@@ -29,3 +29,58 @@ variables:
     description: The prefix for the OIDC resources you using to bootstrap Pipelines.
     default: "pipelines"
     order: 6
+
+  # Must be declared here as well as on the parent, or this template cannot see them and the
+  # derived values below silently fall back to the prefix.
+  - name: WorkloadIdentityPoolID
+    type: string
+    description: The ID of the Workload Identity Pool. Leave blank to derive it from OIDCResourcePrefix.
+    default: ""
+    order: 7
+
+  - name: WorkloadIdentityPoolProviderID
+    type: string
+    description: The ID of the Workload Identity Pool Provider. Leave blank to derive it from OIDCResourcePrefix.
+    default: ""
+    order: 8
+
+  - name: EffectiveWorkloadIdentityPoolID
+    type: string
+    description: >-
+      The Workload Identity Pool ID Pipelines authenticates against. Defaults to
+      WorkloadIdentityPoolID, or to "<OIDCResourcePrefix>-pool" when that is unset.
+    default: "{{ if .WorkloadIdentityPoolID }}{{ .WorkloadIdentityPoolID }}{{ else }}{{ .OIDCResourcePrefix }}-pool{{ end }}"
+    order: 9
+
+  - name: EffectiveWorkloadIdentityPoolProviderID
+    type: string
+    description: >-
+      The Workload Identity Pool Provider ID Pipelines authenticates against. Defaults to
+      WorkloadIdentityPoolProviderID, or to "<OIDCResourcePrefix>-provider" when that is unset.
+    default: "{{ if .WorkloadIdentityPoolProviderID }}{{ .WorkloadIdentityPoolProviderID }}{{ else }}{{ .OIDCResourcePrefix }}-provider{{ end }}"
+    order: 10
+
+  - name: WorkloadIdentityProviderResourceID
+    type: string
+    description: >-
+      Full resource path of the Workload Identity Provider that Pipelines authenticates against.
+      Defaults to the provider the bootstrap stack creates; set it to authenticate against an
+      existing provider instead.
+    default: "projects/{{ .GCPProjectNumber }}/locations/global/workloadIdentityPools/{{ .EffectiveWorkloadIdentityPoolID }}/providers/{{ .EffectiveWorkloadIdentityPoolProviderID }}"
+    order: 11
+
+  - name: PlanServiceAccountEmail
+    type: string
+    description: >-
+      Email of the service account Pipelines uses for plans. Defaults to the account the bootstrap
+      stack creates; set it to use an existing service account instead.
+    default: "{{ .OIDCResourcePrefix }}-plan@{{ .GCPProjectID }}.iam.gserviceaccount.com"
+    order: 12
+
+  - name: ApplyServiceAccountEmail
+    type: string
+    description: >-
+      Email of the service account Pipelines uses for applies. Defaults to the account the bootstrap
+      stack creates; set it to use an existing service account instead.
+    default: "{{ .OIDCResourcePrefix }}-apply@{{ .GCPProjectID }}.iam.gserviceaccount.com"
+    order: 13

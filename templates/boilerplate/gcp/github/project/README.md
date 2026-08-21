@@ -26,14 +26,14 @@ boilerplate \
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
 | `ProjectName` | yes | | Human-readable name of the GCP project being bootstrapped; used as a folder name. |
-| `GCPProjectID` | yes | | GCP project ID (string identifier) of the project being bootstrapped. |
+| `GCPProjectID` | yes | | GCP project ID (string identifier) of the project being bootstrapped. Not interchangeable with `ProjectName`: the service accounts live in the project ID, not the folder name. |
 | `GCPProjectNumber` | yes | | GCP project number (numeric ID) of the project being bootstrapped. |
 | `GitHubOrgName` | yes | | GitHub organization that owns the repository. |
 | `GitHubRepoName` | yes | | Repository name; only workflows in this repo may authenticate. |
 | `GCPRegion` | yes | | GCP region used to configure the Google provider and GCS state backend. |
 | `StateBucketName` | yes | | Name of the GCS bucket used for storing OpenTofu state. Must be globally unique. Also used to grant the plan service account `roles/storage.objectUser` scoped to this bucket for state locking. |
 | `DeployBranch` | no | `main` | Branch granted the apply service account binding. |
-| `TerragruntScaleCatalogRef` | no | `v1.13.1` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.13.2` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix applied to Workload Identity Pool and service account resources. |
 | `Issuer` | no | computed | Override for the OIDC issuer URL; defaults to `https://token.actions.githubusercontent.com`. |
 | `WorkloadIdentityPoolID` | no | computed | ID of the Workload Identity Pool; computed from `OIDCResourcePrefix` if not specified. |

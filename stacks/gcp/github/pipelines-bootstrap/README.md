@@ -49,7 +49,7 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | Name | Description | Default |
 |------|-------------|---------|
 | `terragrunt_scale_catalog_url` | URL of this catalog | `github.com/gruntwork-io/terragrunt-scale-catalog` |
-| `terragrunt_scale_catalog_ref` | Git ref to use | `v1.13.1` |
+| `terragrunt_scale_catalog_ref` | Git ref to use | `v1.13.2` |
 | `oidc_resource_prefix` | Prefix for resources | `pipelines` |
 | `github_token_actions_domain` | GitHub Actions token domain | `token.actions.githubusercontent.com` |
 | `github_org_id` | Numeric GitHub organization/user ID. Required for all repos created on or after 2026-07-15 (see [Immutable Subject Claims](#immutable-subject-claims) below); leave blank for existing repos that haven't opted in. Must be set together with `github_repo_id`. | `1234567` |

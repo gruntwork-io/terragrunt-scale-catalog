@@ -25,53 +25,51 @@ stack "bootstrap" {
     // Only Actions workflows in this org/repo can assume the IAM roles.
     github_org_name  = "{{ .GitHubOrgName }}"
     github_repo_name = "{{ .GitHubRepoName }}"
-
     {{- if and .GitHubOrgID .GitHubRepoID }}
+
     // Numeric GitHub org/repo IDs: switches the sub claim to GitHub's immutable subject-claim format.
     github_org_id  = "{{ .GitHubOrgID }}"
     github_repo_id = "{{ .GitHubRepoID }}"
     {{- end }}
-
     {{- if .DeployBranch }}
+
     deploy_branch = "{{ .DeployBranch }}"
     {{- end }}
-
     {{- if .Issuer }}
+
     issuer = "{{ .Issuer }}"
     {{- end }}
-
     {{- if .AdditionalAudiences }}
-    additional_audiences = {{ toJson .AdditionalAudiences }}
-    {{- end }}
 
+    additional_audiences = [{{ range $i, $aud := .AdditionalAudiences }}{{ if $i }}, {{ end }}{{ toJson $aud }}{{ end }}]
+    {{- end }}
     {{- if .ExcludeOIDCProvider }}
+
     exclude_oidc_provider = true
     {{- end }}
 
     state_bucket_name = local.account_hcl.locals.state_bucket_name
-
     {{- if .OIDCProviderTags }}
-    oidc_provider_tags = {{ toJson .OIDCProviderTags }}
-    {{- end }}
 
+    oidc_provider_tags = { {{ $first := true }}{{ range $k, $v := .OIDCProviderTags }}{{ if not $first }}, {{ end }}{{ $first = false }}{{ toJson $k }} : {{ toJson $v }}{{ end }} }
+    {{- end }}
     {{- if .ApplyConditionOperator }}
+
     // Override the apply role's OIDC condition operator (default "StringEquals"). Use "StringLike"
     // together with a wildcard SubApplyValue to trust many repos under a prefix.
     apply_condition_operator = "{{ .ApplyConditionOperator }}"
     {{- end }}
-
     {{- if .SubApplyValue }}
+
     // Override the apply role's OIDC `sub` claim (e.g. a wildcard for multi-repo trust).
     sub_apply_value = "{{ .SubApplyValue }}"
     {{- end }}
-
     {{- if .SubPlanValue }}
+
     // Override the plan role's OIDC `sub` claim (plan is already StringLike; e.g. a wildcard for
     // multi-repo trust).
     sub_plan_value = "{{ .SubPlanValue }}"
     {{- end }}
-
-
 
     // =========================================================================
     // Import Variables
@@ -81,6 +79,7 @@ stack "bootstrap" {
     // have been successfully imported, it is safe to remove this entire section.
     // =========================================================================
     {{- if .OIDCProviderImportExisting }}
+
     oidc_provider_import_arn = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:oidc-provider/
       {{- if .Issuer -}}
         {{ trimPrefix .Issuer "https://" }}
@@ -89,30 +88,31 @@ stack "bootstrap" {
       {{- end -}}
     "
     {{- end }}
-
     {{- if .PlanIAMRoleImportExisting }}
+
     plan_iam_role_import_existing = true
     {{- end }}
-
     {{- if .PlanIamPolicyImportExisting }}
+
     plan_iam_policy_import_arn = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-plan"
     {{- end }}
-
     {{- if .PlanIAMRolePolicyAttachmentImportExisting }}
+
     plan_iam_role_policy_attachment_import_arn = "{{ .OIDCResourcePrefix }}-plan/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-plan"
     {{- end }}
-
     {{- if .ApplyIAMRoleImportExisting }}
+
     apply_iam_role_import_existing = true
     {{- end }}
-
     {{- if .ApplyIamPolicyImportExisting }}
+
     apply_iam_policy_import_arn = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
     {{- end }}
-
     {{- if .ApplyIAMRolePolicyAttachmentImportExisting }}
+
     apply_iam_role_policy_attachment_import_arn = "{{ .OIDCResourcePrefix }}-apply/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
     {{- end }}
+
     // =========================================================================
     // End Import Variables
     // =========================================================================
