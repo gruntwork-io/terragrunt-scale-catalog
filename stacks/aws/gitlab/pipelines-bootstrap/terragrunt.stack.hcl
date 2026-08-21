@@ -1,7 +1,7 @@
 locals {
   // Source resolution
   terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
-  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.13.1")
+  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.13.2")
 
   // AWS account values
   aws_account_id = values.aws_account_id
