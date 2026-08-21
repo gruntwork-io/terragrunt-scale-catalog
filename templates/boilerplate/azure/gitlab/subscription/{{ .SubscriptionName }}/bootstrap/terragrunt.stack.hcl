@@ -19,12 +19,12 @@ stack "bootstrap" {
     // Only CI pipelines in this GitLab group/project can authenticate via the App Registrations.
     gitlab_group_name   = "{{ .GitLabGroupName }}"
     gitlab_project_name = "{{ .GitLabProjectName }}"
-
     {{- if .DeployBranch }}
+
     deploy_branch = "{{ .DeployBranch }}"
     {{- end }}
-
     {{- if .Issuer }}
+
     issuer = "{{ .Issuer }}"
     {{- end }}
 
