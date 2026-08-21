@@ -44,17 +44,6 @@ variables:
     default: ""
     order: 8
 
-  # Derived identity values. Each composition lives here once, and the files in this template
-  # reference these rather than rebuilding the string from parts -- that is what keeps the rendered
-  # environment file from drifting from what the bootstrap stack creates.
-  #
-  # Every one of them can be overridden when the real resource does not follow the default naming:
-  # an adopted project whose service accounts predate this template, or a Workload Identity provider
-  # that this stack does not create. Overriding is the supported way to express that.
-  #
-  # The defaulting mirrors the bootstrap stack's try(values.x, "<prefix>-pool"): a second copy of
-  # the default, but not of the composition. Removing it would need this file to read stack outputs,
-  # which is impossible since Pipelines parses .gruntwork/*.hcl before OpenTofu runs.
   - name: EffectiveWorkloadIdentityPoolID
     type: string
     description: >-
