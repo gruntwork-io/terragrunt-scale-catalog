@@ -26,7 +26,8 @@ boilerplate \
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
 | `ProjectName` | yes | | Human-readable name of the GCP project being bootstrapped; used as a folder name. |
-| `GCPProjectID` | yes | | GCP project ID (string identifier) of the project being bootstrapped. |
+| `ProjectIDPrefix` | no | | Prefix used to derive `GCPProjectID` as `<prefix>-<ProjectName>`. GCP project IDs are globally unique rather than per-organization, so most real projects carry one. Ignored if `GCPProjectID` is set explicitly. The derived ID must satisfy GCP's 6-30 character limit. |
+| `GCPProjectID` | no | `<ProjectIDPrefix>-<ProjectName>`, or `<ProjectName>` when no prefix is set | GCP project ID (string identifier) of the project being bootstrapped. Not interchangeable with `ProjectName`: the service accounts live in the project ID, not the folder name. |
 | `GCPProjectNumber` | yes | | GCP project number (numeric ID) of the project being bootstrapped. |
 | `GitLabGroupName` | yes | | GitLab group or namespace that owns the repository. |
 | `GitLabProjectName` | yes | | GitLab project name; only pipelines in this project may authenticate. |
