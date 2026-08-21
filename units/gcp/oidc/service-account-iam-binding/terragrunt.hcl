@@ -25,19 +25,11 @@ dependency "service_account" {
     name = "projects/mock-project/serviceAccounts/mock-sa@mock-project.iam.gserviceaccount.com"
   }
 
-  // Mocks are deliberately allowed for every command (no mock_outputs_allowed_terraform_commands):
-  // `run --all apply` reaches this unit while its service_account dependency has not been applied
-  // yet, so restricting mocks to non-apply commands makes a fresh stack unparseable at apply time.
-  //
-  // "shallow" is needed on top of that because a google_service_account apply that dies mid-flight
-  // persists a partial output set: `email` and `member` are known at plan time and get written,
-  // while `id`, `name` and `unique_id` stay "(known after apply)" and never resolve. State then
-  // exists but has no `name`, and Terragrunt's default strategy (no_merge) drops mock_outputs
-  // entirely as soon as a dependency yields any output at all — so `outputs.name` below fails to
-  // parse with "This object does not have an attribute named name", taking the whole `run --all`
-  // down at init rather than at apply. "shallow" merges the mocks under the real outputs: real
-  // values always win, mocks only fill keys a torn apply left behind, and the next apply replaces
-  // them with the truth.
+  // A torn google_service_account apply persists `email` and `member` but not `name`, and the
+  // default no_merge strategy drops mock_outputs entirely once a dependency yields any output —
+  // so `outputs.name` below would fail to parse, taking `run --all` down at init. "shallow" lets
+  // real values win and mocks fill only the missing keys. Mocks stay allowed for every command:
+  // `run --all apply` reaches this unit before service_account has been applied.
   mock_outputs_merge_strategy_with_state = "shallow"
 }
 

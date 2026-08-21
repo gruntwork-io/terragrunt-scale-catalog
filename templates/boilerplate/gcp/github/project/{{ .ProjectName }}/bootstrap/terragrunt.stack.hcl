@@ -7,12 +7,9 @@ locals {
 stack "bootstrap" {
   source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/gcp/github/pipelines-bootstrap?ref={{ .TerragruntScaleCatalogRef }}"
   path   = "bootstrap"
-
-  // Every optional key below opens its conditional body with a blank line, so that whichever subset
-  // renders, each key lands in its own blank-line-separated group. `hcl fmt` aligns `=` per group,
-  // so a lone key in its own group is always aligned and the output is fmt-clean for any subset.
-  // Lists are emitted element-by-element rather than with `toJson`, because `toJson` renders
-  // ["a","b"] while `hcl fmt` wants ["a", "b"].
+{{/* Template note, not rendered: each optional key opens its conditional body with a blank line so
+     it lands in its own group -- hcl fmt aligns = per group, so a lone key is always aligned. Lists
+     are emitted element-by-element because toJson renders ["a","b"] where fmt wants ["a", "b"]. */}}
   values = {
     terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
 

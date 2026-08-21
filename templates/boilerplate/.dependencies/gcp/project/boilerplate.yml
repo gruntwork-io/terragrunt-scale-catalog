@@ -30,10 +30,8 @@ variables:
     default: "pipelines"
     order: 6
 
-  # These mirror the variables of the same name on the parent template. They must be declared here
-  # too, otherwise this template cannot see them and the derived values below silently fall back to
-  # the prefix -- which is how the environment file came to point at a Workload Identity provider
-  # the bootstrap stack had not created.
+  # Must be declared here as well as on the parent, or this template cannot see them and the
+  # derived values below silently fall back to the prefix.
   - name: WorkloadIdentityPoolID
     type: string
     description: The ID of the Workload Identity Pool. Leave blank to derive it from OIDCResourcePrefix.
@@ -46,23 +44,11 @@ variables:
     default: ""
     order: 8
 
-  # ---------------------------------------------------------------------------
-  # Derived identity values -- do not set these directly.
-  #
-  # Every file in this template that needs one of these identity strings must
-  # REFERENCE the variable rather than re-compose the string from its parts. The
-  # composition lives here, once. Re-composing in a consuming file is how both
-  # known drift bugs happened: the service-account emails were built from
-  # ProjectName instead of GCPProjectID, and the provider path was built from
-  # OIDCResourcePrefix while the stack honoured WorkloadIdentityPool*ID.
-  #
-  # The defaulting below intentionally mirrors the bootstrap stack's
-  # try(values.x, "<prefix>-pool") behaviour. That is still a second copy of the
-  # DEFAULT, though no longer of the COMPOSITION. Removing it entirely would
-  # require this file to read the stack's outputs, which is not possible:
-  # Pipelines parses .gruntwork/*.hcl before any OpenTofu runs, so no dependency
-  # lookup is available here.
-  # ---------------------------------------------------------------------------
+  # Derived identity values -- do not set directly. Each composition lives here once; consuming
+  # files reference these rather than rebuilding the string from parts. The defaulting mirrors the
+  # bootstrap stack's try(values.x, "<prefix>-pool"): a second copy of the default, but not of the
+  # composition. Removing it would need this file to read stack outputs, which is impossible since
+  # Pipelines parses .gruntwork/*.hcl before OpenTofu runs.
   - name: EffectiveWorkloadIdentityPoolID
     type: string
     description: Derived. The Workload Identity Pool ID the bootstrap stack actually creates. Do not set directly.
