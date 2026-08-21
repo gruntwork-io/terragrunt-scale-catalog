@@ -13,156 +13,143 @@ variables:
     description: The name of the GCP project you are bootstrapping Pipelines in.
     order: 1
 
-  - name: ProjectIDPrefix
-    type: string
-    description: >-
-      Optional prefix used to derive GCPProjectID as "<prefix>-<ProjectName>". GCP project IDs are
-      globally unique rather than per-organization, so bare names are usually taken and most real
-      projects carry a prefix. Set this and leave GCPProjectID blank to derive it; set GCPProjectID
-      explicitly to override, in which case this prefix is ignored. Note the derived ID must satisfy
-      GCP's 6-30 character limit.
-    default: ""
-    order: 2
-
   - name: GCPProjectID
     type: string
     description: >-
-      The GCP project ID you are bootstrapping Pipelines in. Defaults to ProjectIDPrefix joined to
-      ProjectName, or to ProjectName alone when no prefix is set. This is NOT interchangeable with
-      ProjectName: the service accounts live in the project ID, not the folder name.
-    default: "{{ if .ProjectIDPrefix }}{{ .ProjectIDPrefix }}-{{ .ProjectName }}{{ else }}{{ .ProjectName }}{{ end }}"
-    order: 3
+      The GCP project ID you are bootstrapping Pipelines in. NOT interchangeable with ProjectName:
+      the service accounts live in the project ID, not the folder name.
+    order: 2
 
   - name: GCPProjectNumber
     type: string
     description: The GCP project number (numeric ID) for the project you are bootstrapping Pipelines in.
-    order: 4
+    order: 3
 
   - name: GitLabGroupName
     type: string
     description: The name of the GitLab group you are bootstrapping Pipelines in.
-    order: 5
+    order: 4
 
   - name: GitLabProjectName
     type: string
     description: The name of the GitLab project you are bootstrapping Pipelines in.
-    order: 6
+    order: 5
 
   - name: TerragruntScaleCatalogRef
     type: string
     description: The Git reference of the Terragrunt catalog to use.
     default: "v1.13.2"
-    order: 7
+    order: 6
 
   - name: OIDCResourcePrefix
     type: string
     description: The prefix for the OIDC resources you using to bootstrap Pipelines.
     default: "pipelines"
-    order: 8
+    order: 7
 
   - name: GitLabServerDomain
     type: string
     description: The domain of your GitLab server. Set this for self-hosted GitLab instances; leave empty to use gitlab.com.
     default: ""
-    order: 9
+    order: 8
 
   - name: Issuer
     type: string
     description: The issuer URL for the OIDC provider (is computed dynamically from GitLabServerDomain if not specified).
     default: ""
-    order: 10
+    order: 9
 
   - name: DeployBranch
     type: string
     description: The branch that is allowed to run apply operations.
     default: "main"
-    order: 11
+    order: 10
 
   - name: WorkloadIdentityPoolID
     type: string
     description: The ID of the Workload Identity Pool (computed from prefix if not specified).
     default: ""
-    order: 12
+    order: 11
 
   - name: WorkloadIdentityPoolProviderID
     type: string
     description: The ID of the Workload Identity Pool Provider (computed from prefix if not specified).
     default: ""
-    order: 13
+    order: 12
 
   - name: StateBucketName
     type: string
     description: The name of the GCS bucket used for Terraform state. When provided, the plan service account gets bucket-scoped object permissions for state locking instead of project-wide object access.
-    order: 14
+    order: 13
 
   - name: PlanRoles
     type: list
     description: The IAM roles to grant to the plan service account.
     default: []
-    order: 15
+    order: 14
 
   - name: ApplyRoles
     type: list
     description: The IAM roles to grant to the apply service account.
     default: []
-    order: 16
+    order: 15
 
   - name: WorkloadIdentityPoolImportExisting
     type: bool
     description: Whether to import an existing Workload Identity Pool.
     default: false
-    order: 17
+    order: 16
 
   - name: WorkloadIdentityPoolProviderImportExisting
     type: bool
     description: Whether to import an existing Workload Identity Pool Provider.
     default: false
-    order: 18
+    order: 17
 
   - name: PlanServiceAccountImportExisting
     type: bool
     description: Whether to import an existing plan service account.
     default: false
-    order: 19
+    order: 18
 
   - name: PlanWorkloadIdentityBindingImportExisting
     type: bool
     description: Whether to import an existing plan service account Workload Identity IAM binding.
     default: false
-    order: 20
+    order: 19
 
   - name: PlanStateBucketCustomRoleImportExisting
     type: bool
     description: Whether to import an existing plan state bucket custom IAM role.
     default: false
-    order: 21
+    order: 20
 
   - name: ApplyServiceAccountImportExisting
     type: bool
     description: Whether to import an existing apply service account.
     default: false
-    order: 22
+    order: 21
 
   - name: ApplyWorkloadIdentityBindingImportExisting
     type: bool
     description: Whether to import an existing apply service account Workload Identity IAM binding.
     default: false
-    order: 23
+    order: 22
 
   - name: PlanProjectIAMBindingsImportExisting
     type: bool
     description: Whether to import existing plan service account project IAM role bindings.
     default: false
-    order: 24
+    order: 23
 
   - name: ApplyProjectIAMBindingsImportExisting
     type: bool
     description: Whether to import existing apply service account project IAM role bindings.
     default: false
-    order: 25
+    order: 24
 
   - name: PlanStateBucketIAMBindingImportExisting
     type: bool
     description: Whether to import an existing plan service account state bucket IAM binding.
     default: false
-    order: 26
+    order: 25
