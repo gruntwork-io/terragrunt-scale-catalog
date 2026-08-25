@@ -20,7 +20,7 @@ tests:
       config.GitLabGroupName: "acme"
       config.GitLabProjectName: "infrastructure-live"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.GitLabServerDomain: ""
       config.TerragruntScaleCatalogRef: "v1.13.1"
     steps:

@@ -37,7 +37,7 @@ Make sure the tools this runbook drives are installed.
 <Check
   id="check-prerequisites"
   title="Check required CLIs"
-  description="Verifies **git**, **mise**, the **Azure CLI** (`az`), and the **GitLab CLI** (`glab`) are installed and on your PATH."
+  description="Verifies **git**, **mise**, **jq**, and the **Azure CLI** (`az`) are installed and on your PATH."
   path="checks/check-prerequisites.sh"
 />
 
@@ -52,7 +52,7 @@ Make sure the tools this runbook drives are installed.
 <GitLabAuth
   id="gitlab-auth"
   title="GitLab authentication"
-  description="Used to clone your repository, push the setup branch, and open the merge request with `glab`."
+  description="Used to clone your repository, push the setup branch, and open the merge request."
 />
 
 ## 3. Authenticate to Azure
@@ -68,16 +68,40 @@ run `az account set --subscription <id>` and run this step again.
   path="scripts/azure-login.sh"
 />
 
-## 4. Clone your infrastructure-live repository
+## 4. Select your infrastructure-live repository
 
-Clone the existing repository you want to add Pipelines to.
+Choose the existing repository you want to add Pipelines to — an existing local checkout, or a fresh clone.
+
+Pipelines deploys from a single branch. Name it now — the repository is selected on that branch, and
+the setup merge request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
 
 <GitClone
   id="clone"
-  title="Clone the repository"
-  description="Browse to your existing infrastructure-live repository and clone it."
-  gitlabAuthId="gitlab-auth"
+  inputsId="deploy"
+  title="Select or clone the repository"
+  description="Point this at your existing infrastructure-live repository. If you already have it checked out locally, choose **Use local checkout** and select that directory; otherwise switch to the clone source and browse to it."
+  gitAuthId="gitlab-auth"
   prefilledLocalPath="infrastructure-live"
+  prefilledRef="{{ .inputs.DeployBranch }}"
+  source="local"
+/>
+
+<Admonition
+  type="note"
+  title="Local checkouts: be on your deploy branch"
+  description="If you chose **Use local checkout**, make sure that checkout is on your deploy branch before continuing. The setup request opens against the branch the checkout is on; a fresh clone is put on the deploy branch for you."
 />
 
 Confirm the repository already has a `root.hcl` at its root (the subscription template does not create
@@ -168,14 +192,6 @@ variables:
       - required
     x-section: OIDC
 
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
-    validations:
-      - required
-    x-section: OIDC
-
   - name: TerragruntScaleCatalogRef
     type: string
     description: 'Optional: pin a specific Terragrunt Scale catalog ref (e.g. v1.13.1). Leave blank to use the latest release, resolved automatically before the generate step.'
@@ -216,7 +232,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-bootstrap"
   title="Render the subscription template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived tenant/subscription IDs."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-bootstrap.sh"
 />
 
@@ -225,8 +241,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -242,7 +258,7 @@ succeeds.
 
 <TemplateInline
   id="root-hcl-preview"
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   generateFile={false}
 >
 ```hcl
@@ -291,7 +307,7 @@ EOF
   id="ensure-root-hcl"
   title="Ensure root.hcl configures the Azure backend"
   description="If root.hcl is missing the azurerm backend or the azuread provider, appends the canonical blocks above (backend left commented). No-op when they are already present."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/ensure-root-hcl.sh"
 />
 
@@ -308,7 +324,7 @@ An existing repository needs the Pipelines CI configuration added explicitly. Th
 
 <TemplateInline
   id="gitlab-ci"
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   generateFile={true}
   target="worktree"
   outputPath=".gitlab-ci.yml"
@@ -330,7 +346,7 @@ backend, and migrates state into the newly created storage account.
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Generates the stack and runs `terragrunt run --all ... plan` in the bootstrap directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
 />
@@ -339,7 +355,7 @@ backend, and migrates state into the newly created storage account.
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... --no-stack-generate apply`. Creates the Entra ID apps, role assignments, and the state storage account (state stays local for now)."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
 />
@@ -348,7 +364,7 @@ backend, and migrates state into the newly created storage account.
   id="capture-client-ids"
   title="Capture the plan/apply client IDs"
   description="Reads the client IDs from the applied bootstrap outputs and writes them into .gruntwork/environment-<SubscriptionName>.hcl, replacing the FIXME placeholders."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/capture-client-ids.sh"
   timeoutMs={600000}
 />
@@ -357,7 +373,7 @@ backend, and migrates state into the newly created storage account.
   id="enable-remote-state"
   title="Enable the Azure remote-state backend"
   description="Uncomments the azurerm remote_state block in root.hcl now that the state storage account exists."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/enable-remote-state.sh"
 />
 
@@ -365,7 +381,7 @@ backend, and migrates state into the newly created storage account.
   id="migrate-state"
   title="Migrate state into Azure Blob Storage"
   description="Runs `terragrunt run --all ... -- init -migrate-state -force-copy` to move the local bootstrap state into the storage account."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/migrate-state.sh"
   timeoutMs={1800000}
 />
@@ -375,13 +391,16 @@ backend, and migrates state into the newly created storage account.
 Commit the generated configuration and open a merge request against your repository. Opening the MR
 does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
 
-<Command
+<GitLabMergeRequest
   id="merge-request"
   title="Open the setup merge request"
-  description="Commits the changes, pushes the branch, and opens a merge request with `glab mr create`."
-  inputsId="config"
-  gitlabAuthId="gitlab-auth"
-  path="scripts/open-merge-request.sh"
+  description="Creates the setup branch, commits the generated files, pushes, and opens the merge request against your deploy branch."
+  gitAuthId="gitlab-auth"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.SubscriptionName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 12. Post-flight checks
@@ -390,7 +409,7 @@ does not start a Pipelines run — the commit is tagged `[skip ci]`, and you hav
   id="verify-oidc-apps"
   title="Verify the Entra ID applications exist"
   description="Confirms the plan and apply applications captured above exist in your Entra ID directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-oidc-apps.sh"
 />
 
@@ -398,7 +417,7 @@ does not start a Pipelines run — the commit is tagged `[skip ci]`, and you hav
   id="verify-config"
   title="Verify generated files"
   description="Confirms the CI config, environment HCL (with non-empty client IDs), and bootstrap stack files are present in the repo."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 

@@ -43,7 +43,7 @@ if [ -n "$ISSUER" ]; then
 fi
 
 log_info "Rendering aws/gitlab/account template (ref ${CATALOG_REF})..."
-boilerplate \
+"${BOILERPLATE_BIN:-boilerplate}" \
   --template-url "github.com/gruntwork-io/terragrunt-scale-catalog//templates/boilerplate/aws/gitlab/account?ref=${CATALOG_REF}" \
   --output-folder . \
   --var-file vars.yml \

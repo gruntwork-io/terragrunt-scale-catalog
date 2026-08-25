@@ -15,7 +15,7 @@ credentials:
 
 Wherever a value can be discovered automatically, this runbook does it for you — your GCP project number
 comes from the project ID you provide, and the numeric GitHub org/repo IDs (used for GitHub's immutable
-OIDC subject claims) are fetched with the `gh` CLI after the repository is created. You only fill in what
+OIDC subject claims) come from the clone step. You only fill in what
 genuinely cannot be derived.
 
 <Admonition
@@ -52,7 +52,7 @@ Make sure the tools this runbook drives are installed.
 <GitHubAuth
   id="github-auth"
   title="GitHub authentication"
-  description="Used to create your repository, clone it, look up its numeric IDs, and open the setup pull request."
+  description="Used to create your repository, clone it, and open the setup pull request."
 />
 
 ## 3. Authenticate to GCP
@@ -111,6 +111,21 @@ variables:
 ```
 </Inputs>
 
+Pipelines deploys from a single branch. Name it now — it becomes the new repository's initial branch, and
+the setup pull request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply service account binding.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
+
 <Command
   id="create-repo"
   title="Create the GitHub repository"
@@ -126,11 +141,18 @@ Clone the repository you just created. Everything generated below is written int
 
 <GitClone
   id="clone"
+  inputsId="repo"
   title="Clone the repository"
   description="Clones the repository you just created (its URL is prefilled from the create step)."
   githubAuthId="github-auth"
   prefilledUrl="{{ .outputs.create_repo.repo_url }}"
   prefilledLocalPath="{{ .inputs.GitHubRepoName }}"
+/>
+
+<Admonition
+  type="warning"
+  title="The new repository is empty — create its default branch"
+  description="A repository with no commits has no branch for the setup pull request to target, so the clone above holds back its outputs and every later step stays blocked. Use the block's **Create default branch** button and name the branch to match the deploy branch you entered above (`main` unless you changed it). The clone then releases its outputs and the runbook continues."
 />
 
 ## 6. Configure the bootstrap
@@ -178,14 +200,6 @@ variables:
       - required
     x-section: OIDC
 
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply service account binding.
-    default: main
-    validations:
-      - required
-    x-section: OIDC
-
   - name: IncludeDriftDetection
     type: bool
     description: Whether to render the scheduled drift-detection GitHub Actions workflow.
@@ -212,23 +226,16 @@ variables:
 ```
 </Inputs>
 
-## 7. Auto-derive project and repository identifiers
+## 7. Auto-derive the GCP project number
 
-These two steps discover values so you don't have to enter them by hand.
-
-<Command
-  id="derive-github-ids"
-  title="Resolve GitHub org & repo IDs"
-  description="Runs `gh api` to fetch the numeric org/repo IDs used for GitHub's immutable OIDC subject claims."
-  githubAuthId="github-auth"
-  path="scripts/derive-github-ids.sh"
-/>
+This step discovers values so you don't have to enter them by hand. The GitHub org and repo IDs
+were already resolved by the clone step above.
 
 <Command
   id="derive-gcp"
   title="Resolve the GCP project number"
   description="Runs `gcloud projects describe` to derive the numeric project number from the project ID you entered."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/derive-gcp.sh"
 />
 
@@ -252,7 +259,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-bootstrap"
   title="Render the infrastructure-live template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived IDs."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-bootstrap.sh"
 />
 
@@ -261,8 +268,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -275,7 +282,7 @@ the plan/apply service accounts with IAM bindings, and the GCS state bucket via 
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all ... --backend-bootstrap plan` in the bootstrap directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
 />
@@ -284,7 +291,7 @@ the plan/apply service accounts with IAM bindings, and the GCS state bucket via 
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... apply`. Creates the Workload Identity Pool, plan/apply service accounts, and state bucket."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
 />
@@ -293,12 +300,16 @@ the plan/apply service accounts with IAM bindings, and the GCS state bucket via 
 
 Commit the generated configuration and open a PR against your new repository. Opening the PR does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
 
-<Command
+<GitHubPullRequest
   id="open-pr"
   title="Open the setup pull request"
+  description="Creates the setup branch, commits the generated files, pushes, and opens the pull request against your deploy branch."
   githubAuthId="github-auth"
-  inputsId="config"
-  path="scripts/open-pull-request.sh"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.ProjectName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.ProjectName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.ProjectName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 11. Post-flight checks
@@ -307,7 +318,7 @@ Commit the generated configuration and open a PR against your new repository. Op
   id="verify-service-accounts"
   title="Verify the service accounts exist"
   description="Confirms the <prefix>-plan and <prefix>-apply service accounts were created in the project."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-service-accounts.sh"
 />
 
@@ -315,7 +326,7 @@ Commit the generated configuration and open a PR against your new repository. Op
   id="verify-config"
   title="Verify generated files"
   description="Confirms the scaffold — root.hcl, the Pipelines workflow, the environment HCL, and the bootstrap stack — is present in the repo."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 

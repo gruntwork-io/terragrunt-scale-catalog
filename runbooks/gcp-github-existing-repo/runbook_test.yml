@@ -18,7 +18,7 @@ tests:
       config.GCPRegion: "us-central1"
       config.StateBucketName: "acme-dev-tofu-state"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.TerragruntScaleCatalogRef: "v1.13.1"
     steps:
       - block: check-prerequisites
@@ -36,8 +36,6 @@ tests:
       - block: clone
         expect: skip
       - block: check-root-hcl
-        expect: skip
-      - block: derive-github-ids
         expect: skip
       - block: derive-gcp
         expect: skip

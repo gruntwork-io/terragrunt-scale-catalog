@@ -20,7 +20,7 @@ tests:
       config.Visibility: "private"
       config.StateBucketName: "acme-dev-tofu-state"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.Issuer: ""
       config.TerragruntScaleCatalogRef: "v1.13.1"
     steps:

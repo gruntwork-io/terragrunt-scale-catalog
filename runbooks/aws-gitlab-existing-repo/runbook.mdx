@@ -35,7 +35,7 @@ Make sure the tools this runbook drives are installed.
 <Check
   id="check-prerequisites"
   title="Check required CLIs"
-  description="Verifies **git**, **mise**, the **AWS CLI**, and the **GitLab CLI** (`glab`) are installed and on your PATH."
+  description="Verifies **git**, **mise**, **jq**, and the **AWS CLI** are installed and on your PATH."
   path="checks/check-prerequisites.sh"
 />
 
@@ -50,7 +50,7 @@ Make sure the tools this runbook drives are installed.
 <GitLabAuth
   id="gitlab-auth"
   title="GitLab authentication"
-  description="Used to clone your repository, push the setup branch, and open the merge request. Establishes the session GITLAB_TOKEN that `glab` and `git` reuse."
+  description="Used to clone your repository, push the setup branch, and open the merge request. Establishes the session GITLAB_TOKEN that `git` reuses."
 />
 
 ## 3. Authenticate to AWS
@@ -64,16 +64,40 @@ intend to manage — the bootstrap step will create resources there.
   description="Credentials for the account that will host the OIDC provider and the plan/apply IAM roles."
 />
 
-## 4. Clone your infrastructure-live repository
+## 4. Select your infrastructure-live repository
 
-Clone the existing repository you want to add Pipelines to.
+Choose the existing repository you want to add Pipelines to — an existing local checkout, or a fresh clone.
+
+Pipelines deploys from a single branch. Name it now — the repository is selected on that branch, and
+the setup merge request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
 
 <GitClone
   id="clone"
-  title="Clone the repository"
-  description="Browse to your existing infrastructure-live repository and clone it."
-  gitlabAuthId="gitlab-auth"
+  inputsId="deploy"
+  title="Select or clone the repository"
+  description="Point this at your existing infrastructure-live repository. If you already have it checked out locally, choose **Use local checkout** and select that directory; otherwise switch to the clone source and browse to it."
+  gitAuthId="gitlab-auth"
   prefilledLocalPath="infrastructure-live"
+  prefilledRef="{{ .inputs.DeployBranch }}"
+  source="local"
+/>
+
+<Admonition
+  type="note"
+  title="Local checkouts: be on your deploy branch"
+  description="If you chose **Use local checkout**, make sure that checkout is on your deploy branch before continuing. The setup request opens against the branch the checkout is on; a fresh clone is put on the deploy branch for you."
 />
 
 Confirm the repository already has a `root.hcl` at its root (the account template does not create one).
@@ -150,14 +174,6 @@ variables:
       - required
     x-section: OIDC
 
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
-    validations:
-      - required
-    x-section: OIDC
-
   - name: TerragruntScaleCatalogRef
     type: string
     description: 'Optional: pin a specific Terragrunt Scale catalog ref (e.g. v1.13.1). Leave blank to use the latest release, resolved automatically before the generate step.'
@@ -204,7 +220,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-bootstrap"
   title="Render the account template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived AWS identifiers."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-bootstrap.sh"
 />
 
@@ -213,8 +229,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -245,7 +261,7 @@ the S3 state bucket via `--backend-bootstrap`).
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all ... --backend-bootstrap plan` in the bootstrap directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
@@ -255,7 +271,7 @@ the S3 state bucket via `--backend-bootstrap`).
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... apply`. Creates the OIDC provider, plan/apply IAM roles, and state bucket."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
@@ -266,19 +282,16 @@ the S3 state bucket via `--backend-bootstrap`).
 Commit the generated configuration, push a setup branch, and open a merge request against your
 repository. Opening the MR does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
 
-<Command
+<GitLabMergeRequest
   id="merge-request"
   title="Open the setup merge request"
-  description="Creates a branch, commits the generated files, pushes, and opens a merge request via `glab`."
-  inputsId="config"
-  gitlabAuthId="gitlab-auth"
-  path="scripts/open-merge-request.sh"
-/>
-
-<Admonition
-  type="note"
-  title="If glab isn't available"
-  description="The script pushes the setup branch either way. If `glab` cannot open the merge request automatically, just open one in the GitLab UI from the pushed branch — pushing the branch is all that's required to trigger the Pipelines plan."
+  description="Creates the setup branch, commits the generated files, pushes, and opens the merge request against your deploy branch."
+  gitAuthId="gitlab-auth"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.AccountName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 11. Post-flight checks
@@ -287,7 +300,7 @@ repository. Opening the MR does not start a Pipelines run — the commit is tagg
   id="verify-oidc-roles"
   title="Verify the IAM roles exist"
   description="Confirms the <prefix>-plan and <prefix>-apply IAM roles were created in the account."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="checks/verify-oidc-roles.sh"
 />
@@ -296,7 +309,7 @@ repository. Opening the MR does not start a Pipelines run — the commit is tagg
   id="verify-config"
   title="Verify generated files"
   description="Confirms the CI workflow, environment HCL, and bootstrap stack files are present in the repo."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 

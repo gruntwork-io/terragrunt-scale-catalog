@@ -133,14 +133,6 @@ variables:
       - required
     x-section: OIDC
 
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
-    validations:
-      - required
-    x-section: OIDC
-
   - name: Issuer
     type: string
     description: OIDC issuer URL override. Leave blank for gitlab.com; set this to your instance URL only for self-hosted GitLab (e.g. https://gitlab.example.com).
@@ -172,12 +164,27 @@ variables:
 Create the new, empty `infrastructure-live` project in your group. The following steps fill it with the
 Pipelines scaffold.
 
+Pipelines deploys from a single branch. Name it now — it becomes the new repository's initial branch, and
+the setup merge request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
+
 <Command
   id="create-project"
   title="Create the GitLab project"
   description="Runs `glab repo create <group>/<project>` with the chosen visibility. Skips creation if the project already exists."
-  inputsId="config"
-  gitlabAuthId="gitlab-auth"
+  inputsId={["deploy", "config"]}
+  gitAuthId="gitlab-auth"
   path="scripts/create-project.sh"
 />
 
@@ -187,9 +194,15 @@ Clone the project you just created so the scaffold can be rendered into its work
   id="clone"
   title="Clone the new repository"
   description="Clones the empty project created above; its working tree is where the scaffold is rendered."
-  gitlabAuthId="gitlab-auth"
+  gitAuthId="gitlab-auth"
   prefilledUrl="{{ .outputs.create_project.repo_url }}"
   prefilledLocalPath="{{ .outputs.create_project.project_name }}"
+/>
+
+<Admonition
+  type="warning"
+  title="The new repository is empty — create its default branch"
+  description="A repository with no commits has no branch for the setup merge request to target, so the clone above holds back its outputs and every later step stays blocked. Use the block's **Create default branch** button and name the branch to match the deploy branch you entered above (`main` unless you changed it). The clone then releases its outputs and the runbook continues."
 />
 
 ## 6. Auto-derive your AWS account identifiers
@@ -226,7 +239,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-scaffold"
   title="Render the infrastructure-live template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived AWS identifiers to scaffold the whole repository."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-scaffold.sh"
 />
 
@@ -235,8 +248,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -249,7 +262,7 @@ the S3 state bucket via `--backend-bootstrap`).
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all ... --backend-bootstrap plan` in the bootstrap directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
@@ -259,7 +272,7 @@ the S3 state bucket via `--backend-bootstrap`).
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... apply`. Creates the OIDC provider, plan/apply IAM roles, and state bucket."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
@@ -277,19 +290,16 @@ request does not start a Pipelines run — the commit is tagged `[skip ci]`, and
   description="The new repository has no history yet. This step first seeds an empty deploy branch so the merge request has a target, then opens the merge request from the setup branch that carries the Pipelines scaffold. Once it merges, Pipelines runs apply for changes under your account directory."
 />
 
-<Command
+<GitLabMergeRequest
   id="merge-request"
   title="Open the setup merge request"
-  description="Seeds the deploy branch, creates a setup branch, commits the generated files, pushes, and opens a merge request via `glab`."
-  inputsId="config"
-  gitlabAuthId="gitlab-auth"
-  path="scripts/open-merge-request.sh"
-/>
-
-<Admonition
-  type="note"
-  title="If glab isn't available"
-  description="The script pushes the setup branch either way. If `glab` cannot open the merge request automatically, just open one in the GitLab UI from the pushed branch — pushing the branch is all that's required to trigger the Pipelines plan."
+  description="Creates the setup branch, commits the generated files, pushes, and opens the merge request against your deploy branch."
+  gitAuthId="gitlab-auth"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.AccountName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 10. Post-flight checks
@@ -298,7 +308,7 @@ request does not start a Pipelines run — the commit is tagged `[skip ci]`, and
   id="verify-gitlab-ci"
   title="Verify the GitLab CI pipeline was generated"
   description="Confirms the `.gitlab-ci.yml` Pipelines pipeline was rendered by the infrastructure-live template."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-gitlab-ci.sh"
 />
 
@@ -306,7 +316,7 @@ request does not start a Pipelines run — the commit is tagged `[skip ci]`, and
   id="verify-oidc-roles"
   title="Verify the IAM roles exist"
   description="Confirms the <prefix>-plan and <prefix>-apply IAM roles were created in the account."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="checks/verify-oidc-roles.sh"
 />
@@ -315,7 +325,7 @@ request does not start a Pipelines run — the commit is tagged `[skip ci]`, and
   id="verify-config"
   title="Verify generated files"
   description="Confirms the root config, environment HCL, and bootstrap stack files are present in the repo."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 

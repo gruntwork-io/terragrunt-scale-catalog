@@ -37,7 +37,7 @@ TerragruntScaleCatalogRef: "${CATALOG_REF}"
 EOF
 
 log_info "Rendering gcp/gitlab/project template (ref ${CATALOG_REF})..."
-boilerplate \
+"${BOILERPLATE_BIN:-boilerplate}" \
   --template-url "github.com/gruntwork-io/terragrunt-scale-catalog//templates/boilerplate/gcp/gitlab/project?ref=${CATALOG_REF}" \
   --output-folder . \
   --var-file vars.yml \

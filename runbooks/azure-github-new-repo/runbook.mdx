@@ -19,7 +19,7 @@ workflows authenticate to Azure with no long-lived secrets:
 
 Wherever a value can be discovered automatically, this runbook does it for you — your Azure tenant and
 subscription IDs come from your authenticated `az` session, and the numeric GitHub org/repo IDs (used for
-GitHub's immutable OIDC subject claims) are fetched with the `gh` CLI. You only fill in what genuinely
+GitHub's immutable OIDC subject claims) come from the clone step. You only fill in what genuinely
 cannot be derived.
 
 <Admonition
@@ -56,7 +56,7 @@ Make sure the tools this runbook drives are installed.
 <GitHubAuth
   id="github-auth"
   title="GitHub authentication"
-  description="Used to create your repository, look up its numeric IDs, and open the setup pull request."
+  description="Used to create your repository, clone it, and open the setup pull request."
 />
 
 ## 3. Create the repository
@@ -95,6 +95,21 @@ variables:
 ```
 </Inputs>
 
+Pipelines deploys from a single branch. Name it now — it becomes the new repository's initial branch, and
+the setup pull request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
+
 <Command
   id="create-repo"
   title="Create the GitHub repository"
@@ -108,11 +123,18 @@ Clone the repository you just created so the scaffold can be generated into it.
 
 <GitClone
   id="clone"
+  inputsId="repo"
   title="Clone the new repository"
   description="Clones the empty repository created above; its working tree is where the scaffold is rendered."
   githubAuthId="github-auth"
   prefilledUrl="{{ .outputs.create_repo.repo_url }}"
   prefilledLocalPath="{{ .inputs.GitHubRepoName }}"
+/>
+
+<Admonition
+  type="warning"
+  title="The new repository is empty — create its default branch"
+  description="A repository with no commits has no branch for the setup pull request to target, so the clone above holds back its outputs and every later step stays blocked. Use the block's **Create default branch** button and name the branch to match the deploy branch you entered above (`main` unless you changed it). The clone then releases its outputs and the runbook continues."
 />
 
 ## 4. Authenticate to Azure
@@ -135,17 +157,10 @@ subscription is the one you intend to manage, because the bootstrap step will cr
   path="checks/check-azure-auth.sh"
 />
 
-## 5. Auto-derive repository and Azure identifiers
+## 5. Auto-derive the Azure identifiers
 
-These two steps discover values so you don't have to enter them by hand.
-
-<Command
-  id="derive-github-ids"
-  title="Resolve GitHub org & repo IDs"
-  description="Runs `gh api` to fetch the numeric org/repo IDs used for GitHub's immutable OIDC subject claims."
-  githubAuthId="github-auth"
-  path="scripts/derive-github-ids.sh"
-/>
+This step discovers values so you don't have to enter them by hand. The GitHub org and repo IDs
+were already resolved by the clone step above.
 
 <Command
   id="derive-azure"
@@ -207,14 +222,6 @@ variables:
       - required
     x-section: OIDC
 
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
-    validations:
-      - required
-    x-section: OIDC
-
   - name: Issuer
     type: string
     description: Optional override for the OIDC issuer URL. Leave blank to use GitHub's default (https://token.actions.githubusercontent.com).
@@ -271,7 +278,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-scaffold"
   title="Render the infrastructure-live template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived IDs to scaffold the whole repository."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-scaffold.sh"
 />
 
@@ -280,8 +287,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -300,7 +307,7 @@ service principals, role assignments, and the Azure Blob Storage state backend.
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all ... plan` in the bootstrap directory (local state)."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
 />
@@ -309,7 +316,7 @@ service principals, role assignments, and the Azure Blob Storage state backend.
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... --no-stack-generate apply`. Creates the Entra ID applications, service principals, role assignments, and the state storage account."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
 />
@@ -325,7 +332,7 @@ the Azure storage account. All of these edits are committed as part of the pull 
   id="capture-client-ids"
   title="Record the plan/apply client IDs"
   description="Reads the plan/apply application client IDs from `terragrunt stack output` and writes them into .gruntwork/environment-<SubscriptionName>.hcl, replacing the FIXME placeholders."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/capture-client-ids.sh"
 />
 
@@ -340,7 +347,7 @@ the Azure storage account. All of these edits are committed as part of the pull 
   id="migrate-state"
   title="Migrate state to Azure Blob Storage"
   description="Runs `terragrunt run --all ... init -migrate-state` to copy the local OpenTofu state into the Azure storage account."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/migrate-state.sh"
   timeoutMs={1800000}
 />
@@ -356,12 +363,16 @@ empty, this pull request seeds it with the Pipelines configuration; opening it d
   description="The new repository has no history yet. The pull request establishes the deploy branch and the initial Pipelines scaffold (including the now-active remote state and the recorded client IDs). Once it merges, Pipelines runs apply for changes under your subscription directory."
 />
 
-<Command
+<GitHubPullRequest
   id="open-pr"
   title="Open the setup pull request"
+  description="Creates the setup branch, commits the generated files, pushes, and opens the pull request against your deploy branch."
   githubAuthId="github-auth"
-  inputsId="config"
-  path="scripts/open-pull-request.sh"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.SubscriptionName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 11. Post-flight checks
@@ -370,7 +381,7 @@ empty, this pull request seeds it with the Pipelines configuration; opening it d
   id="verify-workflow"
   title="Verify the workflows were generated"
   description="Confirms the Pipelines GitHub Actions workflows were rendered into .github/workflows/."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-workflow.sh"
 />
 
@@ -378,7 +389,7 @@ empty, this pull request seeds it with the Pipelines configuration; opening it d
   id="verify-oidc"
   title="Verify the Entra ID applications exist"
   description="Confirms the <prefix>-plan and <prefix>-apply Entra ID applications were created in the tenant."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-oidc.sh"
 />
 
@@ -386,7 +397,7 @@ empty, this pull request seeds it with the Pipelines configuration; opening it d
   id="verify-config"
   title="Verify generated files"
   description="Confirms the root config, environment HCL, sub.hcl, and bootstrap stack files are present, remote state is active, and the client IDs are populated."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 

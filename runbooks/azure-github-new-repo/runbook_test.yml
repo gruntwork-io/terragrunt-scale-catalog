@@ -22,7 +22,7 @@ tests:
       config.StateStorageAccountName: "acmedevtofustate01"
       config.StateStorageContainerName: "tfstate"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.Issuer: ""
       config.IncludeDriftDetection: true
       config.TerragruntScaleCatalogRef: "v1.13.1"
@@ -42,8 +42,6 @@ tests:
       - block: az-login
         expect: skip
       - block: check-azure-auth
-        expect: skip
-      - block: derive-github-ids
         expect: skip
       - block: derive-azure
         expect: skip

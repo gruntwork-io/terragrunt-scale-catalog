@@ -40,7 +40,7 @@ OpenTofuVersion: "{{ .inputs.OpenTofuVersion }}"
 EOF
 
 log_info "Rendering gcp/gitlab/infrastructure-live template (ref ${CATALOG_REF})..."
-boilerplate \
+"${BOILERPLATE_BIN:-boilerplate}" \
   --template-url "github.com/gruntwork-io/terragrunt-scale-catalog//templates/boilerplate/gcp/gitlab/infrastructure-live?ref=${CATALOG_REF}" \
   --output-folder . \
   --var-file vars.yml \

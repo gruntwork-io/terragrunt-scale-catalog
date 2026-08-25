@@ -22,7 +22,7 @@ tests:
       config.Visibility: "private"
       config.GitLabServerDomain: ""
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.IncludeDriftDetection: true
       config.TerragruntScaleCatalogRef: "v1.13.1"
     steps:

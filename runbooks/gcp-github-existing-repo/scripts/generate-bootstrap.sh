@@ -29,16 +29,16 @@ GCPProjectNumber: "{{ .outputs.derive_gcp.gcp_project_number }}"
 GCPRegion: "{{ .inputs.GCPRegion }}"
 StateBucketName: "{{ .inputs.StateBucketName }}"
 OIDCResourcePrefix: "{{ .inputs.OIDCResourcePrefix }}"
-GitHubOrgName: "{{ .outputs.derive_github_ids.github_org_name }}"
-GitHubRepoName: "{{ .outputs.derive_github_ids.github_repo_name }}"
-GitHubOrgID: "{{ .outputs.derive_github_ids.github_org_id }}"
-GitHubRepoID: "{{ .outputs.derive_github_ids.github_repo_id }}"
+GitHubOrgName: "{{ .outputs.clone.repo_owner }}"
+GitHubRepoName: "{{ .outputs.clone.repo_name }}"
+GitHubOrgID: "{{ .outputs.clone.org_id }}"
+GitHubRepoID: "{{ .outputs.clone.repo_id }}"
 DeployBranch: "{{ .inputs.DeployBranch }}"
 TerragruntScaleCatalogRef: "${CATALOG_REF}"
 EOF
 
 log_info "Rendering gcp/github/project template (ref ${CATALOG_REF})..."
-boilerplate \
+"${BOILERPLATE_BIN:-boilerplate}" \
   --template-url "github.com/gruntwork-io/terragrunt-scale-catalog//templates/boilerplate/gcp/github/project?ref=${CATALOG_REF}" \
   --output-folder . \
   --var-file vars.yml \

@@ -21,7 +21,7 @@ tests:
       config.StateStorageAccountName: "acmeprodtfstate001"
       config.StateStorageContainerName: "tfstate"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.TerragruntScaleCatalogRef: "v1.13.1"
     steps:
       - block: check-prerequisites

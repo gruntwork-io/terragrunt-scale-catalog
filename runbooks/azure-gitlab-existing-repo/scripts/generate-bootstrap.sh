@@ -38,7 +38,7 @@ StateStorageContainerName: "{{ .inputs.StateStorageContainerName }}"
 EOF
 
 log_info "Rendering azure/gitlab/subscription template (ref ${CATALOG_REF})..."
-boilerplate \
+"${BOILERPLATE_BIN:-boilerplate}" \
   --template-url "github.com/gruntwork-io/terragrunt-scale-catalog//templates/boilerplate/azure/gitlab/subscription?ref=${CATALOG_REF}" \
   --output-folder . \
   --var-file vars.yml \

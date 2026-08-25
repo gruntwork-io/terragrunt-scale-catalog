@@ -24,10 +24,10 @@ log_info "Using terragrunt-scale-catalog ref: ${CATALOG_REF}"
 log_info "Writing vars.yml for the Azure subscription bootstrap..."
 cat > vars.yml <<EOF
 SubscriptionName: "{{ .inputs.SubscriptionName }}"
-GitHubOrgName: "{{ .outputs.derive_github_ids.github_org_name }}"
-GitHubRepoName: "{{ .outputs.derive_github_ids.github_repo_name }}"
-GitHubOrgID: "{{ .outputs.derive_github_ids.github_org_id }}"
-GitHubRepoID: "{{ .outputs.derive_github_ids.github_repo_id }}"
+GitHubOrgName: "{{ .outputs.clone.repo_owner }}"
+GitHubRepoName: "{{ .outputs.clone.repo_name }}"
+GitHubOrgID: "{{ .outputs.clone.org_id }}"
+GitHubRepoID: "{{ .outputs.clone.repo_id }}"
 DeployBranch: "{{ .inputs.DeployBranch }}"
 AzureLocation: "{{ .inputs.AzureLocation }}"
 OIDCResourcePrefix: "{{ .inputs.OIDCResourcePrefix }}"
@@ -40,7 +40,7 @@ StateStorageContainerName: "{{ .inputs.StateStorageContainerName }}"
 EOF
 
 log_info "Rendering azure/github/subscription template (ref ${CATALOG_REF})..."
-boilerplate \
+"${BOILERPLATE_BIN:-boilerplate}" \
   --template-url "github.com/gruntwork-io/terragrunt-scale-catalog//templates/boilerplate/azure/github/subscription?ref=${CATALOG_REF}" \
   --output-folder . \
   --var-file vars.yml \

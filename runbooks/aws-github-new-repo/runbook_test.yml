@@ -20,7 +20,7 @@ tests:
       config.AWSRegion: "us-east-1"
       config.StateBucketName: "acme-dev-tofu-state"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.IncludeDriftDetection: true
       config.TerragruntScaleCatalogRef: "v1.13.1"
     steps:
@@ -37,8 +37,6 @@ tests:
       - block: clone
         expect: skip
       - block: aws-auth
-        expect: skip
-      - block: derive-github-ids
         expect: skip
       - block: derive-aws
         expect: skip

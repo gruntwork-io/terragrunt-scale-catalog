@@ -19,7 +19,7 @@ tests:
       config.GitLabProjectName: "infrastructure-live"
       config.StateBucketName: "acme-dev-tofu-state"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.TerragruntScaleCatalogRef: "v1.13.1"
       config.Issuer: ""
     steps:

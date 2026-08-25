@@ -28,10 +28,10 @@ log_info "Writing vars.yml for the infrastructure-live scaffold..."
 cat > vars.yml <<EOF
 IncludeDriftDetection: {{ .inputs.IncludeDriftDetection }}
 SubscriptionName: "{{ .inputs.SubscriptionName }}"
-GitHubOrgName: "{{ .outputs.derive_github_ids.github_org_name }}"
-GitHubRepoName: "{{ .outputs.derive_github_ids.github_repo_name }}"
-GitHubOrgID: "{{ .outputs.derive_github_ids.github_org_id }}"
-GitHubRepoID: "{{ .outputs.derive_github_ids.github_repo_id }}"
+GitHubOrgName: "{{ .outputs.clone.repo_owner }}"
+GitHubRepoName: "{{ .outputs.clone.repo_name }}"
+GitHubOrgID: "{{ .outputs.clone.org_id }}"
+GitHubRepoID: "{{ .outputs.clone.repo_id }}"
 AzureLocation: "{{ .inputs.AzureLocation }}"
 DeployBranch: "{{ .inputs.DeployBranch }}"
 TerragruntScaleCatalogRef: "${CATALOG_REF}"
@@ -47,7 +47,7 @@ OpenTofuVersion: "{{ .inputs.OpenTofuVersion }}"
 EOF
 
 log_info "Rendering azure/github/infrastructure-live template (ref ${CATALOG_REF})..."
-boilerplate \
+"${BOILERPLATE_BIN:-boilerplate}" \
   --template-url "github.com/gruntwork-io/terragrunt-scale-catalog//templates/boilerplate/azure/github/infrastructure-live?ref=${CATALOG_REF}" \
   --output-folder . \
   --var-file vars.yml \

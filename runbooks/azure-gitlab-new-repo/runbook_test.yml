@@ -22,7 +22,7 @@ tests:
       config.StateStorageAccountName: "acmedevtofustate01"
       config.StateStorageContainerName: "tfstate"
       config.OIDCResourcePrefix: "pipelines"
-      config.DeployBranch: "main"
+      deploy.DeployBranch: "main"
       config.Issuer: ""
       config.TerragruntScaleCatalogRef: "v1.13.1"
       config.IncludeDriftDetection: true

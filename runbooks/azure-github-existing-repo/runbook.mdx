@@ -14,7 +14,7 @@ workflows authenticate to Azure with no long-lived secrets:
 
 Wherever a value can be discovered automatically, this runbook does it for you — your Azure tenant and
 subscription IDs come from your `az` session, and the numeric GitHub org/repo IDs (used for GitHub's
-immutable OIDC subject claims) are fetched with the `gh` CLI. It even reads the App Registration client
+immutable OIDC subject claims) come from the clone step. It even reads the App Registration client
 IDs back out of the bootstrap outputs and writes them into your environment config, so there are no
 manual FIXME edits left behind. You only fill in what genuinely cannot be derived.
 
@@ -37,7 +37,7 @@ Make sure the tools this runbook drives are installed.
 <Check
   id="check-prerequisites"
   title="Check required CLIs"
-  description="Verifies **git**, **mise**, the **Azure CLI**, and the **GitHub CLI** are installed and on your PATH."
+  description="Verifies **git**, **mise**, **jq**, and the **Azure CLI** are installed and on your PATH."
   path="checks/check-prerequisites.sh"
 />
 
@@ -52,7 +52,7 @@ Make sure the tools this runbook drives are installed.
 <GitHubAuth
   id="github-auth"
   title="GitHub authentication"
-  description="Used to clone your repository, look up its numeric IDs, and open the setup pull request."
+  description="Used to clone your repository and open the setup pull request."
 />
 
 ## 3. Authenticate to Azure
@@ -65,20 +65,43 @@ resources there.
   id="azure-auth"
   title="Sign in with az login"
   description="Runs an interactive `az login` and shows the active subscription. Switch it with `az account set --subscription <id>` if needed."
-  interactive={true}
   path="scripts/azure-login.sh"
 />
 
-## 4. Clone your infrastructure-live repository
+## 4. Select your infrastructure-live repository
 
-Clone the existing repository you want to add Pipelines to.
+Choose the existing repository you want to add Pipelines to — an existing local checkout, or a fresh clone.
+
+Pipelines deploys from a single branch. Name it now — the repository is selected on that branch, and
+the setup pull request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
 
 <GitClone
   id="clone"
-  title="Clone the repository"
-  description="Browse to your existing infrastructure-live repository and clone it."
+  inputsId="deploy"
+  title="Select or clone the repository"
+  description="Point this at your existing infrastructure-live repository. If you already have it checked out locally, choose **Use local checkout** and select that directory; otherwise switch to the clone source and browse to it."
   githubAuthId="github-auth"
   prefilledLocalPath="infrastructure-live"
+  prefilledRef="{{ .inputs.DeployBranch }}"
+  source="local"
+/>
+
+<Admonition
+  type="note"
+  title="Local checkouts: be on your deploy branch"
+  description="If you chose **Use local checkout**, make sure that checkout is on your deploy branch before continuing. The setup request opens against the branch the checkout is on; a fresh clone is put on the deploy branch for you."
 />
 
 Check the current state of the repository root. The subscription template does not create `root.hcl`, so
@@ -91,17 +114,10 @@ it is fine if this warns — a later step adds it for you.
   path="checks/check-root-hcl.sh"
 />
 
-## 5. Auto-derive tenant, subscription, and repository identifiers
+## 5. Auto-derive the tenant and subscription identifiers
 
-These steps discover values so you don't have to enter (or mistype) them.
-
-<Command
-  id="derive-github-ids"
-  title="Resolve GitHub org & repo IDs"
-  description="Runs `gh api` to fetch the numeric org/repo IDs used for GitHub's immutable OIDC subject claims."
-  githubAuthId="github-auth"
-  path="scripts/derive-github-ids.sh"
-/>
+This step discovers values so you don't have to enter (or mistype) them. The GitHub org and repo IDs
+were already resolved by the clone step above.
 
 <Command
   id="derive-azure"
@@ -163,14 +179,6 @@ variables:
       - required
     x-section: OIDC
 
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
-    validations:
-      - required
-    x-section: OIDC
-
   - name: OverwriteWorkflows
     type: bool
     description: When false (default), the CI workflow files are written only if they don't already exist, so bootstrapping an additional account into a repo that already has Pipelines won't overwrite (or revert customizations to) its workflows. Set true to force-refresh them.
@@ -218,7 +226,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-bootstrap"
   title="Render the subscription template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived IDs."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-bootstrap.sh"
 />
 
@@ -227,8 +235,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -311,7 +319,7 @@ workflows; set `OverwriteWorkflows` in the form above to force-refresh them.
   id="add-ci-workflows"
   title="Add the Pipelines CI workflows"
   description="Writes the plan/apply, unlock, and drift-detection GitHub Actions workflows into the repo. Each file is written only if it does not already exist, so bootstrapping an additional account into a repo that already has Pipelines will not overwrite its workflows — set \`OverwriteWorkflows\` above to force-refresh them."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/add-ci-workflows.sh"
 />
 
@@ -328,7 +336,7 @@ the Storage Account as a resource. We migrate the state into it in the next sect
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all --non-interactive --provider-cache plan` from the subscription directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
 />
@@ -337,7 +345,7 @@ the Storage Account as a resource. We migrate the state into it in the next sect
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... --no-stack-generate apply`. Creates the state backend and the OIDC applications/roles."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
 />
@@ -358,7 +366,7 @@ IDs into your environment config, and migrate the local state into Azure Blob St
   id="capture-client-ids"
   title="Record the plan/apply client IDs"
   description="Reads the bootstrap stack outputs and writes plan_client_id / apply_client_id into .gruntwork/environment-<sub>.hcl automatically."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/capture-client-ids.sh"
 />
 
@@ -366,7 +374,7 @@ IDs into your environment config, and migrate the local state into Azure Blob St
   id="migrate-state"
   title="Migrate state into Azure Blob Storage"
   description="Runs `terragrunt run --all ... --no-stack-generate -- init -migrate-state -force-copy` to move local state into the backend."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/migrate-state.sh"
   timeoutMs={1800000}
 />
@@ -375,12 +383,16 @@ IDs into your environment config, and migrate the local state into Azure Blob St
 
 Commit the generated configuration and open a PR against your repository. Opening the PR does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
 
-<Command
+<GitHubPullRequest
   id="open-pr"
   title="Open the setup pull request"
+  description="Creates the setup branch, commits the generated files, pushes, and opens the pull request against your deploy branch."
   githubAuthId="github-auth"
-  inputsId="config"
-  path="scripts/open-pull-request.sh"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.SubscriptionName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 13. Post-flight checks
@@ -389,7 +401,7 @@ Commit the generated configuration and open a PR against your repository. Openin
   id="verify-client-ids"
   title="Verify the client IDs were recorded"
   description="Confirms plan_client_id and apply_client_id are populated (no empty FIXME values left) in the environment HCL."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-client-ids.sh"
 />
 
@@ -397,7 +409,7 @@ Commit the generated configuration and open a PR against your repository. Openin
   id="verify-config"
   title="Verify generated files"
   description="Confirms root.hcl, the workflow, the environment HCL, and the bootstrap stack files are present in the repo."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 

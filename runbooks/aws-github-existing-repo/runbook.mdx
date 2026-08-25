@@ -13,7 +13,7 @@ with no long-lived credentials:
 
 Wherever a value can be discovered automatically, this runbook does it for you — your AWS account ID and
 partition come from your authenticated identity, and the numeric GitHub org/repo IDs (used for GitHub's
-immutable OIDC subject claims) are fetched with the `gh` CLI. You only fill in what genuinely cannot be
+immutable OIDC subject claims) come from the clone step. You only fill in what genuinely cannot be
 derived.
 
 <Admonition
@@ -35,7 +35,7 @@ Make sure the tools this runbook drives are installed.
 <Check
   id="check-prerequisites"
   title="Check required CLIs"
-  description="Verifies **git**, **mise**, the **AWS CLI**, and the **GitHub CLI** are installed and on your PATH."
+  description="Verifies **git**, **mise**, **jq**, and the **AWS CLI** are installed and on your PATH."
   path="checks/check-prerequisites.sh"
 />
 
@@ -50,7 +50,7 @@ Make sure the tools this runbook drives are installed.
 <GitHubAuth
   id="github-auth"
   title="GitHub authentication"
-  description="Used to clone your repository, look up its numeric IDs, and open the setup pull request."
+  description="Used to clone your repository and open the setup pull request."
 />
 
 ## 3. Authenticate to AWS
@@ -64,16 +64,40 @@ intend to manage — the bootstrap step will create resources there.
   description="Credentials for the account that will host the OIDC provider and the plan/apply IAM roles."
 />
 
-## 4. Clone your infrastructure-live repository
+## 4. Select your infrastructure-live repository
 
-Clone the existing repository you want to add Pipelines to.
+Choose the existing repository you want to add Pipelines to — an existing local checkout, or a fresh clone.
+
+Pipelines deploys from a single branch. Name it now — the repository is selected on that branch, and
+the setup pull request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
 
 <GitClone
   id="clone"
-  title="Clone the repository"
-  description="Browse to your existing infrastructure-live repository and clone it."
+  inputsId="deploy"
+  title="Select or clone the repository"
+  description="Point this at your existing infrastructure-live repository. If you already have it checked out locally, choose **Use local checkout** and select that directory; otherwise switch to the clone source and browse to it."
   githubAuthId="github-auth"
   prefilledLocalPath="infrastructure-live"
+  prefilledRef="{{ .inputs.DeployBranch }}"
+  source="local"
+/>
+
+<Admonition
+  type="note"
+  title="Local checkouts: be on your deploy branch"
+  description="If you chose **Use local checkout**, make sure that checkout is on your deploy branch before continuing. The setup request opens against the branch the checkout is on; a fresh clone is put on the deploy branch for you."
 />
 
 Confirm the repository already has a `root.hcl` at its root (the account template does not create one).
@@ -85,17 +109,10 @@ Confirm the repository already has a `root.hcl` at its root (the account templat
   path="checks/check-root-hcl.sh"
 />
 
-## 5. Auto-derive account and repository identifiers
+## 5. Auto-derive the AWS account identifiers
 
-These two steps discover values so you don't have to enter them by hand.
-
-<Command
-  id="derive-github-ids"
-  title="Resolve GitHub org & repo IDs"
-  description="Runs `gh api` to fetch the numeric org/repo IDs used for GitHub's immutable OIDC subject claims."
-  githubAuthId="github-auth"
-  path="scripts/derive-github-ids.sh"
-/>
+This step discovers values so you don't have to enter them by hand. The GitHub org and repo IDs
+were already resolved by the clone step above.
 
 <Command
   id="derive-aws"
@@ -139,14 +156,6 @@ variables:
     type: string
     description: Prefix for the OIDC IAM resources. Creates <prefix>-plan and <prefix>-apply roles.
     default: pipelines
-    validations:
-      - required
-    x-section: OIDC
-
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
     validations:
       - required
     x-section: OIDC
@@ -197,7 +206,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-bootstrap"
   title="Render the account template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived IDs."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-bootstrap.sh"
 />
 
@@ -206,8 +215,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -222,7 +231,7 @@ workflows; set `OverwriteWorkflows` in the form above to force-refresh them.
   id="add-ci-workflows"
   title="Add the Pipelines CI workflows"
   description="Writes the plan/apply, unlock, and drift-detection GitHub Actions workflows into the repo. Each file is written only if it does not already exist, so bootstrapping an additional account into a repo that already has Pipelines will not overwrite its workflows — set \`OverwriteWorkflows\` above to force-refresh them."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/add-ci-workflows.sh"
 />
 
@@ -235,7 +244,7 @@ Plan first, review the output, then apply. The plan step bootstraps the S3 state
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all ... --backend-bootstrap plan` in the bootstrap directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
@@ -245,7 +254,7 @@ Plan first, review the output, then apply. The plan step bootstraps the S3 state
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... apply`. Provisions the OIDC provider and the plan/apply IAM roles."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
@@ -255,12 +264,16 @@ Plan first, review the output, then apply. The plan step bootstraps the S3 state
 
 Commit the generated configuration and open a PR against your repository. Opening the PR does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
 
-<Command
+<GitHubPullRequest
   id="open-pr"
   title="Open the setup pull request"
+  description="Creates the setup branch, commits the generated files, pushes, and opens the pull request against your deploy branch."
   githubAuthId="github-auth"
-  inputsId="config"
-  path="scripts/open-pull-request.sh"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.AccountName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 11. Post-flight checks
@@ -269,7 +282,7 @@ Commit the generated configuration and open a PR against your repository. Openin
   id="verify-oidc-roles"
   title="Verify the IAM roles exist"
   description="Confirms the <prefix>-plan and <prefix>-apply IAM roles were created in the account."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   awsAuthId="aws-auth"
   path="checks/verify-oidc-roles.sh"
 />
@@ -278,7 +291,7 @@ Commit the generated configuration and open a PR against your repository. Openin
   id="verify-config"
   title="Verify generated files"
   description="Confirms the workflow, environment HCL, and bootstrap stack files are present in the repo."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 

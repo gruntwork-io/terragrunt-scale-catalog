@@ -136,14 +136,6 @@ variables:
       - required
     x-section: OIDC
 
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
-    validations:
-      - required
-    x-section: OIDC
-
   - name: Issuer
     type: string
     description: Override for the OIDC issuer URL. Leave blank for gitlab.com; set it only for self-hosted GitLab (e.g. https://gitlab.example.com).
@@ -181,12 +173,27 @@ variables:
 Create the empty project in your GitLab group. The next step clones it so the rest of the runbook can
 write into the working copy.
 
+Pipelines deploys from a single branch. Name it now — it becomes the new repository's initial branch, and
+the setup merge request is opened against it.
+
+<Inputs id="deploy" title="Deploy branch">
+```yaml
+variables:
+  - name: DeployBranch
+    type: string
+    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
+    default: main
+    validations:
+      - required
+```
+</Inputs>
+
 <Command
   id="create-repo"
   title="Create the GitLab project"
   description="Runs `glab repo create` for `<group>/<project>` with your chosen visibility, then reads back the clone URL."
-  inputsId="config"
-  gitlabAuthId="gitlab-auth"
+  inputsId={["deploy", "config"]}
+  gitAuthId="gitlab-auth"
   path="scripts/create-repo.sh"
 />
 
@@ -197,11 +204,18 @@ commit.
 
 <GitClone
   id="clone"
+  inputsId="config"
   title="Clone the repository"
   description="Clones the newly created GitLab project into a local working directory."
-  gitlabAuthId="gitlab-auth"
+  gitAuthId="gitlab-auth"
   prefilledUrl="{{ .outputs.create_repo.repo_url }}"
   prefilledLocalPath="{{ .inputs.GitLabProjectName }}"
+/>
+
+<Admonition
+  type="warning"
+  title="The new repository is empty — create its default branch"
+  description="A repository with no commits has no branch for the setup merge request to target, so the clone above holds back its outputs and every later step stays blocked. Use the block's **Create default branch** button and name the branch to match the deploy branch you entered above (`main` unless you changed it). The clone then releases its outputs and the runbook continues."
 />
 
 ## 6. Authenticate to Azure
@@ -255,7 +269,7 @@ automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
   id="generate-bootstrap"
   title="Render the infrastructure-live template"
   description="Runs `boilerplate` non-interactively with your form values and the auto-derived tenant/subscription IDs."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/generate-bootstrap.sh"
 />
 
@@ -264,8 +278,8 @@ Now install the Terragrunt and OpenTofu versions pinned for the repository:
 <Command
   id="install-deps"
   title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate is a prerequisite (verified in pre-flight) and is not installed here."
-  inputsId="config"
+  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
+  inputsId={["deploy", "config"]}
   path="scripts/install-deps.sh"
 />
 
@@ -280,7 +294,7 @@ later step.
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all ... plan` in the bootstrap directory."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
 />
@@ -289,7 +303,7 @@ later step.
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
   description="Runs `terragrunt run --all ... --no-stack-generate apply`. Creates the Entra ID plan/apply apps, role assignments, and state storage."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
 />
@@ -303,7 +317,7 @@ environment file, replacing the empty `FIXME` placeholders.
   id="capture-client-ids"
   title="Write client IDs into the environment file"
   description="Reads `terragrunt stack output` and fills in plan_client_id / apply_client_id in .gruntwork/environment-<sub>.hcl."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/capture-client-ids.sh"
 />
 
@@ -316,7 +330,7 @@ bootstrap state from local disk into Azure Blob Storage.
   id="enable-remote-state"
   title="Uncomment remote_state and migrate"
   description="Uncomments the remote_state block in root.hcl, then runs `terragrunt run --all ... --no-stack-generate -- init -migrate-state`."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="scripts/enable-remote-state.sh"
   timeoutMs={600000}
 />
@@ -326,13 +340,16 @@ bootstrap state from local disk into Azure Blob Storage.
 Push the scaffold to the deploy branch, put the generated configuration on a feature branch, and open a
 merge request. Opening the MR does not start a Pipelines run — the commit is tagged `[skip ci]`, and you have already applied the bootstrap locally. After it merges to your deploy branch, Pipelines takes over.
 
-<Command
+<GitLabMergeRequest
   id="open-merge-request"
-  title="Push and open the merge request"
-  description="Seeds the deploy branch, commits the config on a feature branch, and runs `glab mr create`."
-  inputsId="config"
-  gitlabAuthId="gitlab-auth"
-  path="scripts/open-merge-request.sh"
+  title="Open the setup merge request"
+  description="Creates the setup branch, commits the generated files, pushes, and opens the merge request against your deploy branch."
+  gitAuthId="gitlab-auth"
+  inputsId={["deploy", "config"]}
+  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.SubscriptionName }} [skip ci]"
+  prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.SubscriptionName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
 ## 13. Post-flight checks
@@ -341,7 +358,7 @@ merge request. Opening the MR does not start a Pipelines run — the commit is t
   id="verify-oidc-apps"
   title="Verify the Entra ID applications exist"
   description="Confirms the <prefix>-plan and <prefix>-apply Entra ID applications were created in the tenant."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-oidc-apps.sh"
 />
 
@@ -349,7 +366,7 @@ merge request. Opening the MR does not start a Pipelines run — the commit is t
   id="verify-config"
   title="Verify generated files"
   description="Confirms root.hcl, the generated .gitlab-ci.yml, the environment HCL (with non-empty client IDs), and the bootstrap stack are present."
-  inputsId="config"
+  inputsId={["deploy", "config"]}
   path="checks/verify-config.sh"
 />
 
