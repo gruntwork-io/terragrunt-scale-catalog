@@ -35,6 +35,10 @@ tests:
         expect: skip
       - block: github-auth
         expect: skip
+      - block: list-github-orgs
+        expect: skip
+      - block: verify-github-owner
+        expect: skip
       - block: create-repo
         expect: skip
       - block: clone

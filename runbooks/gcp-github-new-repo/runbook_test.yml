@@ -33,9 +33,13 @@ tests:
         expect: skip
       - block: github-auth
         expect: skip
+      - block: list-github-orgs
+        expect: skip
       - block: gcp-auth
         expect: skip
       - block: gcp-check
+        expect: skip
+      - block: verify-github-owner
         expect: skip
       - block: create-repo
         expect: skip

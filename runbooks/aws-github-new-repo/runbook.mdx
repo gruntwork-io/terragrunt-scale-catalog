@@ -55,6 +55,15 @@ Make sure the tools this runbook drives are installed.
   id="github-auth"
   title="GitHub authentication"
   description="Used to create your repository, clone it, and open the setup pull request."
+  oauthScopes={["repo", "read:org"]}
+/>
+
+<Check
+  id="list-github-orgs"
+  title="List your GitHub organizations"
+  description="Runs `gh api user/orgs` and prints the organizations this token can see, so you can copy an exact name into the form below. Informational — a warning here does not block the runbook."
+  githubAuthId="github-auth"
+  path="checks/list-github-orgs.sh"
 />
 
 ## 3. Create the repository
@@ -92,6 +101,15 @@ variables:
     x-section: Repository
 ```
 </Inputs>
+
+<Check
+  id="verify-github-owner"
+  title="Verify the organization exists"
+  description="Confirms the organization (or user) you entered is reachable with this token, so a typo fails here rather than part-way through repository creation."
+  inputsId="repo"
+  githubAuthId="github-auth"
+  path="checks/verify-github-owner.sh"
+/>
 
 Pipelines deploys from a single branch. Name it now — it becomes the new repository's initial branch, and
 the setup pull request is opened against it.
