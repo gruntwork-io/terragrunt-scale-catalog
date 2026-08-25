@@ -15,7 +15,9 @@ variables:
 
   - name: GCPProjectID
     type: string
-    description: The GCP project ID you are bootstrapping Pipelines in.
+    description: >-
+      The GCP project ID you are bootstrapping Pipelines in. NOT interchangeable with ProjectName:
+      the service accounts live in the project ID, not the folder name.
     order: 2
 
   - name: GCPProjectNumber
@@ -36,7 +38,7 @@ variables:
   - name: TerragruntScaleCatalogRef
     type: string
     description: The Git reference of the Terragrunt catalog to use.
-    default: "v1.13.1"
+    default: "v1.13.2"
     order: 6
 
   - name: OIDCResourcePrefix

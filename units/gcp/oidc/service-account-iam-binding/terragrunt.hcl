@@ -24,6 +24,8 @@ dependency "service_account" {
   mock_outputs = {
     name = "projects/mock-project/serviceAccounts/mock-sa@mock-project.iam.gserviceaccount.com"
   }
+
+  mock_outputs_merge_strategy_with_state = "shallow"
 }
 
 inputs = {
