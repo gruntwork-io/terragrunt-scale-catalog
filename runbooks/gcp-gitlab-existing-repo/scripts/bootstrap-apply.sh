@@ -4,16 +4,39 @@
 # above before running this.
 set -euo pipefail
 
+# Values collected from the form can arrive wrapped in quotes or padded with spaces.
+# None of the names, branches, IDs or versions used here may contain either, so every
+# form value is normalised once, up front, and referenced through these variables.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  # Strip every layer, not just one: a value can reach a script wrapped more than once
+  # (e.g. \"\"latest\"\"), and a single pass would leave the inner pair behind.
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_GCPProjectID=$(rb_unquote "{{ .inputs.GCPProjectID }}")
+RB_ProjectName=$(rb_unquote "{{ .inputs.ProjectName }}")
+RB_out_derive_gcp_gcp_project_number=$(rb_unquote "{{ .outputs.derive_gcp.gcp_project_number }}")
+RB_out_gcp_auth_check_gcp_ready=$(rb_unquote "{{ .outputs.gcp_auth_check.gcp_ready }}")
+
 if [ -z "${REPO_FILES:-}" ]; then
   log_error "No cloned repository found. Complete the earlier steps first."
   exit 1
 fi
 
-log_info "GCP access ready: {{ .outputs.gcp_auth_check.gcp_ready }}"
+log_info "GCP access ready: ${RB_out_gcp_auth_check_gcp_ready}"
 
-cd "$REPO_FILES/{{ .inputs.ProjectName }}/bootstrap"
+cd "$REPO_FILES/${RB_ProjectName}/bootstrap"
 
 log_info "Applying the bootstrap stack..."
 terragrunt run --all --non-interactive --provider-cache apply
 
-log_info "Bootstrap apply complete. The plan/apply service accounts now exist in project {{ .inputs.GCPProjectID }} (number {{ .outputs.derive_gcp.gcp_project_number }})."
+log_info "Bootstrap apply complete. The plan/apply service accounts now exist in project ${RB_GCPProjectID} (number ${RB_out_derive_gcp_gcp_project_number})."

@@ -3,8 +3,24 @@
 # user never has to type (or mistype) them. These populate the environment config and ARM_* variables.
 set -euo pipefail
 
+# Values substituted into this script can arrive wrapped in quotes; strip them before use.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_out_azure_login_account_name=$(rb_unquote "{{ .outputs.azure_login.account_name }}")
+
 # Referencing the sign-in output gates this block until the Azure sign-in step has run.
-: "{{ .outputs.azure_login.account_name }}"
+: "${RB_out_azure_login_account_name}"
 
 log_info "Reading tenant and subscription IDs from your active Azure session..."
 TENANT_ID=$(az account show --query tenantId -o tsv)

@@ -4,9 +4,31 @@
 # glab authenticates with the session GITLAB_TOKEN established by the GitLab auth step.
 set -euo pipefail
 
-GROUP="{{ .inputs.GitLabGroupName }}"
-PROJECT="{{ .inputs.GitLabProjectName }}"
-VISIBILITY="{{ .inputs.Visibility }}"
+# Values collected from the form can arrive wrapped in quotes or padded with spaces.
+# None of the names, branches, IDs or versions used here may contain either, so every
+# form value is normalised once, up front, and referenced through these variables.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  # Strip every layer, not just one: a value can reach a script wrapped more than once
+  # (e.g. \"\"latest\"\"), and a single pass would leave the inner pair behind.
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_GitLabGroupName=$(rb_unquote "{{ .inputs.GitLabGroupName }}")
+RB_GitLabProjectName=$(rb_unquote "{{ .inputs.GitLabProjectName }}")
+RB_Visibility=$(rb_unquote "{{ .inputs.Visibility }}")
+
+GROUP="${RB_GitLabGroupName}"
+PROJECT="${RB_GitLabProjectName}"
+VISIBILITY="${RB_Visibility}"
 
 if [ -z "$GROUP" ] || [ -z "$PROJECT" ]; then
   log_error "GitLabGroupName and GitLabProjectName are required."

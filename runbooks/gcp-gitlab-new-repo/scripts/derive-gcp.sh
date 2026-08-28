@@ -3,9 +3,30 @@
 # look it up by hand. The project number powers the Workload Identity Federation principal identifiers.
 set -euo pipefail
 
-PROJECT_ID="{{ .inputs.GCPProjectID }}"
+# Values collected from the form can arrive wrapped in quotes or padded with spaces.
+# None of the names, branches, IDs or versions used here may contain either, so every
+# form value is normalised once, up front, and referenced through these variables.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  # Strip every layer, not just one: a value can reach a script wrapped more than once
+  # (e.g. \"\"latest\"\"), and a single pass would leave the inner pair behind.
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
 
-log_info "Authenticated as {{ .outputs.gcp_auth.gcp_account }}; resolving the project number for ${PROJECT_ID}..."
+RB_GCPProjectID=$(rb_unquote "{{ .inputs.GCPProjectID }}")
+RB_out_gcp_auth_gcp_account=$(rb_unquote "{{ .outputs.gcp_auth.gcp_account }}")
+
+PROJECT_ID="${RB_GCPProjectID}"
+
+log_info "Authenticated as ${RB_out_gcp_auth_gcp_account}; resolving the project number for ${PROJECT_ID}..."
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 
 if [ -z "$PROJECT_NUMBER" ]; then

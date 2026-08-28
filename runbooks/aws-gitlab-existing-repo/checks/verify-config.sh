@@ -2,6 +2,26 @@
 # Verify the expected Pipelines configuration files were generated in the repository.
 set -uo pipefail
 
+# Values collected from the form can arrive wrapped in quotes or padded with spaces.
+# None of the names, branches, IDs or versions used here may contain either, so every
+# form value is normalised once, up front, and referenced through these variables.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  # Strip every layer, not just one: a value can reach a script wrapped more than once
+  # (e.g. \"\"latest\"\"), and a single pass would leave the inner pair behind.
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_AccountName=$(rb_unquote "{{ .inputs.AccountName }}")
+
 if [ -z "${REPO_FILES:-}" ]; then
   log_error "No cloned repository found."
   exit 1
@@ -21,8 +41,8 @@ check_file() {
 
 check_file ".gitlab-ci.yml"
 check_file ".gruntwork/repository.hcl"
-check_file ".gruntwork/environment-{{ .inputs.AccountName }}.hcl"
-check_file "{{ .inputs.AccountName }}/_global/bootstrap/terragrunt.stack.hcl"
+check_file ".gruntwork/environment-${RB_AccountName}.hcl"
+check_file "${RB_AccountName}/_global/bootstrap/terragrunt.stack.hcl"
 
 if [ "$rc" -eq 0 ]; then
   log_info "All expected Pipelines configuration files are present."

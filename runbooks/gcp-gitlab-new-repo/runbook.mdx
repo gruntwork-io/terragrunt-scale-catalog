@@ -116,7 +116,9 @@ variables:
   - name: GitLabServerDomain
     type: string
     description: Domain of your GitLab server. Leave empty to use gitlab.com; set this for self-hosted GitLab instances (e.g. "gitlab.example.com").
-    default: ""
+    default: "default"
+    validations:
+      - required
     x-section: GitLab
 
   - name: OIDCResourcePrefix
@@ -135,8 +137,10 @@ variables:
 
   - name: TerragruntScaleCatalogRef
     type: string
-    description: 'Optional: pin a specific Terragrunt Scale catalog ref (e.g. v1.13.1). Leave blank to use the latest release, resolved automatically before the generate step.'
-    default: ""
+    description: 'Pin a specific Terragrunt Scale catalog ref (e.g. v1.13.1), or leave it as \"latest\" to use the newest release, resolved automatically before the generate step.'
+    default: \"latest\"
+    validations:
+      - required
     x-section: Advanced
 
   - name: TerragruntVersion
@@ -307,7 +311,7 @@ deploy branch. Opening the MR does not start a Pipelines run — the commit is t
   description="Creates the setup branch, commits the generated files, pushes, and opens the merge request against your deploy branch."
   gitAuthId="gitlab-auth"
   inputsId={["deploy", "config"]}
-  prefilledBranchName="add-gruntwork-pipelines"
+  prefilledBranchName="add-gruntwork-pipelines-{{ .inputs.ProjectName }}"
   prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.ProjectName }} [skip ci]"
   prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.ProjectName }} [skip ci]"
   prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.ProjectName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."

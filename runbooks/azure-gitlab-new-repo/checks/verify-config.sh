@@ -3,13 +3,33 @@
 # client IDs were filled into the environment file (no empty FIXME placeholders remain).
 set -uo pipefail
 
+# Values collected from the form can arrive wrapped in quotes or padded with spaces.
+# None of the names, branches, IDs or versions used here may contain either, so every
+# form value is normalised once, up front, and referenced through these variables.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  # Strip every layer, not just one: a value can reach a script wrapped more than once
+  # (e.g. \"\"latest\"\"), and a single pass would leave the inner pair behind.
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_SubscriptionName=$(rb_unquote "{{ .inputs.SubscriptionName }}")
+
 if [ -z "${REPO_FILES:-}" ]; then
   log_error "No cloned repository found."
   exit 1
 fi
 
 cd "$REPO_FILES"
-SUB="{{ .inputs.SubscriptionName }}"
+SUB="${RB_SubscriptionName}"
 rc=0
 
 check_file() {

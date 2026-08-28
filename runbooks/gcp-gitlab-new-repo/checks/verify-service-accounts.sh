@@ -2,8 +2,29 @@
 # Confirm the plan/apply service accounts created by the bootstrap stack exist in the project.
 set -uo pipefail
 
-PREFIX="{{ .inputs.OIDCResourcePrefix }}"
-PROJECT_ID="{{ .inputs.GCPProjectID }}"
+# Values collected from the form can arrive wrapped in quotes or padded with spaces.
+# None of the names, branches, IDs or versions used here may contain either, so every
+# form value is normalised once, up front, and referenced through these variables.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  # Strip every layer, not just one: a value can reach a script wrapped more than once
+  # (e.g. \"\"latest\"\"), and a single pass would leave the inner pair behind.
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_GCPProjectID=$(rb_unquote "{{ .inputs.GCPProjectID }}")
+RB_OIDCResourcePrefix=$(rb_unquote "{{ .inputs.OIDCResourcePrefix }}")
+
+PREFIX="${RB_OIDCResourcePrefix}"
+PROJECT_ID="${RB_GCPProjectID}"
 rc=0
 
 for sa in "${PREFIX}-plan" "${PREFIX}-apply"; do

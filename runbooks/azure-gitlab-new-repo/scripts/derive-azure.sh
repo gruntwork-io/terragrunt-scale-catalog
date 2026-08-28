@@ -3,7 +3,23 @@
 # so the user never has to type (or mistype) them.
 set -euo pipefail
 
-log_info "Azure login confirmed ({{ .outputs.azure_auth.azure_logged_in }}). Reading your active subscription..."
+# Values substituted into this script can arrive wrapped in quotes; strip them before use.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_out_azure_auth_azure_logged_in=$(rb_unquote "{{ .outputs.azure_auth.azure_logged_in }}")
+
+log_info "Azure login confirmed (${RB_out_azure_auth_azure_logged_in}). Reading your active subscription..."
 
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 TENANT_ID=$(az account show --query tenantId -o tsv)

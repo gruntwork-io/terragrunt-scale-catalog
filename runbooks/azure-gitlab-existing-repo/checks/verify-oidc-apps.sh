@@ -2,8 +2,25 @@
 # Confirm the plan/apply Entra ID applications created by the bootstrap stack exist in the directory.
 set -uo pipefail
 
-PLAN_ID="{{ .outputs.capture_client_ids.plan_client_id }}"
-APPLY_ID="{{ .outputs.capture_client_ids.apply_client_id }}"
+# Values substituted into this script can arrive wrapped in quotes; strip them before use.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_out_capture_client_ids_apply_client_id=$(rb_unquote "{{ .outputs.capture_client_ids.apply_client_id }}")
+RB_out_capture_client_ids_plan_client_id=$(rb_unquote "{{ .outputs.capture_client_ids.plan_client_id }}")
+
+PLAN_ID="${RB_out_capture_client_ids_plan_client_id}"
+APPLY_ID="${RB_out_capture_client_ids_apply_client_id}"
 
 rc=0
 for pair in "plan:${PLAN_ID}" "apply:${APPLY_ID}"; do

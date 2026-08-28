@@ -6,13 +6,29 @@
 # later step uncomments it once the state storage account exists.
 set -euo pipefail
 
+# Values substituted into this script can arrive wrapped in quotes; strip them before use.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_out_generate_bootstrap_generated=$(rb_unquote "{{ .outputs.generate_bootstrap.generated }}")
+
 if [ -z "${REPO_FILES:-}" ]; then
   log_error "No cloned repository found. Complete the earlier steps first."
   exit 1
 fi
 
 # Referencing the generate output gates this block until the bootstrap config (sub.hcl) has been rendered.
-: "{{ .outputs.generate_bootstrap.generated }}"
+: "${RB_out_generate_bootstrap_generated}"
 
 ROOT_HCL="$REPO_FILES/root.hcl"
 

@@ -4,9 +4,30 @@
 # References the GCP auth check output so this stays gated until authentication succeeds.
 set -euo pipefail
 
-PROJECT_ID="{{ .inputs.GCPProjectID }}"
+# Values collected from the form can arrive wrapped in quotes or padded with spaces.
+# None of the names, branches, IDs or versions used here may contain either, so every
+# form value is normalised once, up front, and referenced through these variables.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  # Strip every layer, not just one: a value can reach a script wrapped more than once
+  # (e.g. \"\"latest\"\"), and a single pass would leave the inner pair behind.
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
 
-log_info "Deriving the project number for ${PROJECT_ID} (GCP access ready: {{ .outputs.gcp_auth_check.gcp_ready }})..."
+RB_GCPProjectID=$(rb_unquote "{{ .inputs.GCPProjectID }}")
+RB_out_gcp_auth_check_gcp_ready=$(rb_unquote "{{ .outputs.gcp_auth_check.gcp_ready }}")
+
+PROJECT_ID="${RB_GCPProjectID}"
+
+log_info "Deriving the project number for ${PROJECT_ID} (GCP access ready: ${RB_out_gcp_auth_check_gcp_ready})..."
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 
 if [ -z "$PROJECT_NUMBER" ]; then

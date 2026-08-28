@@ -3,13 +3,29 @@
 # Idempotent: if the block is already active (or absent), this is a no-op.
 set -euo pipefail
 
+# Values substituted into this script can arrive wrapped in quotes; strip them before use.
+rb_unquote() {
+  local v=$1
+  v=${v#"${v%%[![:space:]]*}"}
+  v=${v%"${v##*[![:space:]]}"}
+  while :; do
+    case $v in
+      \'*\'|\"*\") v=${v#[\'\"]}; v=${v%[\'\"]} ;;
+      *) break ;;
+    esac
+  done
+  printf '%s' "$v"
+}
+
+RB_out_capture_client_ids_plan_client_id=$(rb_unquote "{{ .outputs.capture_client_ids.plan_client_id }}")
+
 if [ -z "${REPO_FILES:-}" ]; then
   log_error "No cloned repository found. Complete the earlier steps first."
   exit 1
 fi
 
 # Referencing the capture output gates this block until the client IDs have been captured.
-: "{{ .outputs.capture_client_ids.plan_client_id }}"
+: "${RB_out_capture_client_ids_plan_client_id}"
 
 ROOT_HCL="$REPO_FILES/root.hcl"
 
