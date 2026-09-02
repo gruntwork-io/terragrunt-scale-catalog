@@ -71,26 +71,10 @@ Make sure the tools this runbook drives are installed.
 ## 3. Select your infrastructure-live repository
 
 Point this at the repository you want to manage with Pipelines. Everything generated below is written
-into that clone.
-
-Pipelines deploys from a single branch. Name it now — it is the branch the clone is put on, and the
-branch the setup pull request targets.
-
-<Inputs id="deploy" title="Deploy branch">
-```yaml
-variables:
-  - name: DeployBranch
-    type: string
-    description: The branch Pipelines deploys from. Merges here trigger apply; this branch is granted the apply role.
-    default: main
-    validations:
-      - required
-```
-</Inputs>
+into that clone — and the branch it is on becomes the deploy branch, so check it out before selecting.
 
 <GitClone
   id="clone"
-  inputsId="deploy"
   title="Select or clone the repository"
   description="Point this at the repository you created. With GitHub authentication in place the block lists your organizations and repositories; you can also paste a URL, or switch to **Use local checkout** and pick a clone you already have."
   githubAuthId="github-auth"
@@ -98,16 +82,8 @@ variables:
 
 <Admonition
   type="note"
-  title="If the repository has no commits yet"
-  description="A repository created without a README has no branch for the setup pull request to target, so the clone holds back its outputs and later steps stay blocked. Use the clone block's **Create default branch** button, naming the branch to match your deploy branch above.\n\nThis block also records the branch at the moment you select or clone. If you switch branches in a local checkout afterwards, come back and select it again — the pull request targets the branch recorded here, not the one git is on later."
-/>
-
-<Check
-  id="inspect-repository"
-  title="Check the repository: deploy branch and layout"
-  description="Confirms the clone is on your deploy branch — the branch the setup pull request will target — and works out whether this repository already has a `root.hcl`. Everything below depends on both answers, so run this before continuing."
-  inputsId="deploy"
-  path="checks/inspect-repository.sh"
+  title="Changed branches? Select the repository again"
+  description="This block records the branch at the moment you select or clone, and the setup pull request targets that branch. If you switch branches in a local checkout afterwards, come back and select it again — otherwise the request aims at the branch recorded here, not the one git is on later."
 />
 
 ## 4. Authenticate to AWS
@@ -121,23 +97,34 @@ intend to manage — the bootstrap step will create resources there.
   description="Credentials for the account that will host the OIDC provider and the plan/apply IAM roles."
 />
 
-## 5. Auto-derive the AWS account identifiers
+## 5. Read the account and repository details
 
-This step discovers values so you don't have to enter them by hand. The GitHub org and repo IDs
-were already resolved by the clone step above.
+Four values are read for you here, so you type none of them: the **AWS account** and **partition**
+from the credentials you just confirmed, and the **deploy branch** and **layout** of the repository
+you selected. The GitHub org and repo IDs came from the clone step.
 
-<Command
-  id="derive-aws"
-  title="Resolve AWS account ID & partition"
-  description="Reads your confirmed AWS identity to derive the account ID and partition (aws / aws-us-gov / aws-cn)."
+<Check
+  id="read-details"
+  title="Read the account and repository details"
+  description="One pass, four values: the AWS account and partition from your confirmed credentials, and the deploy branch and layout of the repository you selected. Nothing is changed — click **Check** and the values appear under *View Outputs*."
   awsAuthId="aws-auth"
-  path="scripts/derive-aws.sh"
+  path="checks/read-details.sh"
 />
 
 ## 6. Configure the bootstrap
 
-Fill in the values that cannot be derived automatically. Everything else is supplied for you from the
-steps above.
+First find the newest release of everything this bootstrap pins, so you can see what the form below
+will use before you fill it in.
+
+<Command
+  id="resolve-versions"
+  title="Resolve the latest versions"
+  description="Looks up the newest terragrunt-scale-catalog release (`git ls-remote`) and the newest Terragrunt, OpenTofu and Terraform releases (`mise latest`). Each is used by the generate step unless you pin that field yourself below."
+  path="scripts/resolve-versions.sh"
+/>
+
+Now fill in the values that cannot be derived automatically. Everything else is supplied for you
+from the steps above.
 
 <Inputs id="config" title="Bootstrap settings">
 ```yaml
@@ -185,9 +172,22 @@ variables:
     x-section: Advanced
 
   - name: TerragruntScaleCatalogRef
-    type: string
-    description: 'Pin a specific Terragrunt Scale catalog ref (e.g. v1.13.1), or leave it as \"latest\" to use the newest release, resolved automatically before the generate step.'
-    default: \"latest\"
+    type: enum
+    description: Which terragrunt-scale-catalog version this bootstrap pins. Leave it on latest to use the newest release, resolved when the generate step runs. Pick a tag instead to pin one explicitly.
+    # Regenerated by scripts/update-catalog-refs.sh -- do not hand-edit.
+    options:
+      - latest
+      - v1.13.2
+      - v1.13.1
+      - v1.13.0
+      - v1.12.2
+      - v1.12.1
+      - v1.12.0
+      - v1.11.3
+      - v1.11.2
+      - v1.11.1
+      - v1.11.0
+    default: latest
     validations:
       - required
     x-section: Advanced
@@ -203,82 +203,61 @@ variables:
       - required
     x-section: Advanced
 
-  - name: TerraformVersion
-    type: string
-    description: Terraform version to pin, used only when IaCTool is "terraform" and the repository has no mise config yet.
-    default: "1.15.9"
-    x-section: Advanced
-
   - name: TerragruntVersion
     type: string
-    description: Terragrunt version to pin. Used only when the repository has no mise config yet — an existing .mise.toml is never modified.
-    default: "1.0.0"
+    description: Terragrunt version to pin. Leave it on latest to use the newest release reported by the step above, or type a version to pin one. Applies only when the repository has no mise config yet — an existing .mise.toml is never modified.
+    default: latest
+    validations:
+      - required
     x-section: Advanced
 
   - name: OpenTofuVersion
     type: string
-    description: OpenTofu version to pin. Used only when the repository has no mise config yet — an existing .mise.toml is never modified.
-    default: "1.11.5"
+    description: OpenTofu version to pin, used when IaCTool is opentofu. Leave it on latest to use the newest release reported by the step above, or type a version to pin one. Applies only when the repository has no mise config yet — an existing .mise.toml is never modified.
+    default: latest
+    validations:
+      - required
+    x-section: Advanced
+
+  - name: TerraformVersion
+    type: string
+    description: Terraform version to pin, used when IaCTool is terraform. Leave it on latest to use the newest release reported by the step above, or type a version to pin one. Applies only when the repository has no mise config yet — an existing .mise.toml is never modified.
+    default: latest
+    validations:
+      - required
     x-section: Advanced
 ```
 </Inputs>
 
-## 7. Generate the Pipelines configuration
+## 7. Set up the repository
 
-Before generating, resolve the latest catalog release so the bootstrap pins the newest version
-automatically (unless you pinned a specific `TerragruntScaleCatalogRef` above).
-
-<Command
-  id="resolve-catalog-ref"
-  title="Resolve the latest catalog release"
-  description="Runs `git ls-remote` to find the newest terragrunt-scale-catalog release tag, used as the catalog ref for the generate step unless you pinned one."
-  path="scripts/resolve-catalog-ref.sh"
-/>
+Everything the repository needs is written in one pass: the Terragrunt Scale configuration, the tool
+versions it pins, the Pipelines CI workflows, and a README. Each phase is logged separately, and if one
+fails the run stops there and names it.
 
 <Command
-  id="generate"
-  title="Render the Terragrunt Scale configuration"
-  description="Runs `boilerplate` non-interactively. Renders the whole repository layout, or just the new account's directory and bootstrap stack, according to the layout detected above."
-  inputsId={["deploy", "config"]}
-  path="scripts/generate.sh"
-/>
-
-Now install the Terragrunt and OpenTofu versions pinned for the repository:
-
-<Command
-  id="install-deps"
-  title="Install Tool Dependencies"
-  description="Runs \`mise install\` against the repository's pinned \`.mise.toml\` to install Terragrunt, OpenTofu, and any cloud CLIs. boilerplate ships with the Runbooks app (the app points scripts at it via BOILERPLATE_BIN), so it is not installed here."
-  inputsId={["deploy", "config"]}
-  path="scripts/install-deps.sh"
-/>
-
-<Command
-  id="add-ci-workflows"
-  title="Add the Pipelines CI workflows"
-  description="Writes the plan/apply, unlock, and drift-detection GitHub Actions workflows into the repo. Each file is written only if it does not already exist, so bootstrapping an additional account into a repo that already has Pipelines will not overwrite its workflows — set \`OverwriteWorkflows\` above to force-refresh them."
-  inputsId={["deploy", "config"]}
-  path="scripts/add-ci-workflows.sh"
-/>
-
-<Command
-  id="write-readme"
-  title="Write a repository README"
-  description="Documents the folder layout, `root.hcl`, the `.gruntwork/` Pipelines config, the bootstrap stack, the CI workflows and the pinned tool versions. Written as `README.md` when the repository has none, or only the stub created with it. If a README with real content is already there it is left untouched and this is written as `README.template.md` alongside, for you to adopt or delete."
-  inputsId={["deploy", "config"]}
-  path="scripts/write-readme.sh"
+  id="setup-repository"
+  title="Set up the repository"
+  description="Runs four phases in order: renders the Terragrunt Scale configuration with `boilerplate`, runs `mise install` for the Terragrunt and OpenTofu versions it pins, adds the Pipelines CI workflows (existing ones are left alone unless `OverwriteWorkflows` is set), and writes the README — as `README.md` when the repository has none or only a stub, otherwise as `README.template.md` alongside the existing one."
+  inputsId="config"
+  path="scripts/setup-repository.sh"
+  timeoutMs={900000}
 />
 
 ## 8. Provision the AWS resources
 
 Plan first, review the output, then apply. Apply creates real resources (OIDC provider, IAM roles, and
-the S3 state bucket via `--backend-bootstrap`).
+the S3 state bucket via `--backend-bootstrap`). The last step reads them back out of AWS so you can see
+exactly what now exists in the account, and documents it inside that account's own folder: a diagram
+the **Changed files** panel on the right renders as an image, plus a README of its identifiers. Each
+account bootstrapped into this repository gets its own pair, and both are committed with the rest of
+the configuration.
 
 <Command
   id="bootstrap-plan"
   title="Plan the bootstrap stack"
   description="Runs `terragrunt run --all ... --backend-bootstrap plan` in the bootstrap directory."
-  inputsId={["deploy", "config"]}
+  inputsId="config"
   awsAuthId="aws-auth"
   path="scripts/bootstrap-plan.sh"
   timeoutMs={1800000}
@@ -287,8 +266,8 @@ the S3 state bucket via `--backend-bootstrap`).
 <Command
   id="bootstrap-apply"
   title="Apply the bootstrap stack"
-  description="Runs `terragrunt run --all ... apply`. Provisions the OIDC provider and the plan/apply IAM roles."
-  inputsId={["deploy", "config"]}
+  description="Runs `terragrunt run --all ... apply` to provision the OIDC provider, the plan/apply IAM roles and the state bucket, then reads them straight back out of AWS and writes this account's README and diagram."
+  inputsId="config"
   awsAuthId="aws-auth"
   path="scripts/bootstrap-apply.sh"
   timeoutMs={1800000}
@@ -300,51 +279,19 @@ Commit the generated configuration and open a pull request against your reposito
 `[skip ci]`, so opening it does not start a Pipelines run — you have already applied the bootstrap
 locally. After it merges to your deploy branch, Pipelines takes over.
 
-<Check
-  id="check-setup-branch"
-  title="Check the setup branch is free"
-  description="The pull request pushes without `--force`. This confirms no branch of the same name is already on the remote from an earlier run, which would otherwise reject the push after everything has been generated and committed."
-  inputsId={["deploy", "config"]}
-  path="checks/check-setup-branch.sh"
-/>
+If a branch of the same name is already on the remote from an earlier run, this fails and says so:
+edit the branch name and run it again, or use the button it offers to delete the old branch first.
 
 <GitHubPullRequest
   id="open-pr"
   title="Open the setup pull request"
   description="Creates the setup branch, commits the generated files, pushes, and opens the pull request against your deploy branch."
   githubAuthId="github-auth"
-  inputsId={["deploy", "config"]}
+  inputsId="config"
   prefilledBranchName="add-gruntwork-pipelines-{{ .inputs.AccountName }}"
   prefilledCommitMessage="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
   prefilledPullRequestTitle="Add Gruntwork Pipelines bootstrap for {{ .inputs.AccountName }} [skip ci]"
   prefilledPullRequestDescription="Adds the Gruntwork Pipelines configuration for the {{ .inputs.AccountName }} environment, generated with a Gruntwork Runbook. The bootstrap stack was already applied locally, so the commit carries `[skip ci]` and Pipelines takes over once this merges."
 />
 
-## 10. Post-flight checks
-
-<Check
-  id="verify-workflow"
-  title="Verify the workflows were generated"
-  description="Confirms the Pipelines GitHub Actions workflows were rendered into .github/workflows/."
-  inputsId={["deploy", "config"]}
-  path="checks/verify-workflow.sh"
-/>
-
-<Check
-  id="verify-oidc-roles"
-  title="Verify the IAM roles exist"
-  description="Confirms the <prefix>-plan and <prefix>-apply IAM roles were created in the account."
-  inputsId={["deploy", "config"]}
-  awsAuthId="aws-auth"
-  path="checks/verify-oidc-roles.sh"
-/>
-
-<Check
-  id="verify-config"
-  title="Verify generated files"
-  description="Confirms the workflow, environment HCL, and bootstrap stack files are present in the repo."
-  inputsId={["deploy", "config"]}
-  path="checks/verify-config.sh"
-/>
-
-**You're done.** The setup pull request was committed with `[skip ci]`, so opening it does **not** kick off a Pipelines run — you applied this bootstrap locally on purpose, so Pipelines never runs against half-configured infrastructure. Once you **merge** it to `{{ .inputs.DeployBranch }}`, Gruntwork Pipelines is activated: from then on it runs `plan` on pull requests and `apply` on merges to `{{ .inputs.DeployBranch }}` for changes under `{{ .inputs.AccountName }}/`. To add another account later, re-run this runbook against the same repository and choose a new `AccountName`.
+**You're done.** The setup pull request was committed with `[skip ci]`, so opening it does **not** kick off a Pipelines run — you applied this bootstrap locally on purpose, so Pipelines never runs against half-configured infrastructure. Once you **merge** it to `{{ .outputs.read_details.deploy_branch }}`, Gruntwork Pipelines is activated: from then on it runs `plan` on pull requests and `apply` on merges to `{{ .outputs.read_details.deploy_branch }}` for changes under `{{ .inputs.AccountName }}/`. To add another account later, re-run this runbook against the same repository and choose a new `AccountName`.

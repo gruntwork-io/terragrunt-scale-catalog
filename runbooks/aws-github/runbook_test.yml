@@ -13,7 +13,6 @@ tests:
   - name: parse-and-inputs
     description: Validates the runbook loads and accepts the documented inputs.
     inputs:
-      deploy.DeployBranch: "main"
       config.AccountName: "dev"
       config.AWSRegion: "us-east-1"
       config.StateBucketName: "acme-dev-tofu-state"
@@ -28,33 +27,17 @@ tests:
         expect: skip
       - block: clone
         expect: skip
-      - block: inspect-repository
-        expect: skip
       - block: aws-auth
         expect: skip
-      - block: derive-aws
+      - block: read-details
         expect: skip
-      - block: resolve-catalog-ref
+      - block: resolve-versions
         expect: skip
-      - block: generate
-        expect: skip
-      - block: install-deps
-        expect: skip
-      - block: add-ci-workflows
-        expect: skip
-      - block: write-readme
+      - block: setup-repository
         expect: skip
       - block: bootstrap-plan
         expect: skip
       - block: bootstrap-apply
         expect: skip
-      - block: check-setup-branch
-        expect: skip
       - block: open-pr
-        expect: skip
-      - block: verify-workflow
-        expect: skip
-      - block: verify-oidc-roles
-        expect: skip
-      - block: verify-config
         expect: skip
