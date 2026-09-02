@@ -12,7 +12,6 @@ tests:
   - name: parse-and-inputs
     description: Validates the runbook loads and accepts the documented inputs.
     inputs:
-      deploy.DeployBranch: "main"
       config.SubscriptionName: "dev"
       config.AzureLocation: "eastus"
       config.StateResourceGroupName: "rg-tfstate"
@@ -33,21 +32,11 @@ tests:
         expect: skip
       - block: clone
         expect: skip
-      - block: inspect-repository
+      - block: read-details
         expect: skip
-      - block: derive-azure
+      - block: resolve-versions
         expect: skip
-      - block: resolve-catalog-ref
-        expect: skip
-      - block: generate
-        expect: skip
-      - block: ensure-root-hcl
-        expect: skip
-      - block: install-deps
-        expect: skip
-      - block: add-ci-workflows
-        expect: skip
-      - block: write-readme
+      - block: setup-repository
         expect: skip
       - block: bootstrap-plan
         expect: skip
@@ -59,11 +48,5 @@ tests:
         expect: skip
       - block: migrate-state
         expect: skip
-      - block: check-setup-branch
-        expect: skip
       - block: open-pr
-        expect: skip
-      - block: verify-client-ids
-        expect: skip
-      - block: verify-config
         expect: skip

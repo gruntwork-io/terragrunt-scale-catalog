@@ -22,16 +22,16 @@ rb_unquote() {
 }
 
 RB_SubscriptionName=$(rb_unquote "{{ .inputs.SubscriptionName }}")
-RB_out_derive_azure_azure_subscription_id=$(rb_unquote "{{ .outputs.derive_azure.azure_subscription_id }}")
-RB_out_derive_azure_azure_tenant_id=$(rb_unquote "{{ .outputs.derive_azure.azure_tenant_id }}")
+RB_out_read_details_azure_subscription_id=$(rb_unquote "{{ .outputs.read_details.azure_subscription_id }}")
+RB_out_read_details_azure_tenant_id=$(rb_unquote "{{ .outputs.read_details.azure_tenant_id }}")
 
 if [ -z "${REPO_FILES:-}" ]; then
   log_error "No cloned repository found."
   exit 1
 fi
 
-export ARM_TENANT_ID="${RB_out_derive_azure_azure_tenant_id}"
-export ARM_SUBSCRIPTION_ID="${RB_out_derive_azure_azure_subscription_id}"
+export ARM_TENANT_ID="${RB_out_read_details_azure_tenant_id}"
+export ARM_SUBSCRIPTION_ID="${RB_out_read_details_azure_subscription_id}"
 
 cd "$REPO_FILES/${RB_SubscriptionName}"
 
