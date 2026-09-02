@@ -640,6 +640,7 @@ runs `terragrunt apply`. Nothing is applied from a laptop in normal operation.
 
 ```
 .
+├── README.md
 ├── root.hcl
 ├── .mise.toml
 ├── .gitignore
@@ -664,6 +665,7 @@ runs `terragrunt apply`. Nothing is applied from a laptop in normal operation.
 
 | Path | What it is |
 | --- | --- |
+| `README.md` | This document |
 | `root.hcl` | Root Terragrunt config: remote state, providers, shared inputs |
 | `.mise.toml` | Pinned tool versions (Terragrunt, __RB_TOOL__) |
 | `.gruntwork/repository.hcl` | Repository-wide Pipelines settings: deploy branch, `tf_binary` |
