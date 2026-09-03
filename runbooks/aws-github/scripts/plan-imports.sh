@@ -29,6 +29,8 @@ rb_unquote() {
 RB_AddStsAudienceIfMissing=$(rb_unquote "{{ .inputs.AddStsAudienceIfMissing }}")
 RB_ExistingOIDCProvider=$(rb_unquote "{{ .inputs.ExistingOIDCProvider }}")
 RB_Issuer=$(rb_unquote "{{ .inputs.Issuer }}")
+RB_PlanIAMRoleName=$(rb_unquote "{{ .inputs.PlanIAMRoleName }}")
+RB_ApplyIAMRoleName=$(rb_unquote "{{ .inputs.ApplyIAMRoleName }}")
 RB_ExistingPipelinesRoles=$(rb_unquote "{{ .inputs.ExistingPipelinesRoles }}")
 RB_OIDCResourcePrefix=$(rb_unquote "{{ .inputs.OIDCResourcePrefix }}")
 RB_out_read_details_aws_account_id=$(rb_unquote "{{ .outputs.read_details.aws_account_id }}")
@@ -56,6 +58,23 @@ else
 fi
 OIDC_PROVIDER_ARN="arn:${PARTITION}:iam::${ACCOUNT}:oidc-provider/${ISSUER_HOST}"
 
+# The roles the bootstrap will manage. "default" means the prefix form the catalog has always used;
+# a name here adopts a role that exists under a different name. The POLICIES keep following the
+# prefix either way -- the catalog names them "<prefix>-plan-<hash>" whatever the role is called.
+if [ "$RB_PlanIAMRoleName" = "default" ] || [ -z "$RB_PlanIAMRoleName" ]; then
+  RB_PlanIAMRoleName=""
+  PLAN_ROLE="${PREFIX}-plan"
+else
+  PLAN_ROLE="$RB_PlanIAMRoleName"
+fi
+if [ "$RB_ApplyIAMRoleName" = "default" ] || [ -z "$RB_ApplyIAMRoleName" ]; then
+  RB_ApplyIAMRoleName=""
+  APPLY_ROLE="${PREFIX}-apply"
+else
+  APPLY_ROLE="$RB_ApplyIAMRoleName"
+fi
+[ -n "$RB_PlanIAMRoleName$RB_ApplyIAMRoleName" ] && log_info "Roles: ${PLAN_ROLE}, ${APPLY_ROLE}"
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -82,14 +101,14 @@ aws_exists() {
 #
 # Sets: FOUND_POLICY_ARN (empty when none), FOUND_POLICY_ATTACHED (true/false)
 find_policy_for_role() {
-  local role=$1 json
+  local role=$1 policy_base=$2 json
   FOUND_POLICY_ARN=""
   FOUND_POLICY_ATTACHED=false
 
   json=$(aws iam list-attached-role-policies --role-name "$role" --output json 2>/dev/null) || json=""
   if [ -n "$json" ]; then
     FOUND_POLICY_ARN=$(printf '%s' "$json" \
-      | jq -r --arg re "^${role}-[0-9a-f]{8}$" \
+      | jq -r --arg re "^${policy_base}-[0-9a-f]{8}$" \
           'first(.AttachedPolicies[]? | select(.PolicyName | test($re)) | .PolicyArn) // ""' 2>/dev/null)
     if [ -n "$FOUND_POLICY_ARN" ]; then
       FOUND_POLICY_ATTACHED=true
@@ -102,7 +121,7 @@ find_policy_for_role() {
   json=$(aws iam list-policies --scope Local --output json 2>/dev/null) || json=""
   [ -n "$json" ] || return 0
   FOUND_POLICY_ARN=$(printf '%s' "$json" \
-    | jq -r --arg re "^${role}-[0-9a-f]{8}$" \
+    | jq -r --arg re "^${policy_base}-[0-9a-f]{8}$" \
         'first(.Policies[]? | select(.PolicyName | test($re)) | .Arn) // ""' 2>/dev/null)
 }
 
@@ -212,7 +231,7 @@ FOREIGN_ROLES=""
 NOT_OIDC_ROLES=""
 
 check_role() {
-  role=$1
+  kind=$1 role=$2 policy_base=$3
   role_exists=$(aws_exists "IAM role ${role}" aws iam get-role --role-name "$role") || exit 1
   [ "$role_exists" = "true" ] || { log_info "IAM role ${role}: not present, will be created."; return 0; }
 
@@ -231,7 +250,7 @@ check_role() {
        NOT_OIDC_ROLES="${NOT_OIDC_ROLES:+${NOT_OIDC_ROLES}, }${role}" ;;
   esac
 
-  find_policy_for_role "$role"
+  find_policy_for_role "$role" "$policy_base"
   policy_exists=false
   [ -n "$FOUND_POLICY_ARN" ] && policy_exists=true
   if [ "$policy_exists" = "true" ]; then
@@ -240,15 +259,15 @@ check_role() {
     log_info "  no matching policy in the account; one will be created."
   fi
 
-  case $role in
-    *-plan)  PLAN_ROLE_IMPORT=true;  PLAN_POLICY_IMPORT=$policy_exists;  PLAN_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
-    *-apply) APPLY_ROLE_IMPORT=true; APPLY_POLICY_IMPORT=$policy_exists; APPLY_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
+  case $kind in
+    plan)  PLAN_ROLE_IMPORT=true;  PLAN_POLICY_IMPORT=$policy_exists;  PLAN_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
+    apply) APPLY_ROLE_IMPORT=true; APPLY_POLICY_IMPORT=$policy_exists; APPLY_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
   esac
 }
 
 log_info ""
-check_role "${PREFIX}-plan"
-check_role "${PREFIX}-apply"
+check_role plan  "$PLAN_ROLE"  "${PREFIX}-plan"
+check_role apply "$APPLY_ROLE" "${PREFIX}-apply"
 
 if [ -n "$FOUND_ROLES" ]; then
   # A role that is not a GitHub OIDC role at all is never adopted, whatever was chosen: importing
@@ -294,7 +313,7 @@ if [ -n "$FOUND_ROLES" ]; then
       ;;
   esac
 else
-  log_info "No roles with the prefix ${PREFIX} exist yet; all of them will be created."
+  log_info "Neither ${PLAN_ROLE} nor ${APPLY_ROLE} exists yet; both will be created."
 fi
 
 {
@@ -308,6 +327,8 @@ fi
   echo "apply_role_import=${APPLY_ROLE_IMPORT}"
   echo "apply_policy_import=${APPLY_POLICY_IMPORT}"
   echo "apply_attachment_import=${APPLY_ATTACH_IMPORT}"
+  echo "plan_role_name=${RB_PlanIAMRoleName}"
+  echo "apply_role_name=${RB_ApplyIAMRoleName}"
 } >> "$RUNBOOK_OUTPUT"
 
 log_info ""

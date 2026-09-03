@@ -217,6 +217,22 @@ variables:
     default: false
     x-section: Existing resources
 
+  - name: PlanIAMRoleName
+    type: string
+    description: Optional. The name of the IAM role Pipelines assumes for plan. Leave as "default" to use <OIDCResourcePrefix>-plan, which is what the bootstrap has always created. Set it to adopt a role that already exists under a different name — it is then used for the role, the import, and the ARN Pipelines assumes. Needs a catalog release that supports it; the generate step checks and says so if not.
+    default: "default"
+    validations:
+      - required
+    x-section: Existing resources
+
+  - name: ApplyIAMRoleName
+    type: string
+    description: Optional. The name of the IAM role Pipelines assumes for apply. Leave as "default" to use <OIDCResourcePrefix>-apply. See PlanIAMRoleName.
+    default: "default"
+    validations:
+      - required
+    x-section: Existing resources
+
   - name: ExistingPipelinesRoles
     type: enum
     description: What to do if IAM roles with the prefix above already exist. import adopts them, but only when their trust policy already names this repository — a role belonging to another repository is refused, because importing repoints it and breaks that repository's Pipelines. import-any adopts them regardless, taking them over from whatever used them before. stop halts before anything is generated so you can choose a different OIDCResourcePrefix and leave the existing roles alone.
