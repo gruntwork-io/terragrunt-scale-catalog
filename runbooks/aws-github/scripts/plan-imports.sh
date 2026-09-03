@@ -31,6 +31,7 @@ RB_ExistingOIDCProvider=$(rb_unquote "{{ .inputs.ExistingOIDCProvider }}")
 RB_Issuer=$(rb_unquote "{{ .inputs.Issuer }}")
 RB_PlanIAMRoleName=$(rb_unquote "{{ .inputs.PlanIAMRoleName }}")
 RB_ApplyIAMRoleName=$(rb_unquote "{{ .inputs.ApplyIAMRoleName }}")
+RB_DiscoverExistingRoles=$(rb_unquote "{{ .inputs.DiscoverExistingRoles }}")
 RB_ExistingPipelinesRoles=$(rb_unquote "{{ .inputs.ExistingPipelinesRoles }}")
 RB_OIDCResourcePrefix=$(rb_unquote "{{ .inputs.OIDCResourcePrefix }}")
 RB_out_read_details_aws_account_id=$(rb_unquote "{{ .outputs.read_details.aws_account_id }}")
@@ -154,6 +155,111 @@ role_belongs_to_this_repo() {
   FOREIGN_SUB="$subs"
   return 1
 }
+
+# ---------------------------------------------------------------------------
+# Discovery
+# ---------------------------------------------------------------------------
+
+# Which roles in this account already trust this repository through the OIDC provider? The name of a
+# role that was not created by this bootstrap is the one thing the form cannot be expected to know,
+# so it is found rather than typed. ListRoles returns each trust policy, so this is one paginated
+# call rather than a get-role per role.
+#
+# Prints "name<TAB>operator<TAB>sub" per match. Needs iam:ListRoles, which is broader than the
+# get-role the rest of this script uses; if it is denied, discovery is skipped rather than fatal.
+# Results go to a file, not stdout. The log helpers write to stdout, so capturing this with $(...)
+# would fold its own warning lines into the list of roles -- and setting DISCOVERY_AVAILABLE inside
+# a command substitution would set it in a subshell, where the caller never sees it.
+DISCOVERY_AVAILABLE=true
+DISCOVERY_FILE=$(mktemp)
+trap 'rm -f "$DISCOVERY_FILE"' EXIT
+
+discover_oidc_roles() {
+  local json rc=0
+  : > "$DISCOVERY_FILE"
+  json=$(aws iam list-roles --output json 2>&1) || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    DISCOVERY_AVAILABLE=false
+    log_warn "Cannot list roles in this account (iam:ListRoles denied?), so existing roles cannot be"
+    log_warn "discovered by what they trust. Name them in the form if you need them adopted."
+    return 0
+  fi
+  printf '%s' "$json" | jq -r --arg prov "$OIDC_PROVIDER_ARN" \
+    --arg a "repo:${RB_out_clone_repo_owner}@${RB_out_clone_org_id}/${RB_out_clone_repo_name}@${RB_out_clone_repo_id}:" \
+    --arg b "repo:${RB_out_clone_repo_owner}/${RB_out_clone_repo_name}:" '
+    .Roles[]? as $r
+    | ($r.AssumeRolePolicyDocument.Statement // [])[]
+    | select((.Action == "sts:AssumeRoleWithWebIdentity") or (.Action[]? == "sts:AssumeRoleWithWebIdentity"))
+    | select(.Principal.Federated == $prov)
+    | (.Condition // {}) | to_entries[] as $op
+    | $op.value | to_entries[]
+    | select(.key | endswith(":sub"))
+    | (if (.value | type) == "array" then .value[] else .value end) as $sub
+    | select(($sub | startswith($a)) or ($sub | startswith($b)))
+    | [$r.RoleName, $op.key, $sub] | @tsv' 2>/dev/null | sort -u > "$DISCOVERY_FILE"
+}
+
+# The catalog gives plan a StringLike sub ending ":*" and apply a StringEquals sub pinned to the
+# deploy branch. Fall back to the name when a hand-made role does not follow that.
+classify_role() {
+  local op=$2 sub=$3
+  case "$op:$sub" in
+    StringLike:*\*)              printf 'plan' ;;
+    StringEquals:*:ref:refs/*)   printf 'apply' ;;
+    *) case "$1" in *plan*) printf 'plan' ;; *apply*) printf 'apply' ;; *) printf 'unknown' ;; esac ;;
+  esac
+}
+
+DISCOVERED_PLAN=""
+DISCOVERED_APPLY=""
+report_discovery() {
+  local name op sub kind found=0
+  discover_oidc_roles
+  while IFS=$'\t' read -r name op sub; do
+    [ -n "$name" ] || continue
+    found=$((found + 1))
+    kind=$(classify_role "$name" "$op" "$sub")
+    log_info "  ${name}  (${kind}; ${op} ${sub})"
+    case $kind in
+      plan)  DISCOVERED_PLAN="${DISCOVERED_PLAN:+${DISCOVERED_PLAN} }${name}" ;;
+      apply) DISCOVERED_APPLY="${DISCOVERED_APPLY:+${DISCOVERED_APPLY} }${name}" ;;
+    esac
+  done < "$DISCOVERY_FILE"
+  [ "$found" -eq 0 ] && [ "$DISCOVERY_AVAILABLE" = "true" ] && \
+    log_info "  none: no role in this account trusts this repository through that provider yet."
+  return 0
+}
+
+log_info ""
+log_info "Roles already trusting this repository through ${OIDC_PROVIDER_ARN}:"
+report_discovery
+
+# Explicit names win; discovery only fills in what was left at the default.
+if [ "$RB_DiscoverExistingRoles" = "true" ]; then
+  if [ "$DISCOVERY_AVAILABLE" != "true" ]; then
+    log_error "DiscoverExistingRoles is on but this account's roles cannot be listed."
+    exit 1
+  fi
+  for kind in plan apply; do
+    case $kind in
+      plan)  typed="$RB_PlanIAMRoleName";  found="$DISCOVERED_PLAN" ;;
+      apply) typed="$RB_ApplyIAMRoleName"; found="$DISCOVERED_APPLY" ;;
+    esac
+    [ -n "$typed" ] && { log_info "${kind}: using the name given in the form (${typed})."; continue; }
+    set -- $found
+    case $# in
+      0) log_info "${kind}: nothing discovered; the ${PREFIX}-${kind} role will be used." ;;
+      1) log_warn "${kind}: adopting the discovered role ${1}."
+         if [ "$kind" = "plan" ]; then RB_PlanIAMRoleName="$1"; PLAN_ROLE="$1"
+         else RB_ApplyIAMRoleName="$1"; APPLY_ROLE="$1"; fi ;;
+      *) log_error "${kind}: more than one role trusts this repository: ${found}"
+         case $kind in plan) field="PlanIAMRoleName" ;; *) field="ApplyIAMRoleName" ;; esac
+         log_error "Which one Pipelines should use is not something to guess at. Put the name in"
+         log_error "${field} above and run this step again."
+         exit 1 ;;
+    esac
+  done
+fi
 
 # ---------------------------------------------------------------------------
 # OIDC provider

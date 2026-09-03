@@ -217,6 +217,12 @@ variables:
     default: false
     x-section: Existing resources
 
+  - name: DiscoverExistingRoles
+    type: bool
+    description: Find the roles to adopt by what they trust, instead of by name. When on, the reconcile step looks for roles whose trust policy names this repository through the OIDC provider and uses them — useful when roles exist under names you do not know. A name typed above always wins, and more than one candidate for plan or apply stops the step rather than guessing. Needs iam:ListRoles.
+    default: false
+    x-section: Existing resources
+
   - name: PlanIAMRoleName
     type: string
     description: Optional. The name of the IAM role Pipelines assumes for plan. Leave as "default" to use <OIDCResourcePrefix>-plan, which is what the bootstrap has always created. Set it to adopt a role that already exists under a different name — it is then used for the role, the import, and the ARN Pipelines assumes. Needs a catalog release that supports it; the generate step checks and says so if not.
