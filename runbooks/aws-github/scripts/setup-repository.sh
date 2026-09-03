@@ -159,6 +159,31 @@ if [ -n "$RB_TerragruntScaleCatalogRefOverride" ] && [ "$RB_TerragruntScaleCatal
   esac
 fi
 
+# Leaving an existing provider out of the stack means the roles take its ARN from the stack's mock
+# value. Catalogs before the issuer fix build that mock from GitHub's default domain, so on a custom
+# issuer the roles would trust a provider that is not there -- and nothing fails until Actions tries
+# to authenticate. Ask the catalog actually in use rather than assuming: this then stops refusing on
+# its own once a release carries the fix, and allows a branch that already has it.
+if [ "${RB_out_plan_imports_exclude_oidc_provider}" = "true" ] && [ -n "$RB_Issuer" ]; then
+  stack_url="https://raw.githubusercontent.com/gruntwork-io/terragrunt-scale-catalog/${CATALOG_REF}/stacks/aws/github/pipelines-bootstrap/terragrunt.stack.hcl"
+  if ! command -v curl >/dev/null 2>&1; then
+    log_error "Cannot check whether catalog ${CATALOG_REF} builds the provider mock from the issuer"
+    log_error "(curl is not installed), and getting it wrong creates roles nothing can assume."
+    exit 1
+  fi
+  if curl -fsSL "$stack_url" 2>/dev/null | grep -q 'issuer_host'; then
+    log_info "Catalog ${CATALOG_REF} derives the provider mock from the issuer; the excluded-provider"
+    log_info "and custom-issuer combination is safe here."
+  else
+    log_error "ExistingOIDCProvider is leave-alone and a custom Issuer is set (${RB_Issuer}), but"
+    log_error "catalog ${CATALOG_REF} builds the roles' provider ARN from GitHub's default domain."
+    log_error "The roles would be created trusting a provider that does not exist."
+    log_error "Use a catalog ref that derives the mock from the issuer, set ExistingOIDCProvider to"
+    log_error "import, or leave Issuer at default."
+    exit 1
+  fi
+fi
+
 pick_version "Terragrunt" \
   "$RB_TerragruntVersion" "$RB_out_resolve_versions_terragrunt_version" "1.0.0"
 TERRAGRUNT_VERSION="$PICKED"
