@@ -93,13 +93,6 @@ locals {
   plan_iam_policy_name_suffix  = substr(sha256(local.plan_iam_policy), 0, 8)
   apply_iam_policy_name_suffix = substr(sha256(local.apply_iam_policy), 0, 8)
 
-  // The names of the plan/apply roles. Default to the prefix form, so leaving these unset behaves
-  // exactly as before -- including when importing, which then looks up "<prefix>-plan" as it always
-  // has. Set them to adopt roles that were created outside this stack and are named something else.
-  // Only the roles are affected: the policies keep following the prefix, as they always have.
-  plan_iam_role_name  = try(values.plan_iam_role_name, "${local.oidc_resource_prefix}-plan")
-  apply_iam_role_name = try(values.apply_iam_role_name, "${local.oidc_resource_prefix}-apply")
-
   plan_iam_role_import_existing      = try(values.plan_iam_role_import_existing, false)
   raw_plan_iam_policy_import_arn     = try(values.plan_iam_policy_import_arn, "")
   raw_plan_iam_attachment_import_arn = try(values.plan_iam_role_policy_attachment_import_arn, "")
@@ -157,7 +150,7 @@ unit "plan_iam_role" {
     // is excluded, so naming the wrong provider here creates roles nothing can ever assume.
     mock_iam_openid_connect_provider_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:oidc-provider/${local.issuer_host}"
 
-    name = local.plan_iam_role_name
+    name = "${local.oidc_resource_prefix}-plan"
 
     condition_operator = "StringLike"
 
@@ -196,7 +189,7 @@ unit "plan_iam_role_policy_attachment" {
     iam_policy_config_path = "../iam-policy"
 
     // Used to generate accurate mock values; actual values come from dependencies
-    mock_iam_role_name = local.plan_iam_role_name
+    mock_iam_role_name = "${local.oidc_resource_prefix}-plan"
     // Hashed to match the iam-policy module's real name (see plan_iam_policy_name_suffix above).
     mock_iam_policy_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:policy/${local.oidc_resource_prefix}-plan-${local.plan_iam_policy_name_suffix}"
 
@@ -220,7 +213,7 @@ unit "apply_iam_role" {
     // is excluded, so naming the wrong provider here creates roles nothing can ever assume.
     mock_iam_openid_connect_provider_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:oidc-provider/${local.issuer_host}"
 
-    name = local.apply_iam_role_name
+    name = "${local.oidc_resource_prefix}-apply"
 
     condition_operator = local.apply_condition_operator
 
@@ -261,7 +254,7 @@ unit "apply_iam_role_policy_attachment" {
     iam_policy_config_path = "../iam-policy"
 
     // Used to generate accurate mock values; actual values come from dependencies
-    mock_iam_role_name = local.apply_iam_role_name
+    mock_iam_role_name = "${local.oidc_resource_prefix}-apply"
     // Hashed to match the iam-policy module's real name (see apply_iam_policy_name_suffix above).
     mock_iam_policy_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:policy/${local.oidc_resource_prefix}-apply-${local.apply_iam_policy_name_suffix}"
 

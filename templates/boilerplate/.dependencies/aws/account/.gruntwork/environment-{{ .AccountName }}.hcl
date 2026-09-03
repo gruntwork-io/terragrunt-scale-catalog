@@ -14,8 +14,8 @@ environment "{{ .AccountName }}" {
     // Both roles are created by the bootstrap stack in _global/bootstrap/.
     aws_oidc {
       account_id         = "{{ .AWSAccountID }}"
-      plan_iam_role_arn  = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:role/{{ if .PlanIAMRoleName }}{{ .PlanIAMRoleName }}{{ else }}{{ .OIDCResourcePrefix }}-plan{{ end }}"
-      apply_iam_role_arn = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:role/{{ if .ApplyIAMRoleName }}{{ .ApplyIAMRoleName }}{{ else }}{{ .OIDCResourcePrefix }}-apply{{ end }}"
+      plan_iam_role_arn  = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:role/{{ .OIDCResourcePrefix }}-plan"
+      apply_iam_role_arn = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:role/{{ .OIDCResourcePrefix }}-apply"
     }
   }
 }
