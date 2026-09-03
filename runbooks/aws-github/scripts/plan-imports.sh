@@ -104,7 +104,22 @@ fi
 # OIDC provider
 # ---------------------------------------------------------------------------
 
-OIDC_JSON=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_PROVIDER_ARN" --output json 2>/dev/null || printf '')
+# "Absent" has to be distinguished from "could not tell", the way the role check above does. Reading
+# a denied call or a throttle as "no provider" would have the bootstrap create a second one, and the
+# apply would fail on a duplicate after the configuration was already generated.
+OIDC_JSON=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_PROVIDER_ARN" --output json 2>&1)
+oidc_rc=$?
+if [ "$oidc_rc" -ne 0 ]; then
+  if printf '%s' "$OIDC_JSON" | grep -q NoSuchEntity; then
+    OIDC_JSON=""
+  else
+    log_error "Could not check whether an OIDC provider exists at ${ISSUER_HOST}:"
+    log_error "  ${OIDC_JSON}"
+    log_error "Treating that as 'no provider' would create a second one and fail the apply, so this"
+    log_error "stops here. Check the credentials can read IAM, then run this step again."
+    exit 1
+  fi
+fi
 OIDC_IMPORT=false
 EXCLUDE_OIDC=false
 ADDITIONAL_AUDIENCES="[]"
