@@ -5,18 +5,11 @@
 into an `infrastructure-live` repository — interactively, in your browser, with as much automated as
 possible.
 
-There is one runbook per **cloud provider × source-control host**:
+There is one runbook: [aws-github](./aws-github), for AWS accounts with GitHub.
 
-| | GitHub | GitLab — new repo | GitLab — existing repo |
-|---|---|---|---|
-| **AWS** | [aws-github](./aws-github) | [aws-gitlab-new-repo](./aws-gitlab-new-repo) | [aws-gitlab-existing-repo](./aws-gitlab-existing-repo) |
-| **GCP** | [gcp-github](./gcp-github) | [gcp-gitlab-new-repo](./gcp-gitlab-new-repo) | [gcp-gitlab-existing-repo](./gcp-gitlab-existing-repo) |
-| **Azure** | [azure-github](./azure-github) | [azure-gitlab-new-repo](./azure-gitlab-new-repo) | [azure-gitlab-existing-repo](./azure-gitlab-existing-repo) |
-
-The GitHub runbooks handle both repository states in one pass: create the repository on GitHub first
-(empty is fine), and the runbook detects from the clone whether it needs to render the full
+It handles both repository states in one pass. Create the repository on GitHub first (empty is
+fine), and the runbook detects from the clone whether it needs to render the full
 `infrastructure-live` layout or add another account to a repo that already runs Terragrunt Scale.
-The GitLab runbooks are still split, and the *new repo* ones create the project for you.
 
 ## Opening a runbook
 
@@ -36,25 +29,21 @@ runbooks open https://github.com/gruntwork-io/terragrunt-scale-catalog/tree/main
 > On a Windows or locked-down machine, toggle **Instruction mode** in the app to get copy-pasteable
 > commands you run yourself instead of the app running them for you.
 
-## What each runbook does
+## What the runbook does
 
-Every runbook walks the same arc, specialized per cloud/SCM/repo-state:
+The runbook walks this arc:
 
 1. **Pre-flight checks** — verify `git`, `mise`, the cloud CLI, and the SCM CLI are installed, then
    install `boilerplate`, `terragrunt`, and `opentofu`.
-2. **Authenticate** — to the SCM host (GitHub/GitLab) and to the cloud (AWS via the `AwsAuth` block;
-   GCP/Azure via `gcloud`/`az` login steps).
-3. **Get the repository** — the GitHub runbooks clone the repository you select and read its state from
-   the clone; the GitLab *new-repo* runbooks create the project (`glab repo create`) first, and the
-   *existing-repo* ones clone yours and check for a `root.hcl`.
+2. **Authenticate** — to GitHub, and to AWS via the `AwsAuth` block.
+3. **Get the repository** — clone the repository you select, and read its state from the clone.
 4. **Auto-derive identifiers** — see below.
 5. **Configure** — a short form collects only the values that genuinely cannot be derived.
-6. **Set up the repository** — in the GitHub runbooks this is a single step that renders the matching
-   `templates/boilerplate/<cloud>/<scm>/…` template with `boilerplate --non-interactive`, installs the
+6. **Set up the repository** — a single step that renders the matching
+   `templates/boilerplate/aws/github/…` template with `boilerplate --non-interactive`, installs the
    tool versions it pins, adds the Pipelines CI workflows, and writes a README. A repo being scaffolded
    gets its CI workflow from the `infrastructure-live` template; a repo that already runs Terragrunt
-   Scale has it added without clobbering customizations. The GitLab runbooks still do these as
-   separate steps.
+   Scale has it added without clobbering customizations.
 7. **Provision** — `terragrunt` plan then apply the bootstrap stack (OIDC trust + state backend).
 8. **Open a PR / MR** and run **post-flight checks** that the OIDC resources and generated files exist.
 
@@ -66,16 +55,12 @@ These runbooks derive everything that can be derived, so you don't type (or mist
 |---|---|
 | AWS account ID & partition | `aws sts get-caller-identity` (partition inferred from the ARN) |
 | GitHub numeric org & repo IDs | the `org_id` / `repo_id` outputs of the `GitClone` block — used for GitHub's [immutable OIDC subject claims](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/) |
-| GCP project number | `gcloud projects describe <project-id>` |
-| Azure tenant & subscription IDs | `az account show` |
-| Azure plan/apply client IDs | captured from `terragrunt stack output` and written into `.gruntwork/environment-<sub>.hcl` automatically |
-| Deploy branch *(GitHub runbooks)* | `git rev-parse --abbrev-ref HEAD` on the clone — the branch you picked when selecting the repository |
-| Scaffold vs. add-an-account *(GitHub runbooks)* | presence of a root `root.hcl` in the clone |
-| Catalog, Terragrunt, OpenTofu & Terraform versions *(GitHub runbooks)* | the **Resolve the latest versions** step — `git ls-remote` for the catalog, `mise latest` for the tools |
+| Deploy branch | `git rev-parse --abbrev-ref HEAD` on the clone — the branch you picked when selecting the repository |
+| Scaffold vs. add-an-account | presence of a root `root.hcl` in the clone |
+| Catalog, Terragrunt, OpenTofu & Terraform versions | the **Resolve the latest versions** step — `git ls-remote` for the catalog, `mise latest` for the tools |
 
-You are only asked for genuine choices: environment/account names, region/location, state bucket or
-storage-account names, the OIDC resource prefix, and — in the GitHub runbooks — which IaC binary
-Pipelines should use. The GitLab runbooks still ask for the deploy branch.
+You are only asked for genuine choices: the account name, region, state bucket name, the OIDC
+resource prefix, and which IaC binary Pipelines should use.
 
 ## Testing
 

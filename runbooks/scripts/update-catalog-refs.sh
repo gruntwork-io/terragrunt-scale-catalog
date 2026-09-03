@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Regenerates the TerragruntScaleCatalogRef dropdown in every runbook.
+# Regenerates the TerragruntScaleCatalogRef dropdown in each runbook that is present.
 #
 # The Runbooks app reads each <Inputs> block's YAML when the runbook is opened,
 # before any step has run, so the list of selectable catalog versions has to be
