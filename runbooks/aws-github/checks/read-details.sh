@@ -102,7 +102,8 @@ for role in pipelines-plan pipelines-apply; do
     log_warn "IAM role ${role} already exists."
   fi
 done
-log_info "If roles with the prefix you choose already exist, answer ExistingPipelinesRoles below."
+log_info "The reconcile step after the form lists every role and policy you could adopt, with the"
+log_info "ARNs to copy into it."
 
 {
   echo "aws_account_id=${ACCOUNT_ID}"

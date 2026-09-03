@@ -225,36 +225,34 @@ variables:
     default: false
     x-section: Existing resources
 
-  - name: DiscoverExistingRoles
-    type: bool
-    description: Find the roles to adopt by what they trust, instead of by name. When on, the reconcile step looks for roles whose trust policy names this repository through the OIDC provider and uses them — useful when roles exist under names you do not know. A name typed above always wins, and more than one candidate for plan or apply stops the step rather than guessing. Needs iam:ListRoles.
-    default: false
-    x-section: Existing resources
-
-  - name: PlanIAMRoleName
+  - name: PlanIAMRoleImportArn
+    description: Optional. Full ARN of an existing IAM role to adopt for plan, instead of creating one. The reconcile step lists the roles that trust this repository through the OIDC provider — copy the ARN you want from there. Adopting a role rewrites its trust policy, so only name one that is yours to take over. Leave as none to create a new role.
     type: string
-    description: Optional. The name of the IAM role Pipelines assumes for plan. Leave as "default" to use <OIDCResourcePrefix>-plan, which is what the bootstrap has always created. Set it to adopt a role that already exists under a different name — it is then used for the role, the import, and the ARN Pipelines assumes. Needs a catalog release that supports it; the generate step checks and says so if not.
-    default: "default"
+    default: none
     validations:
       - required
     x-section: Existing resources
 
-  - name: ApplyIAMRoleName
+  - name: PlanIAMPolicyImportArn
+    description: Optional. Full ARN of an existing IAM policy to adopt for plan. The reconcile step lists the policies attached to the roles above — copy the ARN from there. The exact ARN is needed because policies are named "<name>-<hash of the document>", so an account can hold several generations of the same one and no prefix says which is meant. Leave as none to create a new policy.
     type: string
-    description: Optional. The name of the IAM role Pipelines assumes for apply. Leave as "default" to use <OIDCResourcePrefix>-apply. See PlanIAMRoleName.
-    default: "default"
+    default: none
     validations:
       - required
     x-section: Existing resources
 
-  - name: ExistingPipelinesRoles
-    type: enum
-    description: What to do if IAM roles with the prefix above already exist. import adopts them, but only when their trust policy already names this repository — a role belonging to another repository is refused, because importing repoints it and breaks that repository's Pipelines. import-any adopts them regardless, taking them over from whatever used them before. stop halts before anything is generated so you can choose a different OIDCResourcePrefix and leave the existing roles alone.
-    options:
-      - import
-      - import-any
-      - stop
-    default: import
+  - name: ApplyIAMRoleImportArn
+    description: Optional. Full ARN of an existing IAM role to adopt for apply, instead of creating one. The reconcile step lists the roles that trust this repository through the OIDC provider — copy the ARN you want from there. Adopting a role rewrites its trust policy, so only name one that is yours to take over. Leave as none to create a new role.
+    type: string
+    default: none
+    validations:
+      - required
+    x-section: Existing resources
+
+  - name: ApplyIAMPolicyImportArn
+    description: Optional. Full ARN of an existing IAM policy to adopt for apply. The reconcile step lists the policies attached to the roles above — copy the ARN from there. The exact ARN is needed because policies are named "<name>-<hash of the document>", so an account can hold several generations of the same one and no prefix says which is meant. Leave as none to create a new policy.
+    type: string
+    default: none
     validations:
       - required
     x-section: Existing resources

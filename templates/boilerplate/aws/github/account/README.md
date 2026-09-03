@@ -42,11 +42,11 @@ If the account already contains IAM resources with the same names, set the match
 | `OIDCProviderImportExisting` | OIDC provider |
 | `OIDCProviderTags` | Tags to set on an imported provider |
 | `PlanIAMRoleImportExisting` | `<prefix>-plan` role |
-| `PlanIamPolicyImportExisting` | `<prefix>-plan` policy |
-| `PlanIAMRolePolicyAttachmentImportExisting` | plan role-policy attachment |
+| `PlanIAMPolicyImportArn` | full ARN of an existing plan policy |
+| `PlanIAMRolePolicyAttachmentImportId` | `<role name>/<policy ARN>` of an existing plan attachment |
 | `ApplyIAMRoleImportExisting` | `<prefix>-apply` role |
-| `ApplyIamPolicyImportExisting` | `<prefix>-apply` policy |
-| `ApplyIAMRolePolicyAttachmentImportExisting` | apply role-policy attachment |
+| `ApplyIAMPolicyImportArn` | full ARN of an existing apply policy |
+| `ApplyIAMRolePolicyAttachmentImportId` | `<role name>/<policy ARN>` of an existing apply attachment |
 
 ## How It Works
 

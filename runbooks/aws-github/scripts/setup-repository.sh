@@ -86,8 +86,16 @@ RB_out_read_details_aws_account_id=$(rb_unquote "{{ .outputs.read_details.aws_ac
 RB_out_read_details_partition=$(rb_unquote "{{ .outputs.read_details.partition }}")
 RB_out_read_details_repo_mode=$(rb_unquote "{{ .outputs.read_details.repo_mode }}")
 RB_out_plan_imports_additional_audiences=$(rb_unquote "{{ .outputs.plan_imports.additional_audiences }}")
-RB_out_plan_imports_apply_attachment_import=$(rb_unquote "{{ .outputs.plan_imports.apply_attachment_import }}")
+RB_out_plan_imports_apply_attachment_id=$(rb_unquote "{{ .outputs.plan_imports.apply_attachment_id }}")
+RB_out_plan_imports_apply_policy_arn=$(rb_unquote "{{ .outputs.plan_imports.apply_policy_arn }}")
+RB_out_plan_imports_apply_role_import=$(rb_unquote "{{ .outputs.plan_imports.apply_role_import }}")
 RB_out_plan_imports_apply_role_name=$(rb_unquote "{{ .outputs.plan_imports.apply_role_name }}")
+RB_out_plan_imports_exclude_oidc_provider=$(rb_unquote "{{ .outputs.plan_imports.exclude_oidc_provider }}")
+RB_out_plan_imports_oidc_import_existing=$(rb_unquote "{{ .outputs.plan_imports.oidc_import_existing }}")
+RB_out_plan_imports_oidc_provider_tags=$(rb_unquote "{{ .outputs.plan_imports.oidc_provider_tags }}")
+RB_out_plan_imports_plan_attachment_id=$(rb_unquote "{{ .outputs.plan_imports.plan_attachment_id }}")
+RB_out_plan_imports_plan_policy_arn=$(rb_unquote "{{ .outputs.plan_imports.plan_policy_arn }}")
+RB_out_plan_imports_plan_role_import=$(rb_unquote "{{ .outputs.plan_imports.plan_role_import }}")
 RB_out_plan_imports_plan_role_name=$(rb_unquote "{{ .outputs.plan_imports.plan_role_name }}")
 RB_out_plan_imports_apply_policy_import=$(rb_unquote "{{ .outputs.plan_imports.apply_policy_import }}")
 RB_out_plan_imports_apply_role_import=$(rb_unquote "{{ .outputs.plan_imports.apply_role_import }}")
@@ -214,19 +222,6 @@ trap 'rm -rf "$(dirname "$VARS_FILE")"' EXIT
 if [ -f vars.yml ] && grep -q '^TerragruntScaleCatalogRef:' vars.yml; then
   rm -f vars.yml
 
-# Boilerplate ignores variables a template does not declare, so a catalog ref from before role
-# naming existed would quietly render prefix-named roles instead. Check the result rather than
-# assume it: the wrong roles here mean Pipelines assumes an ARN that was never created.
-if [ -n "${RB_out_plan_imports_plan_role_name}${RB_out_plan_imports_apply_role_name}" ]; then
-  env_hcl=".gruntwork/environment-${RB_AccountName}.hcl"
-  if [ -f "$env_hcl" ] && ! grep -q "role/${RB_out_plan_imports_plan_role_name:-$RB_OIDCResourcePrefix-plan}\"" "$env_hcl"; then
-    log_error "A custom IAM role name was requested, but catalog ref ${CATALOG_REF} rendered the"
-    log_error "default prefix-based names instead: it predates PlanIAMRoleName/ApplyIAMRoleName."
-    log_error "Pin a catalog release that supports them, or set both names back to default."
-    exit 1
-  fi
-  log_info "Rendered with the requested IAM role names."
-fi
 
   log_info "Removed a vars.yml left in the repository by an earlier run."
 fi
@@ -248,19 +243,25 @@ TerragruntScaleCatalogRef: "${CATALOG_REF}"
 OIDCProviderImportExisting: ${RB_out_plan_imports_oidc_import_existing:-false}
 ExcludeOIDCProvider: ${RB_out_plan_imports_exclude_oidc_provider:-false}
 PlanIAMRoleImportExisting: ${RB_out_plan_imports_plan_role_import:-false}
-PlanIamPolicyImportExisting: ${RB_out_plan_imports_plan_policy_import:-false}
-PlanIAMRolePolicyAttachmentImportExisting: ${RB_out_plan_imports_plan_attachment_import:-false}
 ApplyIAMRoleImportExisting: ${RB_out_plan_imports_apply_role_import:-false}
-ApplyIamPolicyImportExisting: ${RB_out_plan_imports_apply_policy_import:-false}
-ApplyIAMRolePolicyAttachmentImportExisting: ${RB_out_plan_imports_apply_attachment_import:-false}
 EOF
 
 # Audiences and tags are only written when there is something to carry across: the template treats
 # an empty list or map as "not set" either way, and leaving them out keeps vars.yml readable.
 # A custom issuer has to reach the template too: it builds the OIDC provider's ARN from it.
 [ -n "$RB_Issuer" ] && echo "Issuer: \"${RB_Issuer}\"" >> "$VARS_FILE"
-[ -n "${RB_out_plan_imports_plan_role_name}" ] && echo "PlanIAMRoleName: \"${RB_out_plan_imports_plan_role_name}\"" >> "$VARS_FILE"
-[ -n "${RB_out_plan_imports_apply_role_name}" ] && echo "ApplyIAMRoleName: \"${RB_out_plan_imports_apply_role_name}\"" >> "$VARS_FILE"
+# Written only when set: an empty value would make the template emit an import block pointing at
+# nothing, which fails the plan rather than simply creating the resource.
+for pair in \
+  "PlanIAMRoleName:${RB_out_plan_imports_plan_role_name}" \
+  "ApplyIAMRoleName:${RB_out_plan_imports_apply_role_name}" \
+  "PlanIAMPolicyImportArn:${RB_out_plan_imports_plan_policy_arn}" \
+  "ApplyIAMPolicyImportArn:${RB_out_plan_imports_apply_policy_arn}" \
+  "PlanIAMRolePolicyAttachmentImportId:${RB_out_plan_imports_plan_attachment_id}" \
+  "ApplyIAMRolePolicyAttachmentImportId:${RB_out_plan_imports_apply_attachment_id}"; do
+  key=${pair%%:*}; val=${pair#*:}
+  [ -n "$val" ] && echo "${key}: \"${val}\"" >> "$VARS_FILE"
+done
 if [ -n "${RB_out_plan_imports_additional_audiences}" ] && [ "${RB_out_plan_imports_additional_audiences}" != "[]" ]; then
   echo "AdditionalAudiences: ${RB_out_plan_imports_additional_audiences}" >> "$VARS_FILE"
 fi
