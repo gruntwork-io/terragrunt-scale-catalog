@@ -88,6 +88,15 @@ stack "bootstrap" {
       {{- end -}}
     "
     {{- end }}
+    {{- if .PlanIAMRoleName }}
+
+    // Adopt/manage a role that is not named "<prefix>-plan".
+    plan_iam_role_name = "{{ .PlanIAMRoleName }}"
+    {{- end }}
+    {{- if .ApplyIAMRoleName }}
+
+    apply_iam_role_name = "{{ .ApplyIAMRoleName }}"
+    {{- end }}
     {{- if .PlanIAMRoleImportExisting }}
 
     plan_iam_role_import_existing = true
@@ -98,7 +107,7 @@ stack "bootstrap" {
     {{- end }}
     {{- if .PlanIAMRolePolicyAttachmentImportExisting }}
 
-    plan_iam_role_policy_attachment_import_arn = "{{ .OIDCResourcePrefix }}-plan/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-plan"
+    plan_iam_role_policy_attachment_import_arn = "{{ if .PlanIAMRoleName }}{{ .PlanIAMRoleName }}{{ else }}{{ .OIDCResourcePrefix }}-plan{{ end }}/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-plan"
     {{- end }}
     {{- if .ApplyIAMRoleImportExisting }}
 
@@ -110,7 +119,7 @@ stack "bootstrap" {
     {{- end }}
     {{- if .ApplyIAMRolePolicyAttachmentImportExisting }}
 
-    apply_iam_role_policy_attachment_import_arn = "{{ .OIDCResourcePrefix }}-apply/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
+    apply_iam_role_policy_attachment_import_arn = "{{ if .ApplyIAMRoleName }}{{ .ApplyIAMRoleName }}{{ else }}{{ .OIDCResourcePrefix }}-apply{{ end }}/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
     {{- end }}
 
     // =========================================================================

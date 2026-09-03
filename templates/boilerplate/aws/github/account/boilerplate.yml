@@ -130,6 +130,24 @@ variables:
     default: false
     order: 20
 
+  - name: PlanIAMRoleName
+    description: |
+      Optional. The name of the IAM role Pipelines assumes for plan. Defaults to
+      "<OIDCResourcePrefix>-plan". Set it to adopt a role that already exists under a different
+      name; it is then used for the role this stack manages, for the import target, and for the ARN
+      Pipelines assumes.
+    type: string
+    default: ""
+
+  - name: ApplyIAMRoleName
+    description: |
+      Optional. The name of the IAM role Pipelines assumes for apply. Defaults to
+      "<OIDCResourcePrefix>-apply". Set it to adopt a role that already exists under a different
+      name; it is then used for the role this stack manages, for the import target, and for the ARN
+      Pipelines assumes.
+    type: string
+    default: ""
+
   - name: ApplyConditionOperator
     type: string
     description: >-
