@@ -100,7 +100,17 @@ variables:
     default: false
     order: 15
 
+  - name: PlanIamPolicyImportExisting
+    type: bool
+    description: Whether to import an existing plan IAM policy.
+    default: false
+    order: 16
 
+  - name: PlanIAMRolePolicyAttachmentImportExisting
+    type: bool
+    description: Whether to import an existing plan IAM role policy attachment.
+    default: false
+    order: 17
 
   - name: ApplyIAMRoleImportExisting
     type: bool
@@ -108,7 +118,17 @@ variables:
     default: false
     order: 18
 
+  - name: ApplyIamPolicyImportExisting
+    type: bool
+    description: Whether to import an existing apply IAM policy.
+    default: false
+    order: 19
 
+  - name: ApplyIAMRolePolicyAttachmentImportExisting
+    type: bool
+    description: Whether to import an existing apply IAM role policy attachment.
+    default: false
+    order: 20
 
   - name: PlanIAMRoleName
     description: |
@@ -125,38 +145,6 @@ variables:
       "<OIDCResourcePrefix>-apply". Set it to adopt a role that already exists under a different
       name; it is then used for the role this stack manages, for the import target, and for the ARN
       Pipelines assumes.
-    type: string
-    default: ""
-
-  - name: PlanIAMPolicyImportArn
-    description: |
-      Optional. Full ARN of an existing IAM policy to adopt for plan instead of creating one, e.g.
-      "arn:aws:iam::123456789012:policy/pipelines-plan-1d973c05". Policies are named
-      "<name>-<hash of the document>", so the exact ARN has to be given -- it cannot be derived
-      from a prefix.
-    type: string
-    default: ""
-
-  - name: PlanIAMRolePolicyAttachmentImportId
-    description: |
-      Optional. Import id of an existing attachment between the plan role and its policy, written
-      "<role name>/<policy ARN>". Only meaningful when both the role and the policy are adopted.
-    type: string
-    default: ""
-
-  - name: ApplyIAMPolicyImportArn
-    description: |
-      Optional. Full ARN of an existing IAM policy to adopt for apply instead of creating one, e.g.
-      "arn:aws:iam::123456789012:policy/pipelines-apply-1d973c05". Policies are named
-      "<name>-<hash of the document>", so the exact ARN has to be given -- it cannot be derived
-      from a prefix.
-    type: string
-    default: ""
-
-  - name: ApplyIAMRolePolicyAttachmentImportId
-    description: |
-      Optional. Import id of an existing attachment between the apply role and its policy, written
-      "<role name>/<policy ARN>". Only meaningful when both the role and the policy are adopted.
     type: string
     default: ""
 

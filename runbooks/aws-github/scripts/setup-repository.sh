@@ -86,17 +86,9 @@ RB_out_read_details_aws_account_id=$(rb_unquote "{{ .outputs.read_details.aws_ac
 RB_out_read_details_partition=$(rb_unquote "{{ .outputs.read_details.partition }}")
 RB_out_read_details_repo_mode=$(rb_unquote "{{ .outputs.read_details.repo_mode }}")
 RB_out_plan_imports_additional_audiences=$(rb_unquote "{{ .outputs.plan_imports.additional_audiences }}")
-RB_out_plan_imports_apply_attachment_id=$(rb_unquote "{{ .outputs.plan_imports.apply_attachment_id }}")
-RB_out_plan_imports_apply_policy_arn=$(rb_unquote "{{ .outputs.plan_imports.apply_policy_arn }}")
-RB_out_plan_imports_apply_role_import=$(rb_unquote "{{ .outputs.plan_imports.apply_role_import }}")
-RB_out_plan_imports_apply_role_name=$(rb_unquote "{{ .outputs.plan_imports.apply_role_name }}")
 RB_out_plan_imports_exclude_oidc_provider=$(rb_unquote "{{ .outputs.plan_imports.exclude_oidc_provider }}")
 RB_out_plan_imports_oidc_import_existing=$(rb_unquote "{{ .outputs.plan_imports.oidc_import_existing }}")
 RB_out_plan_imports_oidc_provider_tags=$(rb_unquote "{{ .outputs.plan_imports.oidc_provider_tags }}")
-RB_out_plan_imports_plan_attachment_id=$(rb_unquote "{{ .outputs.plan_imports.plan_attachment_id }}")
-RB_out_plan_imports_plan_policy_arn=$(rb_unquote "{{ .outputs.plan_imports.plan_policy_arn }}")
-RB_out_plan_imports_plan_role_import=$(rb_unquote "{{ .outputs.plan_imports.plan_role_import }}")
-RB_out_plan_imports_plan_role_name=$(rb_unquote "{{ .outputs.plan_imports.plan_role_name }}")
 RB_out_plan_imports_apply_policy_import=$(rb_unquote "{{ .outputs.plan_imports.apply_policy_import }}")
 RB_out_plan_imports_apply_role_import=$(rb_unquote "{{ .outputs.plan_imports.apply_role_import }}")
 RB_out_plan_imports_exclude_oidc_provider=$(rb_unquote "{{ .outputs.plan_imports.exclude_oidc_provider }}")
@@ -242,26 +234,12 @@ DeployBranch: "${RB_DeployBranch}"
 TerragruntScaleCatalogRef: "${CATALOG_REF}"
 OIDCProviderImportExisting: ${RB_out_plan_imports_oidc_import_existing:-false}
 ExcludeOIDCProvider: ${RB_out_plan_imports_exclude_oidc_provider:-false}
-PlanIAMRoleImportExisting: ${RB_out_plan_imports_plan_role_import:-false}
-ApplyIAMRoleImportExisting: ${RB_out_plan_imports_apply_role_import:-false}
 EOF
 
 # Audiences and tags are only written when there is something to carry across: the template treats
 # an empty list or map as "not set" either way, and leaving them out keeps vars.yml readable.
 # A custom issuer has to reach the template too: it builds the OIDC provider's ARN from it.
 [ -n "$RB_Issuer" ] && echo "Issuer: \"${RB_Issuer}\"" >> "$VARS_FILE"
-# Written only when set: an empty value would make the template emit an import block pointing at
-# nothing, which fails the plan rather than simply creating the resource.
-for pair in \
-  "PlanIAMRoleName:${RB_out_plan_imports_plan_role_name}" \
-  "ApplyIAMRoleName:${RB_out_plan_imports_apply_role_name}" \
-  "PlanIAMPolicyImportArn:${RB_out_plan_imports_plan_policy_arn}" \
-  "ApplyIAMPolicyImportArn:${RB_out_plan_imports_apply_policy_arn}" \
-  "PlanIAMRolePolicyAttachmentImportId:${RB_out_plan_imports_plan_attachment_id}" \
-  "ApplyIAMRolePolicyAttachmentImportId:${RB_out_plan_imports_apply_attachment_id}"; do
-  key=${pair%%:*}; val=${pair#*:}
-  [ -n "$val" ] && echo "${key}: \"${val}\"" >> "$VARS_FILE"
-done
 if [ -n "${RB_out_plan_imports_additional_audiences}" ] && [ "${RB_out_plan_imports_additional_audiences}" != "[]" ]; then
   echo "AdditionalAudiences: ${RB_out_plan_imports_additional_audiences}" >> "$VARS_FILE"
 fi

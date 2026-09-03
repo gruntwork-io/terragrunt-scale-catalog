@@ -100,17 +100,20 @@ locals {
   plan_iam_role_name  = try(values.plan_iam_role_name, "${local.oidc_resource_prefix}-plan")
   apply_iam_role_name = try(values.apply_iam_role_name, "${local.oidc_resource_prefix}-apply")
 
-  // Import targets are given verbatim: the caller names the exact resource to adopt. Policies are
-  // content-addressed ("<name>-<hash of the document>"), so a name built here from a prefix could
-  // only ever be a guess at which of them is meant -- and a wrong guess fails late, either on a
-  // duplicate name or on an import target that does not exist.
-  plan_iam_role_import_existing              = try(values.plan_iam_role_import_existing, false)
-  plan_iam_policy_import_arn                 = try(values.plan_iam_policy_import_arn, "")
-  plan_iam_role_policy_attachment_import_arn = try(values.plan_iam_role_policy_attachment_import_arn, "")
+  plan_iam_role_import_existing      = try(values.plan_iam_role_import_existing, false)
+  raw_plan_iam_policy_import_arn     = try(values.plan_iam_policy_import_arn, "")
+  raw_plan_iam_attachment_import_arn = try(values.plan_iam_role_policy_attachment_import_arn, "")
+  // Append the content hash so the import ARN matches the hashed policy name. The hash lands on the
+  // trailing :policy/<name> segment of both the policy ARN and the "<role>/<policy-arn>" attachment id.
+  // Empty stays empty so the unit's `disable = import_arn == ""` still suppresses the import block.
+  plan_iam_policy_import_arn                 = local.raw_plan_iam_policy_import_arn == "" ? "" : "${local.raw_plan_iam_policy_import_arn}-${local.plan_iam_policy_name_suffix}"
+  plan_iam_role_policy_attachment_import_arn = local.raw_plan_iam_attachment_import_arn == "" ? "" : "${local.raw_plan_iam_attachment_import_arn}-${local.plan_iam_policy_name_suffix}"
 
   apply_iam_role_import_existing              = try(values.apply_iam_role_import_existing, false)
-  apply_iam_policy_import_arn                 = try(values.apply_iam_policy_import_arn, "")
-  apply_iam_role_policy_attachment_import_arn = try(values.apply_iam_role_policy_attachment_import_arn, "")
+  raw_apply_iam_policy_import_arn             = try(values.apply_iam_policy_import_arn, "")
+  raw_apply_iam_attachment_import_arn         = try(values.apply_iam_role_policy_attachment_import_arn, "")
+  apply_iam_policy_import_arn                 = local.raw_apply_iam_policy_import_arn == "" ? "" : "${local.raw_apply_iam_policy_import_arn}-${local.apply_iam_policy_name_suffix}"
+  apply_iam_role_policy_attachment_import_arn = local.raw_apply_iam_attachment_import_arn == "" ? "" : "${local.raw_apply_iam_attachment_import_arn}-${local.apply_iam_policy_name_suffix}"
 
   oidc_provider_tags = try(values.oidc_provider_tags, {})
 }

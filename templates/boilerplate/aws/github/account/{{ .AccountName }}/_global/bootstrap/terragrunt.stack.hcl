@@ -101,27 +101,25 @@ stack "bootstrap" {
 
     plan_iam_role_import_existing = true
     {{- end }}
-    {{- if .PlanIAMPolicyImportArn }}
+    {{- if .PlanIamPolicyImportExisting }}
 
-    // Adopt this exact policy rather than creating one.
-    plan_iam_policy_import_arn = "{{ .PlanIAMPolicyImportArn }}"
+    plan_iam_policy_import_arn = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-plan"
     {{- end }}
-    {{- if .PlanIAMRolePolicyAttachmentImportId }}
+    {{- if .PlanIAMRolePolicyAttachmentImportExisting }}
 
-    plan_iam_role_policy_attachment_import_arn = "{{ .PlanIAMRolePolicyAttachmentImportId }}"
+    plan_iam_role_policy_attachment_import_arn = "{{ if .PlanIAMRoleName }}{{ .PlanIAMRoleName }}{{ else }}{{ .OIDCResourcePrefix }}-plan{{ end }}/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-plan"
     {{- end }}
     {{- if .ApplyIAMRoleImportExisting }}
 
     apply_iam_role_import_existing = true
     {{- end }}
-    {{- if .ApplyIAMPolicyImportArn }}
+    {{- if .ApplyIamPolicyImportExisting }}
 
-    // Adopt this exact policy rather than creating one.
-    apply_iam_policy_import_arn = "{{ .ApplyIAMPolicyImportArn }}"
+    apply_iam_policy_import_arn = "arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
     {{- end }}
-    {{- if .ApplyIAMRolePolicyAttachmentImportId }}
+    {{- if .ApplyIAMRolePolicyAttachmentImportExisting }}
 
-    apply_iam_role_policy_attachment_import_arn = "{{ .ApplyIAMRolePolicyAttachmentImportId }}"
+    apply_iam_role_policy_attachment_import_arn = "{{ if .ApplyIAMRoleName }}{{ .ApplyIAMRoleName }}{{ else }}{{ .OIDCResourcePrefix }}-apply{{ end }}/arn:{{ .Partition }}:iam::{{ .AWSAccountID }}:policy/{{ .OIDCResourcePrefix }}-apply"
     {{- end }}
 
     // =========================================================================

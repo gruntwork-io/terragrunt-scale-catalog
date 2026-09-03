@@ -102,8 +102,8 @@ for role in pipelines-plan pipelines-apply; do
     log_warn "IAM role ${role} already exists."
   fi
 done
-log_info "The reconcile step after the form lists every role and policy you could adopt, with the"
-log_info "ARNs to copy into it."
+log_info "The bootstrap creates its own roles, so if these names are taken the step after the form"
+log_info "stops and asks you for a different OIDCResourcePrefix."
 
 {
   echo "aws_account_id=${ACCOUNT_ID}"

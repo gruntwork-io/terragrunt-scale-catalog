@@ -225,38 +225,6 @@ variables:
     default: false
     x-section: Existing resources
 
-  - name: PlanIAMRoleImportArn
-    description: Optional. Full ARN of an existing IAM role to adopt for plan, instead of creating one. The reconcile step lists the roles that trust this repository through the OIDC provider — copy the ARN you want from there. Adopting a role rewrites its trust policy, so only name one that is yours to take over. Leave as none to create a new role.
-    type: string
-    default: none
-    validations:
-      - required
-    x-section: Existing resources
-
-  - name: PlanIAMPolicyImportArn
-    description: Optional. Full ARN of an existing IAM policy to adopt for plan. The reconcile step lists the policies attached to the roles above — copy the ARN from there. The exact ARN is needed because policies are named "<name>-<hash of the document>", so an account can hold several generations of the same one and no prefix says which is meant. Leave as none to create a new policy.
-    type: string
-    default: none
-    validations:
-      - required
-    x-section: Existing resources
-
-  - name: ApplyIAMRoleImportArn
-    description: Optional. Full ARN of an existing IAM role to adopt for apply, instead of creating one. The reconcile step lists the roles that trust this repository through the OIDC provider — copy the ARN you want from there. Adopting a role rewrites its trust policy, so only name one that is yours to take over. Leave as none to create a new role.
-    type: string
-    default: none
-    validations:
-      - required
-    x-section: Existing resources
-
-  - name: ApplyIAMPolicyImportArn
-    description: Optional. Full ARN of an existing IAM policy to adopt for apply. The reconcile step lists the policies attached to the roles above — copy the ARN from there. The exact ARN is needed because policies are named "<name>-<hash of the document>", so an account can hold several generations of the same one and no prefix says which is meant. Leave as none to create a new policy.
-    type: string
-    default: none
-    validations:
-      - required
-    x-section: Existing resources
-
   - name: IaCTool
     type: enum
     description: 'The IaC binary Pipelines instructs Terragrunt to use. Gruntwork recommends OpenTofu; choose terraform only if your organisation requires it. A repository that already declares a tool keeps it — this choice applies to new configuration only.'
@@ -302,7 +270,7 @@ you chose above. What it finds is matched against the answers in the **Existing 
 <Command
   id="plan-imports"
   title="Reconcile existing AWS resources"
-  description="Looks for a GitHub OIDC provider and for `<prefix>-plan` / `<prefix>-apply` roles, their policies and attachments, and decides which of them the bootstrap should import rather than create. Stops with an explanation if something exists that you asked not to import."
+  description="Decides what to do about an OIDC provider that already exists, and stops if IAM roles with your chosen prefix are already taken — the bootstrap always creates its own roles and policies, so a name clash would fail the apply after everything had been generated."
   inputsId="config"
   awsAuthId="aws-auth"
   path="scripts/plan-imports.sh"

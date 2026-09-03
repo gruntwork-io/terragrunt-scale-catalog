@@ -48,35 +48,3 @@ variables:
       Pipelines assumes.
     type: string
     default: ""
-
-  - name: PlanIAMPolicyImportArn
-    description: |
-      Optional. Full ARN of an existing IAM policy to adopt for plan instead of creating one, e.g.
-      "arn:aws:iam::123456789012:policy/pipelines-plan-1d973c05". Policies are named
-      "<name>-<hash of the document>", so the exact ARN has to be given -- it cannot be derived
-      from a prefix.
-    type: string
-    default: ""
-
-  - name: PlanIAMRolePolicyAttachmentImportId
-    description: |
-      Optional. Import id of an existing attachment between the plan role and its policy, written
-      "<role name>/<policy ARN>". Only meaningful when both the role and the policy are adopted.
-    type: string
-    default: ""
-
-  - name: ApplyIAMPolicyImportArn
-    description: |
-      Optional. Full ARN of an existing IAM policy to adopt for apply instead of creating one, e.g.
-      "arn:aws:iam::123456789012:policy/pipelines-apply-1d973c05". Policies are named
-      "<name>-<hash of the document>", so the exact ARN has to be given -- it cannot be derived
-      from a prefix.
-    type: string
-    default: ""
-
-  - name: ApplyIAMRolePolicyAttachmentImportId
-    description: |
-      Optional. Import id of an existing attachment between the apply role and its policy, written
-      "<role name>/<policy ARN>". Only meaningful when both the role and the policy are adopted.
-    type: string
-    default: ""
