@@ -82,6 +82,16 @@ RB_out_clone_repo_owner=$(rb_unquote "{{ .outputs.clone.repo_owner }}")
 RB_out_read_details_aws_account_id=$(rb_unquote "{{ .outputs.read_details.aws_account_id }}")
 RB_out_read_details_partition=$(rb_unquote "{{ .outputs.read_details.partition }}")
 RB_out_read_details_repo_mode=$(rb_unquote "{{ .outputs.read_details.repo_mode }}")
+RB_out_plan_imports_additional_audiences=$(rb_unquote "{{ .outputs.plan_imports.additional_audiences }}")
+RB_out_plan_imports_apply_attachment_import=$(rb_unquote "{{ .outputs.plan_imports.apply_attachment_import }}")
+RB_out_plan_imports_apply_policy_import=$(rb_unquote "{{ .outputs.plan_imports.apply_policy_import }}")
+RB_out_plan_imports_apply_role_import=$(rb_unquote "{{ .outputs.plan_imports.apply_role_import }}")
+RB_out_plan_imports_exclude_oidc_provider=$(rb_unquote "{{ .outputs.plan_imports.exclude_oidc_provider }}")
+RB_out_plan_imports_oidc_import_existing=$(rb_unquote "{{ .outputs.plan_imports.oidc_import_existing }}")
+RB_out_plan_imports_oidc_provider_tags=$(rb_unquote "{{ .outputs.plan_imports.oidc_provider_tags }}")
+RB_out_plan_imports_plan_attachment_import=$(rb_unquote "{{ .outputs.plan_imports.plan_attachment_import }}")
+RB_out_plan_imports_plan_policy_import=$(rb_unquote "{{ .outputs.plan_imports.plan_policy_import }}")
+RB_out_plan_imports_plan_role_import=$(rb_unquote "{{ .outputs.plan_imports.plan_role_import }}")
 RB_out_resolve_versions_catalog_ref=$(rb_unquote "{{ .outputs.resolve_versions.catalog_ref }}")
 RB_out_resolve_versions_opentofu_version=$(rb_unquote "{{ .outputs.resolve_versions.opentofu_version }}")
 RB_out_resolve_versions_terraform_version=$(rb_unquote "{{ .outputs.resolve_versions.terraform_version }}")
@@ -177,7 +187,24 @@ GitHubOrgID: "${RB_out_clone_org_id}"
 GitHubRepoID: "${RB_out_clone_repo_id}"
 DeployBranch: "${RB_DeployBranch}"
 TerragruntScaleCatalogRef: "${CATALOG_REF}"
+OIDCProviderImportExisting: ${RB_out_plan_imports_oidc_import_existing:-false}
+ExcludeOIDCProvider: ${RB_out_plan_imports_exclude_oidc_provider:-false}
+PlanIAMRoleImportExisting: ${RB_out_plan_imports_plan_role_import:-false}
+PlanIamPolicyImportExisting: ${RB_out_plan_imports_plan_policy_import:-false}
+PlanIAMRolePolicyAttachmentImportExisting: ${RB_out_plan_imports_plan_attachment_import:-false}
+ApplyIAMRoleImportExisting: ${RB_out_plan_imports_apply_role_import:-false}
+ApplyIamPolicyImportExisting: ${RB_out_plan_imports_apply_policy_import:-false}
+ApplyIAMRolePolicyAttachmentImportExisting: ${RB_out_plan_imports_apply_attachment_import:-false}
 EOF
+
+# Audiences and tags are only written when there is something to carry across: the template treats
+# an empty list or map as "not set" either way, and leaving them out keeps vars.yml readable.
+if [ -n "${RB_out_plan_imports_additional_audiences}" ] && [ "${RB_out_plan_imports_additional_audiences}" != "[]" ]; then
+  echo "AdditionalAudiences: ${RB_out_plan_imports_additional_audiences}" >> "$VARS_FILE"
+fi
+if [ -n "${RB_out_plan_imports_oidc_provider_tags}" ] && [ "${RB_out_plan_imports_oidc_provider_tags}" != "{}" ]; then
+  echo "OIDCProviderTags: ${RB_out_plan_imports_oidc_provider_tags}" >> "$VARS_FILE"
+fi
 
 # Only the full-repository template renders .mise.toml and the CI workflows, so only it takes
 # the tool versions and the drift-detection switch.

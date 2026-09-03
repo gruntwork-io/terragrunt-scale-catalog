@@ -72,6 +72,34 @@ fi
 log_info "If you changed branches after selecting the repository above, select it again so the"
 log_info "pull request targets ${BRANCH} too."
 
+# --- what is already in the account -------------------------------------------
+# Reported here, before the form, so the import questions below can be answered against what is
+# actually in the account rather than guessed. The authoritative pass runs after the form, once the
+# OIDC resource prefix is known; this looks at the default prefix only.
+OIDC_ARN="arn:${PARTITION}:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
+OIDC_JSON=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN" --output json 2>/dev/null || printf '')
+
+log_info ""
+if [ -n "$OIDC_JSON" ]; then
+  AUDIENCES=$(printf '%s' "$OIDC_JSON" | jq -r '.ClientIDList | join(", ")' 2>/dev/null)
+  log_warn "A GitHub OIDC provider already exists in this account."
+  log_warn "  audiences: ${AUDIENCES:-<none>}"
+  case ",${AUDIENCES}," in
+    *,sts.amazonaws.com,*) log_info "  It already trusts sts.amazonaws.com." ;;
+    *) log_warn "  It does NOT list sts.amazonaws.com; Pipelines needs that audience." ;;
+  esac
+  log_info "  Answer ExistingOIDCProvider in the form below to say whether it should be imported."
+else
+  log_info "No GitHub OIDC provider in this account yet; the bootstrap will create one."
+fi
+
+for role in pipelines-plan pipelines-apply; do
+  if aws iam get-role --role-name "$role" >/dev/null 2>&1; then
+    log_warn "IAM role ${role} already exists."
+  fi
+done
+log_info "If roles with the prefix you choose already exist, answer ExistingPipelinesRoles below."
+
 {
   echo "aws_account_id=${ACCOUNT_ID}"
   echo "partition=${PARTITION}"

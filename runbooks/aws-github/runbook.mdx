@@ -192,6 +192,34 @@ variables:
       - required
     x-section: Advanced
 
+  - name: ExistingOIDCProvider
+    type: enum
+    description: What to do if a GitHub OIDC provider already exists in this account. import brings it under Terragrunt so the bootstrap manages it from now on, and the apply adds the sts.amazonaws.com audience if it is missing (existing audiences and tags are kept). leave-alone omits the provider from the stack entirely, so the bootstrap neither manages nor touches it.
+    options:
+      - import
+      - leave-alone
+    default: import
+    validations:
+      - required
+    x-section: Existing resources
+
+  - name: AddStsAudienceIfMissing
+    type: bool
+    description: Only used when ExistingOIDCProvider is leave-alone. Pipelines cannot authenticate unless the provider trusts sts.amazonaws.com, and nothing manages the provider on that path, so this adds the audience directly with the AWS API. Leave false to be told about it and fix it yourself.
+    default: false
+    x-section: Existing resources
+
+  - name: ExistingPipelinesRoles
+    type: enum
+    description: What to do if IAM roles with the prefix above already exist. import adopts the role, its policy and their attachment into Terragrunt, replacing any customizations with the bootstrap defaults. stop halts before anything is generated so you can choose a different OIDCResourcePrefix and keep the existing roles untouched.
+    options:
+      - import
+      - stop
+    default: import
+    validations:
+      - required
+    x-section: Existing resources
+
   - name: IaCTool
     type: enum
     description: 'The IaC binary Pipelines instructs Terragrunt to use. Gruntwork recommends OpenTofu; choose terraform only if your organisation requires it. A repository that already declares a tool keeps it — this choice applies to new configuration only.'
@@ -230,6 +258,18 @@ variables:
 </Inputs>
 
 ## 7. Set up the repository
+
+Existing OIDC providers and IAM roles are reconciled before anything is generated, using the prefix
+you chose above. What it finds is matched against the answers in the **Existing resources** section.
+
+<Command
+  id="plan-imports"
+  title="Reconcile existing AWS resources"
+  description="Looks for a GitHub OIDC provider and for `<prefix>-plan` / `<prefix>-apply` roles, their policies and attachments, and decides which of them the bootstrap should import rather than create. Stops with an explanation if something exists that you asked not to import."
+  inputsId="config"
+  awsAuthId="aws-auth"
+  path="scripts/plan-imports.sh"
+/>
 
 Everything the repository needs is written in one pass: the Terragrunt Scale configuration, the tool
 versions it pins, the Pipelines CI workflows, and a README. Each phase is logged separately, and if one

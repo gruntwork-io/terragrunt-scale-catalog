@@ -33,6 +33,8 @@ tests:
         expect: skip
       - block: resolve-versions
         expect: skip
+      - block: plan-imports
+        expect: skip
       - block: setup-repository
         expect: skip
       - block: bootstrap-plan
