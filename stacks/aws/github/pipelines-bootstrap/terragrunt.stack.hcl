@@ -18,6 +18,9 @@ locals {
 
   issuer = try(values.issuer, local.default_issuer)
 
+  // The provider is addressed by host, with no scheme.
+  issuer_host = replace(replace(local.issuer, "https://", ""), "http://", "")
+
   github_org_name  = try(values.github_org_name, "")
   github_repo_name = try(values.github_repo_name, "")
 
@@ -149,7 +152,10 @@ unit "plan_iam_role" {
     iam_openid_connect_provider_config_path = "../../oidc-provider"
 
     // Used to generate accurate mock values; actual values come from dependencies
-    mock_iam_openid_connect_provider_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:oidc-provider/${local.github_token_actions_domain}"
+    // Built from the issuer, not the raw domain: the two differ on GitHub Enterprise Server and on
+    // enterprises with unique token URLs. This mock is what the roles trust when the provider unit
+    // is excluded, so naming the wrong provider here creates roles nothing can ever assume.
+    mock_iam_openid_connect_provider_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:oidc-provider/${local.issuer_host}"
 
     name = local.plan_iam_role_name
 
@@ -209,7 +215,10 @@ unit "apply_iam_role" {
     iam_openid_connect_provider_config_path = "../../oidc-provider"
 
     // Used to generate accurate mock values; actual values come from dependencies
-    mock_iam_openid_connect_provider_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:oidc-provider/${local.github_token_actions_domain}"
+    // Built from the issuer, not the raw domain: the two differ on GitHub Enterprise Server and on
+    // enterprises with unique token URLs. This mock is what the roles trust when the provider unit
+    // is excluded, so naming the wrong provider here creates roles nothing can ever assume.
+    mock_iam_openid_connect_provider_arn = "arn:${local.aws_partition}:iam::${local.aws_account_id}:oidc-provider/${local.issuer_host}"
 
     name = local.apply_iam_role_name
 

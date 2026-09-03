@@ -297,6 +297,19 @@ else
     leave-alone)
       EXCLUDE_OIDC=true
       log_warn "Leaving it alone: the stack omits the OIDC provider entirely."
+      # With the provider excluded, the roles take its ARN from the stack's mock value instead of
+      # from the unit's output. Catalog releases up to v1.13.2 build that mock from the default
+      # GitHub domain rather than from the issuer, so on a custom issuer the roles would be created
+      # trusting a provider that does not exist -- and nothing would fail until Actions tried to
+      # authenticate. Refuse the pairing rather than produce roles that quietly never work.
+      if [ -n "$RB_Issuer" ]; then
+        log_error "ExistingOIDCProvider is leave-alone and a custom Issuer is set (${RB_Issuer})."
+        log_error "With the provider left out of the stack, the roles take its ARN from a mock that"
+        log_error "names GitHub's default issuer, so they would trust a provider that is not there."
+        log_error "Set ExistingOIDCProvider to import, or leave Issuer at default, or pin a catalog"
+        log_error "release whose mock follows the issuer."
+        exit 1
+      fi
       if [ "$HAS_STS" != "true" ]; then
         if [ "$RB_AddStsAudienceIfMissing" = "true" ]; then
           log_warn "Adding the sts.amazonaws.com audience directly, since nothing will manage it."
