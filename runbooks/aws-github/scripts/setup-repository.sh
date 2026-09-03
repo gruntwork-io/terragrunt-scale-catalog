@@ -75,6 +75,7 @@ RB_OIDCResourcePrefix=$(rb_unquote "{{ .inputs.OIDCResourcePrefix }}")
 RB_OpenTofuVersion=$(rb_unquote "{{ .inputs.OpenTofuVersion }}")
 RB_StateBucketName=$(rb_unquote "{{ .inputs.StateBucketName }}")
 RB_TerragruntScaleCatalogRef=$(rb_unquote "{{ .inputs.TerragruntScaleCatalogRef }}")
+RB_TerragruntScaleCatalogRefOverride=$(rb_unquote "{{ .inputs.TerragruntScaleCatalogRefOverride }}")
 RB_TerraformVersion=$(rb_unquote "{{ .inputs.TerraformVersion }}")
 RB_TerragruntVersion=$(rb_unquote "{{ .inputs.TerragruntVersion }}")
 RB_out_clone_org_id=$(rb_unquote "{{ .outputs.clone.org_id }}")
@@ -144,6 +145,19 @@ pick_version() {
 pick_version "terragrunt-scale-catalog" \
   "$RB_TerragruntScaleCatalogRef" "$RB_out_resolve_versions_catalog_ref" "v1.13.1"
 CATALOG_REF="$PICKED"
+
+# The dropdown can only offer published releases, so testing an unreleased catalog needs a way past
+# it. This wins over everything: a branch, a tag, or a commit SHA, whatever git will resolve.
+if [ -n "$RB_TerragruntScaleCatalogRefOverride" ] && [ "$RB_TerragruntScaleCatalogRefOverride" != "none" ]; then
+  CATALOG_REF="$RB_TerragruntScaleCatalogRefOverride"
+  log_warn "Overriding the catalog ref with ${CATALOG_REF}."
+  case "$CATALOG_REF" in
+    v[0-9]*) : ;;
+    *) log_warn "That does not look like a release tag. If it is a branch, the rendered"
+       log_warn "terragrunt.stack.hcl pins it by name, so this repository follows whatever the branch"
+       log_warn "becomes rather than a fixed version. Fine for testing, not for a real bootstrap." ;;
+  esac
+fi
 
 pick_version "Terragrunt" \
   "$RB_TerragruntVersion" "$RB_out_resolve_versions_terragrunt_version" "1.0.0"

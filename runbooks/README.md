@@ -121,6 +121,14 @@ before any step has run — so a script running mid-runbook cannot add to it. Af
 A stale list never blocks anyone — `latest` is the first option and the default, and it resolves at run
 time. The list only affects which *older* versions can be picked from the dropdown.
 
+### Testing an unreleased catalog
+
+The dropdown can only offer published releases. To run a GitHub runbook against a branch, a tag that
+does not exist yet, or a commit SHA, set `TerragruntScaleCatalogRefOverride` in the form's Advanced
+section; it wins over the dropdown. A branch is a moving target, so the repository it generates
+follows the branch rather than pinning a version — the step says so when the ref does not look like
+a release tag.
+
 ## Contributing
 
 `aws-github` is the hand-authored reference implementation; the other cells follow its

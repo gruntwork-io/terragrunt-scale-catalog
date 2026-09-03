@@ -183,6 +183,14 @@ variables:
       - required
     x-section: Advanced
 
+  - name: TerragruntScaleCatalogRefOverride
+    type: string
+    description: For testing an unreleased catalog. Anything git understands works here — a branch, a tag, a commit SHA — and it wins over the dropdown above, which can only offer published releases. Leave as none for normal use. A branch is a moving target, so the generated repository will track it rather than pin a version.
+    default: none
+    validations:
+      - required
+    x-section: Advanced
+
   - name: IaCTool
     type: enum
     description: 'The IaC binary Pipelines instructs Terragrunt to use. Gruntwork recommends OpenTofu; choose terraform only if your organisation requires it. A repository that already declares a tool keeps it — this choice applies to new configuration only.'

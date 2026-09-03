@@ -192,6 +192,14 @@ variables:
       - required
     x-section: Advanced
 
+  - name: TerragruntScaleCatalogRefOverride
+    type: string
+    description: For testing an unreleased catalog. Anything git understands works here — a branch, a tag, a commit SHA — and it wins over the dropdown above, which can only offer published releases. Leave as none for normal use. A branch is a moving target, so the generated repository will track it rather than pin a version.
+    default: none
+    validations:
+      - required
+    x-section: Advanced
+
   - name: Issuer
     type: string
     description: Optional override for the OIDC issuer URL, for GitHub Enterprise Server or an enterprise with unique token URLs. Leave as "default" to use GitHub's default (https://token.actions.githubusercontent.com). The issuer decides which OIDC provider is looked for, imported and trusted, so set it before answering the questions below.
