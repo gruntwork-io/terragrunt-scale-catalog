@@ -211,9 +211,10 @@ variables:
 
   - name: ExistingPipelinesRoles
     type: enum
-    description: What to do if IAM roles with the prefix above already exist. import adopts the role, its policy and their attachment into Terragrunt, replacing any customizations with the bootstrap defaults. stop halts before anything is generated so you can choose a different OIDCResourcePrefix and keep the existing roles untouched.
+    description: What to do if IAM roles with the prefix above already exist. import adopts them, but only when their trust policy already names this repository — a role belonging to another repository is refused, because importing repoints it and breaks that repository's Pipelines. import-any adopts them regardless, taking them over from whatever used them before. stop halts before anything is generated so you can choose a different OIDCResourcePrefix and leave the existing roles alone.
     options:
       - import
+      - import-any
       - stop
     default: import
     validations:
