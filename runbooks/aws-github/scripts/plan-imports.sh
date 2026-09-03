@@ -339,35 +339,48 @@ NOT_OIDC_ROLES=""
 check_role() {
   kind=$1 role=$2 policy_base=$3
   role_exists=$(aws_exists "IAM role ${role}" aws iam get-role --role-name "$role") || exit 1
-  [ "$role_exists" = "true" ] || { log_info "IAM role ${role}: not present, will be created."; return 0; }
 
-  FOUND_ROLES="${FOUND_ROLES:+${FOUND_ROLES}, }${role}"
+  if [ "$role_exists" = "true" ]; then
+    FOUND_ROLES="${FOUND_ROLES:+${FOUND_ROLES}, }${role}"
 
-  # Who does it currently trust?
-  FOREIGN_SUB=""
-  belongs=0
-  role_belongs_to_this_repo "$role" || belongs=$?
-  case $belongs in
-    0) log_warn "IAM role ${role} already exists and already trusts this repository." ;;
-    1) log_warn "IAM role ${role} already exists but trusts a DIFFERENT repository:"
-       log_warn "  ${FOREIGN_SUB}"
-       FOREIGN_ROLES="${FOREIGN_ROLES:+${FOREIGN_ROLES}, }${role}" ;;
-    2) log_warn "IAM role ${role} already exists but is not a GitHub OIDC role."
-       NOT_OIDC_ROLES="${NOT_OIDC_ROLES:+${NOT_OIDC_ROLES}, }${role}" ;;
-  esac
+    # Who does it currently trust?
+    FOREIGN_SUB=""
+    belongs=0
+    role_belongs_to_this_repo "$role" || belongs=$?
+    case $belongs in
+      0) log_warn "IAM role ${role} already exists and already trusts this repository." ;;
+      1) log_warn "IAM role ${role} already exists but trusts a DIFFERENT repository:"
+         log_warn "  ${FOREIGN_SUB}"
+         FOREIGN_ROLES="${FOREIGN_ROLES:+${FOREIGN_ROLES}, }${role}" ;;
+      2) log_warn "IAM role ${role} already exists but is not a GitHub OIDC role."
+         NOT_OIDC_ROLES="${NOT_OIDC_ROLES:+${NOT_OIDC_ROLES}, }${role}" ;;
+    esac
+  else
+    log_info "IAM role ${role}: not present, will be created."
+  fi
 
+  # The policy is looked for whether or not the role is there. A policy left behind by a deleted
+  # role still owns its name, and creating over it fails the apply exactly as a live one would.
+  # There is nothing to decide here: an existing policy is imported, a missing one is created.
   find_policy_for_role "$role" "$policy_base"
   policy_exists=false
   [ -n "$FOUND_POLICY_ARN" ] && policy_exists=true
   if [ "$policy_exists" = "true" ]; then
-    log_warn "  policy ${FOUND_POLICY_ARN} (attached: ${FOUND_POLICY_ATTACHED})"
+    if [ "$FOUND_POLICY_ATTACHED" = "true" ]; then
+      log_warn "  policy ${FOUND_POLICY_ARN} (attached to the role)"
+    elif [ "$role_exists" = "true" ]; then
+      log_warn "  policy ${FOUND_POLICY_ARN} (exists but not attached to ${role})"
+    else
+      log_warn "  policy ${FOUND_POLICY_ARN} left over from a deleted role; it will be imported"
+      log_warn "  rather than created, which would otherwise fail on the duplicate name."
+    fi
   else
     log_info "  no matching policy in the account; one will be created."
   fi
 
   case $kind in
-    plan)  PLAN_ROLE_IMPORT=true;  PLAN_POLICY_IMPORT=$policy_exists;  PLAN_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
-    apply) APPLY_ROLE_IMPORT=true; APPLY_POLICY_IMPORT=$policy_exists; APPLY_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
+    plan)  PLAN_ROLE_IMPORT=$role_exists;  PLAN_POLICY_IMPORT=$policy_exists;  PLAN_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
+    apply) APPLY_ROLE_IMPORT=$role_exists; APPLY_POLICY_IMPORT=$policy_exists; APPLY_ATTACH_IMPORT=$FOUND_POLICY_ATTACHED ;;
   esac
 }
 
