@@ -24,6 +24,17 @@ Or directly from the catalog:
 runbooks open https://github.com/gruntwork-io/terragrunt-scale-catalog/tree/main/runbooks/aws-github
 ```
 
+## After the bootstrap applies
+
+If you chose to **import** an existing OIDC provider, the generated
+`<account>/_global/bootstrap/terragrunt.stack.hcl` keeps an `Import Variables` section naming what
+was adopted. Once the apply has succeeded, delete that section and commit.
+
+Leaving it is harmless day to day — an import block whose target is already in state is a no-op, and
+the plan stays clean. But it only stays inert while the target exists: if the OIDC provider is later
+removed, or the issuer changes, every subsequent plan fails with `Cannot import non-existent remote
+object`, including in CI on an unrelated pull request. The generated file carries the same note.
+
 Mirrors the official guides:
 [Add Pipelines to a new repository](https://docs.gruntwork.io/2.0/docs/pipelines/installation/addingnewrepo)
 and [Add Pipelines to an existing repository](https://docs.gruntwork.io/2.0/docs/pipelines/installation/addingexistingrepo).
