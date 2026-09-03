@@ -192,6 +192,14 @@ variables:
       - required
     x-section: Advanced
 
+  - name: Issuer
+    type: string
+    description: Optional override for the OIDC issuer URL, for GitHub Enterprise Server or an enterprise with unique token URLs. Leave as "default" to use GitHub's default (https://token.actions.githubusercontent.com). The issuer decides which OIDC provider is looked for, imported and trusted, so set it before answering the questions below.
+    default: "default"
+    validations:
+      - required
+    x-section: Existing resources
+
   - name: ExistingOIDCProvider
     type: enum
     description: What to do if a GitHub OIDC provider already exists in this account. import brings it under Terragrunt so the bootstrap manages it from now on, and the apply adds the sts.amazonaws.com audience if it is missing (existing audiences and tags are kept). leave-alone omits the provider from the stack entirely, so the bootstrap neither manages nor touches it.

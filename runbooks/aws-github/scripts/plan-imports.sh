@@ -28,6 +28,7 @@ rb_unquote() {
 
 RB_AddStsAudienceIfMissing=$(rb_unquote "{{ .inputs.AddStsAudienceIfMissing }}")
 RB_ExistingOIDCProvider=$(rb_unquote "{{ .inputs.ExistingOIDCProvider }}")
+RB_Issuer=$(rb_unquote "{{ .inputs.Issuer }}")
 RB_ExistingPipelinesRoles=$(rb_unquote "{{ .inputs.ExistingPipelinesRoles }}")
 RB_OIDCResourcePrefix=$(rb_unquote "{{ .inputs.OIDCResourcePrefix }}")
 RB_out_read_details_aws_account_id=$(rb_unquote "{{ .outputs.read_details.aws_account_id }}")
@@ -40,6 +41,20 @@ RB_out_clone_repo_owner=$(rb_unquote "{{ .outputs.clone.repo_owner }}")
 ACCOUNT="$RB_out_read_details_aws_account_id"
 PARTITION="$RB_out_read_details_partition"
 PREFIX="$RB_OIDCResourcePrefix"
+
+# An OIDC provider has no name: it is addressed by its issuer host, so that is what decides which
+# provider is looked for, imported and trusted. GitHub Enterprise Server and enterprises with unique
+# token URLs use a different one, and then every ARN below has to follow it.
+if [ "$RB_Issuer" = "default" ] || [ -z "$RB_Issuer" ]; then
+  RB_Issuer=""
+  ISSUER_HOST="token.actions.githubusercontent.com"
+else
+  ISSUER_HOST=${RB_Issuer#https://}
+  ISSUER_HOST=${ISSUER_HOST#http://}
+  ISSUER_HOST=${ISSUER_HOST%/}
+  log_info "Using a non-default OIDC issuer: ${RB_Issuer}"
+fi
+OIDC_PROVIDER_ARN="arn:${PARTITION}:iam::${ACCOUNT}:oidc-provider/${ISSUER_HOST}"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -97,7 +112,7 @@ find_policy_for_role() {
 # Returns: 0 this repository, 1 a GitHub OIDC role for a different repository, 2 not an OIDC role
 role_belongs_to_this_repo() {
   local role=$1 doc subs provider_arn
-  provider_arn="arn:${PARTITION}:iam::${ACCOUNT}:oidc-provider/token.actions.githubusercontent.com"
+  provider_arn="$OIDC_PROVIDER_ARN"
 
   doc=$(aws iam get-role --role-name "$role" --output json 2>/dev/null \
     | jq -c '.Role.AssumeRolePolicyDocument' 2>/dev/null) || doc=""
@@ -125,7 +140,7 @@ role_belongs_to_this_repo() {
 # OIDC provider
 # ---------------------------------------------------------------------------
 
-OIDC_ARN="arn:${PARTITION}:iam::${ACCOUNT}:oidc-provider/token.actions.githubusercontent.com"
+OIDC_ARN="$OIDC_PROVIDER_ARN"
 OIDC_JSON=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN" --output json 2>/dev/null || printf '')
 
 OIDC_IMPORT=false

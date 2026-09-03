@@ -76,6 +76,8 @@ log_info "pull request targets ${BRANCH} too."
 # Reported here, before the form, so the import questions below can be answered against what is
 # actually in the account rather than guessed. The authoritative pass runs after the form, once the
 # OIDC resource prefix is known; this looks at the default prefix only.
+# This runs before the form, so a custom Issuer is not known yet: report against GitHub's default
+# and let the reconcile step, which does know it, be authoritative.
 OIDC_ARN="arn:${PARTITION}:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
 OIDC_JSON=$(aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN" --output json 2>/dev/null || printf '')
 
@@ -90,7 +92,9 @@ if [ -n "$OIDC_JSON" ]; then
   esac
   log_info "  Answer ExistingOIDCProvider in the form below to say whether it should be imported."
 else
-  log_info "No GitHub OIDC provider in this account yet; the bootstrap will create one."
+  log_info "No OIDC provider for GitHub's default issuer in this account yet."
+  log_info "  The bootstrap will create one. If you use GitHub Enterprise Server or an enterprise"
+  log_info "  with unique token URLs, set Issuer in the form below and this is re-checked there."
 fi
 
 for role in pipelines-plan pipelines-apply; do

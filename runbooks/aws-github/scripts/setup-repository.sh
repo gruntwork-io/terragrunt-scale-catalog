@@ -69,6 +69,8 @@ RB_AccountName=$(rb_unquote "{{ .inputs.AccountName }}")
 RB_DeployBranch=$(rb_unquote "{{ .outputs.read_details.deploy_branch }}")
 RB_IaCTool=$(rb_unquote "{{ .inputs.IaCTool }}")
 RB_IncludeDriftDetection=$(rb_unquote "{{ .inputs.IncludeDriftDetection }}")
+RB_Issuer=$(rb_unquote "{{ .inputs.Issuer }}")
+if [ "$RB_Issuer" = "default" ]; then RB_Issuer=""; fi
 RB_OIDCResourcePrefix=$(rb_unquote "{{ .inputs.OIDCResourcePrefix }}")
 RB_OpenTofuVersion=$(rb_unquote "{{ .inputs.OpenTofuVersion }}")
 RB_StateBucketName=$(rb_unquote "{{ .inputs.StateBucketName }}")
@@ -199,6 +201,8 @@ EOF
 
 # Audiences and tags are only written when there is something to carry across: the template treats
 # an empty list or map as "not set" either way, and leaving them out keeps vars.yml readable.
+# A custom issuer has to reach the template too: it builds the OIDC provider's ARN from it.
+[ -n "$RB_Issuer" ] && echo "Issuer: \"${RB_Issuer}\"" >> "$VARS_FILE"
 if [ -n "${RB_out_plan_imports_additional_audiences}" ] && [ "${RB_out_plan_imports_additional_audiences}" != "[]" ]; then
   echo "AdditionalAudiences: ${RB_out_plan_imports_additional_audiences}" >> "$VARS_FILE"
 fi
