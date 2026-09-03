@@ -259,6 +259,115 @@ log_info "Rendering aws/github/${TEMPLATE} template (ref ${CATALOG_REF})..."
   --non-interactive
 
 
+# --- Customer-owned IAM policy documents -------------------------
+# The catalog's pipelines-bootstrap stack builds its plan/apply policies from JSON templates that
+# ship inside the stack source, read via get_parent_terragrunt_dir(). Inside the FETCHED copy of that
+# stack, that function resolves to <bootstrap>/.terragrunt-stack/bootstrap/ — and every file there is
+# listed in .terragrunt-stack-manifest, so Terragrunt deletes and re-copies it on each
+# `terragrunt stack generate`. There is therefore no way to customise those documents in place.
+#
+# What the stack does support is a values override:
+#     plan_iam_policy = try(values.plan_iam_policy, local.default_plan_iam_policy)
+# so the documents are fetched at $CATALOG_REF, substituted here (this runbook already knows the
+# partition, the state bucket and the locks table), written into the account's bootstrap folder as
+# plain JSON, and wired up with file() rather than templatefile() — so a customer editing them later
+# can use IAM's own ${aws:...} policy variables without Terraform reading them as template syntax.
+write_policy_overrides() {
+  bootstrap_dir="${RB_AccountName}/_global/bootstrap"
+  stack_hcl="${bootstrap_dir}/terragrunt.stack.hcl"
+
+  if [ ! -f "$stack_hcl" ]; then
+    log_error "Expected ${stack_hcl} after rendering the ${TEMPLATE} template, but it is not there."
+    exit 1
+  fi
+
+  # Adding an account to a repo that already carries these, or re-running over a previous bootstrap.
+  if grep -q 'plan_iam_policy' "$stack_hcl"; then
+    log_info "${stack_hcl} already sets plan_iam_policy; leaving the policy documents alone."
+    return 0
+  fi
+
+  # Check the anchor BEFORE fetching anything, so a template reshape cannot leave this repository
+  # holding policy documents that nothing references.
+  anchor='state_bucket_name = local\.account_hcl\.locals\.state_bucket_name'
+  if ! grep -q "$anchor" "$stack_hcl"; then
+    log_error "Cannot wire up the policy documents: the line this runbook anchors on"
+    log_error "  state_bucket_name = local.account_hcl.locals.state_bucket_name"
+    log_error "is not in ${stack_hcl}. The account template in catalog ${CATALOG_REF} has changed"
+    log_error "shape; update write_policy_overrides in this script to match."
+    exit 1
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    log_error "curl is required to fetch the catalog's IAM policy documents, and is not installed."
+    exit 1
+  fi
+
+  # Not a boilerplate variable anywhere: the catalog stack defaults it, and this must match.
+  locks_table="terraform-locks"
+
+  for kind in plan apply; do
+    dest="${bootstrap_dir}/${kind}_iam_policy.json"
+    if [ -f "$dest" ]; then
+      log_info "${dest} already exists; keeping this repository's copy."
+      continue
+    fi
+
+    url="https://raw.githubusercontent.com/gruntwork-io/terragrunt-scale-catalog/${CATALOG_REF}/stacks/aws/github/pipelines-bootstrap/default_${kind}_iam_policy.json"
+    if ! curl -fsSL "$url" -o "${dest}.tmp"; then
+      log_error "Could not fetch default_${kind}_iam_policy.json from catalog ${CATALOG_REF}:"
+      log_error "  ${url}"
+      rm -f "${dest}.tmp"
+      exit 1
+    fi
+
+    sed -e "s|\${aws_partition}|${RB_out_read_details_partition}|g" \
+        -e "s|\${state_bucket_name}|${RB_StateBucketName}|g" \
+        -e "s|\${terraform_locks_table_name}|${locks_table}|g" \
+        "${dest}.tmp" > "$dest"
+    rm -f "${dest}.tmp"
+
+    # A placeholder left behind is one this runbook does not know to substitute. Writing it through
+    # would put a literal ${...} into a live IAM policy, where AWS reads it as an IAM policy variable
+    # rather than failing — a resource ARN that quietly matches nothing.
+    if grep -q '\${' "$dest"; then
+      log_error "default_${kind}_iam_policy.json in catalog ${CATALOG_REF} uses placeholders this"
+      log_error "runbook does not substitute:"
+      for ph in $(grep -o '\${[a-z_]*}' "$dest" | sort -u); do
+        log_error "  ${ph}"
+      done
+      rm -f "$dest"
+      exit 1
+    fi
+
+    log_info "Wrote ${dest} (from catalog ${CATALOG_REF})."
+  done
+
+  awk '
+    { print }
+    /state_bucket_name = local\.account_hcl\.locals\.state_bucket_name/ && !done {
+      print ""
+      print "    // IAM policy documents for the plan and apply roles, kept in this folder so they can be"
+      print "    // edited in place. Setting these overrides the catalog defaults completely: from now on,"
+      print "    // moving the ?ref= above to a newer catalog no longer changes what these roles may do."
+      print "    // The bucket and table names below are baked into the JSON, so if account.hcl'\''s"
+      print "    // state_bucket_name ever changes, update the JSON to match."
+      print "    plan_iam_policy  = file(\"${get_terragrunt_dir()}/plan_iam_policy.json\")"
+      print "    apply_iam_policy = file(\"${get_terragrunt_dir()}/apply_iam_policy.json\")"
+      done = 1
+    }
+  ' "$stack_hcl" > "${stack_hcl}.tmp" && mv "${stack_hcl}.tmp" "$stack_hcl"
+
+  if ! grep -q 'plan_iam_policy' "$stack_hcl"; then
+    log_error "Failed to add plan_iam_policy/apply_iam_policy to ${stack_hcl}."
+    exit 1
+  fi
+  log_info "Pointed ${stack_hcl} at this repository's own policy documents."
+}
+
+write_policy_overrides
+
+
 # Catalog releases from the version that added IaCTool onwards render the right pin and tf_binary
 # themselves, and the reconciliation below then finds nothing to do. Older refs — including any
 # already-published ref a user may pin — do not, so the rendered files are reconciled here. Both must agree: tf_binary tells Pipelines which binary to run
