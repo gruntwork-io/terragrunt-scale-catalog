@@ -4,6 +4,19 @@ variables:
     description: The version of Terragrunt to use.
     default: "1.0.0"
 
+  - name: IaCTool
+    type: enum
+    description: The IaC binary Pipelines instructs Terragrunt to use. Gruntwork recommends OpenTofu.
+    options:
+      - opentofu
+      - terraform
+    default: opentofu
+
+  - name: TerraformVersion
+    type: string
+    description: The version of Terraform to use. Only applies when IaCTool is "terraform".
+    default: "1.15.9"
+
   - name: OpenTofuVersion
     type: string
     description: The version of OpenTofu to use.

@@ -6,6 +6,10 @@ repository {
   // If you change this, also update the branch trigger in your CI workflow file.
   deploy_branch_name = "{{ .DeployBranch }}"
 
+  // The IaC binary Pipelines instructs Terragrunt to use: "opentofu" (recommended) or "terraform".
+  // Docs: https://docs.gruntwork.io/2.0/reference/pipelines/configurations-as-code/api#tf_binary
+  tf_binary = "{{ .IaCTool }}"
+
   // Controls whether each push creates a new status comment or updates the existing one in-place.
   // Docs: https://docs.gruntwork.io/2.0/reference/pipelines/configurations-as-code/api#new_comment_per_push
   status_update {
