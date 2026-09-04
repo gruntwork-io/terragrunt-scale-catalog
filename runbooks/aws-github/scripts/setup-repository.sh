@@ -936,8 +936,8 @@ rm -f "$TARGET.bak"
 # nothing. Angle brackets in the placeholder labels are written as entities.
 write_example_diagram() {
   cat > pipelines-bootstrap-example.svg <<'SVGEOF'
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="560" viewBox="0 0 760 560" font-family="Helvetica, Arial, sans-serif">
-  <rect width="760" height="560" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="628" viewBox="0 0 760 628" font-family="Helvetica, Arial, sans-serif">
+  <rect width="760" height="628" fill="#ffffff"/>
   <text x="380" y="34" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a1a1a">Gruntwork Pipelines bootstrap</text>
   <text x="380" y="54" text-anchor="middle" font-size="12" fill="#666666">what the stack provisions in each AWS account</text>
 
@@ -969,15 +969,30 @@ write_example_diagram() {
   <text x="565" y="364" text-anchor="middle" font-size="10" fill="#666666">assumed on merges to the deploy branch</text>
   <text x="565" y="380" text-anchor="middle" font-size="10" fill="#666666">creates and changes infrastructure</text>
 
-  <line x1="195" y1="390" x2="330" y2="446" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <line x1="565" y1="390" x2="430" y2="446" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="195" y1="390" x2="195" y2="416" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="203" y="408" font-size="9" fill="#666666">attached</text>
+  <line x1="565" y1="390" x2="565" y2="416" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="573" y="408" font-size="9" fill="#666666">attached</text>
 
-  <rect x="210" y="450" width="340" height="66" rx="6" fill="#eef2f8" stroke="#3f5f8d" stroke-width="1.5"/>
-  <text x="380" y="473" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">S3 state bucket</text>
-  <text x="380" y="491" text-anchor="middle" font-size="11" fill="#444444">&lt;state-bucket&gt;</text>
-  <text x="380" y="507" text-anchor="middle" font-size="10" fill="#666666">one state file per unit</text>
+  <rect x="20" y="420" width="350" height="66" rx="6" fill="#f7faf7" stroke="#3f7d43" stroke-width="1.5"/>
+  <text x="195" y="443" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">Plan policy</text>
+  <text x="195" y="462" text-anchor="middle" font-size="10" fill="#444444">&lt;prefix&gt;-plan-&lt;hash&gt;</text>
+  <text x="195" y="478" text-anchor="middle" font-size="10" fill="#666666">from plan_iam_policy.json</text>
 
-  <text x="380" y="540" text-anchor="middle" font-size="10" fill="#999999">Example. Each account has its own diagram at &lt;account&gt;/pipelines-bootstrap.svg</text>
+  <rect x="390" y="420" width="350" height="66" rx="6" fill="#fdf7f7" stroke="#a63c3c" stroke-width="1.5"/>
+  <text x="565" y="443" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">Apply policy</text>
+  <text x="565" y="462" text-anchor="middle" font-size="10" fill="#444444">&lt;prefix&gt;-apply-&lt;hash&gt;</text>
+  <text x="565" y="478" text-anchor="middle" font-size="10" fill="#666666">from apply_iam_policy.json</text>
+
+  <line x1="195" y1="486" x2="330" y2="514" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="565" y1="486" x2="430" y2="514" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="210" y="518" width="340" height="66" rx="6" fill="#eef2f8" stroke="#3f5f8d" stroke-width="1.5"/>
+  <text x="380" y="541" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">S3 state bucket</text>
+  <text x="380" y="559" text-anchor="middle" font-size="11" fill="#444444">&lt;state-bucket&gt;</text>
+  <text x="380" y="575" text-anchor="middle" font-size="10" fill="#666666">one state file per unit</text>
+
+  <text x="380" y="610" text-anchor="middle" font-size="10" fill="#999999">Example. Each account has its own diagram at &lt;account&gt;/pipelines-bootstrap.svg</text>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">

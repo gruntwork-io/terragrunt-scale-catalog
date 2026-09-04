@@ -74,8 +74,14 @@ missing=0
 # Filled in by the lookups below and used to label the diagram.
 OIDC_AUDIENCES=""
 LAST_ROLE_ARN=""
+LAST_ROLE_POLICY_ARN=""
+LAST_ROLE_POLICY_NAME=""
 PLAN_ROLE_ARN=""
 APPLY_ROLE_ARN=""
+PLAN_POLICY_ARN=""
+APPLY_POLICY_ARN=""
+PLAN_POLICY_NAME=""
+APPLY_POLICY_NAME=""
 
 show_oidc_provider() {
   local arn json audiences created
@@ -97,7 +103,7 @@ show_oidc_provider() {
 }
 
 show_role() {
-  local name=$1 label=$2 json arn created policies inline
+  local name=$1 label=$2 json arn created policies inline attached
   json=$(aws iam get-role --role-name "$name" --output json 2>/dev/null)
   if [ -z "$json" ]; then
     log_warn "${label} role ${name}: not found"
@@ -118,6 +124,17 @@ show_role() {
     while IFS= read -r p; do
       [ -n "$p" ] && log_info "  policy     ${p}"
     done <<< "$policies"
+    # Kept for the diagram and the account README. The catalog attaches exactly one policy per role,
+    # named "<prefix>-<kind>-<sha256(document)[:8]>", so the first is the one to show. A role that
+    # has picked up others is reported as a count rather than as a misleadingly single name.
+    LAST_ROLE_POLICY_ARN=$(printf '%s\n' "$policies" | head -1)
+    LAST_ROLE_POLICY_NAME=${LAST_ROLE_POLICY_ARN##*/}
+    attached=$(printf '%s\n' "$policies" | grep -c .)
+    if [ "$attached" -gt 1 ]; then
+      LAST_ROLE_POLICY_NAME="${LAST_ROLE_POLICY_NAME} (+$((attached - 1)) more)"
+    fi
+  else
+    LAST_ROLE_POLICY_NAME="(none attached)"
   fi
 
   inline=$(aws iam list-role-policies --role-name "$name" --output json 2>/dev/null \
@@ -154,13 +171,17 @@ log_info "Reading back what the bootstrap created in account ${ACCOUNT}..."
 log_info ""
 show_oidc_provider
 log_info ""
-LAST_ROLE_ARN=""
+LAST_ROLE_ARN=""; LAST_ROLE_POLICY_ARN=""; LAST_ROLE_POLICY_NAME=""
 show_role "${PREFIX}-plan" "Plan"
 PLAN_ROLE_ARN="$LAST_ROLE_ARN"
+PLAN_POLICY_ARN="$LAST_ROLE_POLICY_ARN"
+PLAN_POLICY_NAME="$LAST_ROLE_POLICY_NAME"
 log_info ""
-LAST_ROLE_ARN=""
+LAST_ROLE_ARN=""; LAST_ROLE_POLICY_ARN=""; LAST_ROLE_POLICY_NAME=""
 show_role "${PREFIX}-apply" "Apply"
 APPLY_ROLE_ARN="$LAST_ROLE_ARN"
+APPLY_POLICY_ARN="$LAST_ROLE_POLICY_ARN"
+APPLY_POLICY_NAME="$LAST_ROLE_POLICY_NAME"
 log_info ""
 show_state_bucket
 log_info ""
@@ -192,8 +213,8 @@ write_diagram() {
   fi
 
   cat > "$file" <<'SVGEOF'
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="540" viewBox="0 0 760 540" font-family="Helvetica, Arial, sans-serif">
-  <rect width="760" height="540" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="600" viewBox="0 0 760 600" font-family="Helvetica, Arial, sans-serif">
+  <rect width="760" height="600" fill="#ffffff"/>
   <text x="380" y="34" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a1a1a">Gruntwork Pipelines bootstrap</text>
   <text x="380" y="54" text-anchor="middle" font-size="12" fill="#666666">AWS account __RB_ACCOUNT__ (__RB_PARTITION__)</text>
 
@@ -225,14 +246,28 @@ write_diagram() {
   <text x="565" y="364" text-anchor="middle" font-size="10" fill="#666666">assumed on merges to __RB_BRANCH__</text>
   <text x="565" y="380" text-anchor="middle" font-size="10" fill="#666666">creates and changes infrastructure</text>
 
-  <line x1="195" y1="390" x2="330" y2="446" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <line x1="565" y1="390" x2="430" y2="446" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="195" y1="390" x2="195" y2="416" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="203" y="408" font-size="9" fill="#666666">attached</text>
+  <line x1="565" y1="390" x2="565" y2="416" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="573" y="408" font-size="9" fill="#666666">attached</text>
 
-  <rect x="210" y="450" width="340" height="66" rx="6" fill="#eef2f8" stroke="#3f5f8d" stroke-width="1.5"/>
-  <text x="380" y="473" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">S3 state bucket</text>
-  <text x="380" y="491" text-anchor="middle" font-size="11" fill="#444444">__RB_BUCKET__</text>
-  <text x="380" y="507" text-anchor="middle" font-size="10" fill="#666666">OpenTofu / Terraform state</text>
+  <rect x="20" y="420" width="350" height="66" rx="6" fill="#f7faf7" stroke="#3f7d43" stroke-width="1.5"/>
+  <text x="195" y="443" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">Plan policy</text>
+  <text x="195" y="462" text-anchor="middle" font-size="10" fill="#444444">__RB_PLAN_POLICY__</text>
+  <text x="195" y="478" text-anchor="middle" font-size="10" fill="#666666">from plan_iam_policy.json</text>
 
+  <rect x="390" y="420" width="350" height="66" rx="6" fill="#fdf7f7" stroke="#a63c3c" stroke-width="1.5"/>
+  <text x="565" y="443" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">Apply policy</text>
+  <text x="565" y="462" text-anchor="middle" font-size="10" fill="#444444">__RB_APPLY_POLICY__</text>
+  <text x="565" y="478" text-anchor="middle" font-size="10" fill="#666666">from apply_iam_policy.json</text>
+
+  <line x1="195" y1="486" x2="330" y2="514" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="565" y1="486" x2="430" y2="514" stroke="#5b6b7c" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="210" y="518" width="340" height="66" rx="6" fill="#eef2f8" stroke="#3f5f8d" stroke-width="1.5"/>
+  <text x="380" y="541" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a1a1a">S3 state bucket</text>
+  <text x="380" y="559" text-anchor="middle" font-size="11" fill="#444444">__RB_BUCKET__</text>
+  <text x="380" y="575" text-anchor="middle" font-size="10" fill="#666666">OpenTofu / Terraform state</text>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -251,6 +286,8 @@ SVGEOF
     -e "s|__RB_AUDIENCE__|$(svg_escape "${OIDC_AUDIENCES:-sts.amazonaws.com}")|g" \
     -e "s|__RB_PLAN_ARN__|$(svg_escape "$PLAN_ROLE_ARN")|g" \
     -e "s|__RB_APPLY_ARN__|$(svg_escape "$APPLY_ROLE_ARN")|g" \
+    -e "s|__RB_PLAN_POLICY__|$(svg_escape "${PLAN_POLICY_NAME:-(none attached)}")|g" \
+    -e "s|__RB_APPLY_POLICY__|$(svg_escape "${APPLY_POLICY_NAME:-(none attached)}")|g" \
     -e "s|__RB_BUCKET__|$(svg_escape "$RB_StateBucketName")|g" \
     "$file"
   rm -f "$file.bak"
@@ -322,7 +359,9 @@ Gruntwork Pipelines is bootstrapped for this environment in AWS account `__RB_AC
 | Deploy branch | `__RB_BRANCH__` |
 | OIDC provider | `__RB_OIDC_ARN__` |
 | Plan role | `__RB_PLAN_ARN__` |
+| Plan policy | `__RB_PLAN_POLICY_ARN__` |
 | Apply role | `__RB_APPLY_ARN__` |
+| Apply policy | `__RB_APPLY_POLICY_ARN__` |
 | State bucket | `__RB_BUCKET__` |
 
 ## How this account is deployed
@@ -359,6 +398,8 @@ MDEOF
     -e "s|__RB_PLAN_ARN__|$(svg_escape "$PLAN_ROLE_ARN")|g" \
     -e "s|__RB_APPLY_ARN__|$(svg_escape "$APPLY_ROLE_ARN")|g" \
     -e "s|__RB_BUCKET__|$(svg_escape "$RB_StateBucketName")|g" \
+    -e "s|__RB_PLAN_POLICY_ARN__|$(svg_escape "${PLAN_POLICY_ARN:-(none attached)}")|g" \
+    -e "s|__RB_APPLY_POLICY_ARN__|$(svg_escape "${APPLY_POLICY_ARN:-(none attached)}")|g" \
     -e "s|__RB_TITLE__|$(svg_escape "$title")|g" \
     "$target"
   rm -f "$target.bak"
