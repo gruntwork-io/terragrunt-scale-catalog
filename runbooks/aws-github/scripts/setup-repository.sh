@@ -829,7 +829,9 @@ runs `terragrunt apply`. Nothing is applied from a laptop in normal operation.
     └── _global/
         ├── region.hcl
         └── bootstrap/
-            └── terragrunt.stack.hcl
+            ├── terragrunt.stack.hcl
+            ├── plan_iam_policy.json
+            └── apply_iam_policy.json
 ```
 
 | Path | What it is |
@@ -847,7 +849,9 @@ runs `terragrunt apply`. Nothing is applied from a laptop in normal operation.
 | `<account>/pipelines-bootstrap.svg` | The same, drawn with this account's real values |
 | `<account>/account.hcl` | Account-level values: account id, state bucket |
 | `<account>/_global/region.hcl` | Region-level values for global resources |
-| `<account>/_global/bootstrap/` | The bootstrap stack (see below) |
+| `<account>/_global/bootstrap/terragrunt.stack.hcl` | The bootstrap stack (see below) |
+| `<account>/_global/bootstrap/plan_iam_policy.json` | What the plan role may do — yours to edit |
+| `<account>/_global/bootstrap/apply_iam_policy.json` | What the apply role may do — yours to edit |
 
 Each additional account is another top-level directory with the same shape, plus its own
 `.gruntwork/environment-<account>.hcl`.
@@ -869,6 +873,12 @@ Pipelines needs before it can deploy anything into the account:
 - `__RB_PREFIX__-plan` — read-only, assumed on pull requests,
 - `__RB_PREFIX__-apply` — assumed on merges to the deploy branch,
 - the S3 bucket holding this account's state.
+
+What those two roles are *allowed* to do lives beside the stack file, in `plan_iam_policy.json` and
+`apply_iam_policy.json`. They are ordinary IAM policy documents, written from the catalog defaults
+when the account was bootstrapped: edit one, open a pull request, and the plan names exactly which
+permissions change. Because the stack reads these files, a later catalog upgrade will not alter
+them — to pick up policy changes from a release, diff against that release's defaults and merge.
 
 ![Example bootstrap topology](pipelines-bootstrap-example.svg)
 

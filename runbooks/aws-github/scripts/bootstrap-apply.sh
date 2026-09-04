@@ -331,6 +331,23 @@ Pipelines assumes the plan role on pull requests and the apply role on merges to
 `__RB_BRANCH__`, for changes under `__RB_ACCOUNT_NAME__/`. The bootstrap stack that created these
 resources is in `__RB_ACCOUNT_NAME__/_global/bootstrap`.
 
+## What those roles may do
+
+Two documents in `__RB_ACCOUNT_NAME__/_global/bootstrap/` define the permissions:
+
+| | |
+|---|---|
+| `plan_iam_policy.json` | Attached to the plan role |
+| `apply_iam_policy.json` | Attached to the apply role |
+
+They are ordinary IAM policy documents, written from the Terragrunt Scale catalog defaults when this
+account was bootstrapped. Edit one, open a pull request, and the plan names exactly which permissions
+change. The stack reads these files rather than the catalog's own copies, so upgrading the catalog
+ref will not alter them.
+
+The state bucket name is written into them literally. If `__RB_BUCKET__` is ever renamed, update
+both documents to match, or the plan role loses access to state.
+
 MDEOF
 
   sed -i.bak \
