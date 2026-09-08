@@ -2,4 +2,8 @@
 # Run `mise install` in the repo root to activate these versions locally.
 [tools]
 terragrunt = "{{ .TerragruntVersion }}"
+{{ if eq .IaCTool "terraform" -}}
+terraform = "{{ .TerraformVersion }}"
+{{- else -}}
 opentofu = "{{ .OpenTofuVersion }}"
+{{- end }}

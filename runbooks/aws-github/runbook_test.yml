@@ -1,0 +1,45 @@
+version: 1
+
+# Template-validation tier test. The auth, clone, detect, derive, generate, provision, and PR
+# blocks all require live GitHub/AWS access, so they are skipped here; this test guards that the
+# runbook parses, the input schemas are valid, and block IDs resolve. Run a full integration pass
+# manually with real credentials. See https://runbooks.gruntwork.io/authoring/testing/
+settings:
+  use_temp_working_dir: true
+  timeout: 5m
+  parallelizable: true
+
+tests:
+  - name: parse-and-inputs
+    description: Validates the runbook loads and accepts the documented inputs.
+    inputs:
+      config.AccountName: "dev"
+      config.AWSRegion: "us-east-1"
+      config.StateBucketName: "acme-dev-tofu-state"
+      config.OIDCResourcePrefix: "pipelines"
+      config.IncludeDriftDetection: true
+      config.OverwriteWorkflows: false
+      config.TerragruntScaleCatalogRef: "v1.13.1"
+    steps:
+      - block: check-prerequisites
+        expect: skip
+      - block: github-auth
+        expect: skip
+      - block: clone
+        expect: skip
+      - block: aws-auth
+        expect: skip
+      - block: read-details
+        expect: skip
+      - block: resolve-versions
+        expect: skip
+      - block: plan-imports
+        expect: skip
+      - block: setup-repository
+        expect: skip
+      - block: bootstrap-plan
+        expect: skip
+      - block: bootstrap-apply
+        expect: skip
+      - block: open-pr
+        expect: skip

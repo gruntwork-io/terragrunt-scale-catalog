@@ -1,4 +1,8 @@
 [tools]
 terragrunt = "{{ .TerragruntVersion }}"
+{{ if eq .IaCTool "terraform" -}}
+terraform = "{{ .TerraformVersion }}"
+{{- else -}}
 opentofu = "{{ .OpenTofuVersion }}"
+{{- end }}
 gcloud = "{{ .GCloudVersion }}"
