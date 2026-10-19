@@ -1,4 +1,4 @@
-// Bootstrap stack: provisions plan/apply App Registrations (Federated Identity) and Azure Blob state storage.
+// Bootstrap stack: provisions plan/apply App Registrations (Federated Identity).
 // Terragrunt Stacks: https://docs.terragrunt.com/features/stacks/
 
 locals {
@@ -34,10 +34,8 @@ stack "bootstrap" {
     issuer = "{{ .Issuer }}"
     {{- end }}
 
-    location = "{{ .AzureLocation }}"
-
-    state_resource_group_name    = local.sub_hcl.locals.state_resource_group_name
-    state_storage_account_name   = local.sub_hcl.locals.state_storage_account_name
-    state_storage_container_name = local.sub_hcl.locals.state_storage_container_name
+    subscription_id            = local.sub_hcl.locals.subscription_id
+    state_resource_group_name  = local.sub_hcl.locals.state_resource_group_name
+    state_storage_account_name = local.sub_hcl.locals.state_storage_account_name
   }
 }

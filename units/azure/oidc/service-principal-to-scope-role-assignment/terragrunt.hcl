@@ -15,14 +15,6 @@ dependency "service_principal" {
   }
 }
 
-dependency "storage_account" {
-  config_path = values.scope_config_path
-
-  mock_outputs = {
-    id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/mockstorageacct"
-  }
-}
-
 errors {
   retry "role_creation_in_progress" {
     // Role creation is eventually consistent in Azure, so it's worth retrying if we hit this error.
@@ -34,7 +26,7 @@ errors {
 
 inputs = {
   principal_id = dependency.service_principal.outputs.object_id
-  scope        = dependency.storage_account.outputs.id
+  scope        = values.scope
 
   role_definition_name = values.role_definition_name
   description          = values.description
