@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/azure/custom-role-definition?ref=${values.ref}"
+  source = "../../../..//modules/azure/custom-role-definition"
+
+  update_source_with_cas = true
 }
 
 inputs = {
