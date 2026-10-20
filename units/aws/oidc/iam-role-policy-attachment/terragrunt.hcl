@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/aws/iam-role-policy-attachment?ref=${values.ref}"
+  source = "../../../..//modules/aws/iam-role-policy-attachment"
+
+  update_source_with_cas = true
 }
 
 dependency "iam_role" {
@@ -22,11 +24,11 @@ dependency "iam_policy" {
   }
 }
 
-generate "import"  {
-  disable = values.import_arn == ""
-  path = "import.tf"
+generate "import" {
+  disable   = values.import_arn == ""
+  path      = "import.tf"
   if_exists = "overwrite_terragrunt"
-  contents = <<EOF
+  contents  = <<EOF
 import {
   to = aws_iam_role_policy_attachment.arn_policy_attachments_for_role
   id = "${values.import_arn}"

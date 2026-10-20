@@ -1,8 +1,4 @@
 locals {
-  // Source resolution
-  terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
-  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.14.0")
-
   // AWS account values
   aws_account_id = values.aws_account_id
   aws_partition  = try(values.aws_partition, "aws")
@@ -118,13 +114,12 @@ locals {
 // State units
 
 unit "oidc_provider" {
-  source = "${local.terragrunt_scale_catalog_url}//units/aws/oidc/iam-openid-connect-provider?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/aws/oidc/iam-openid-connect-provider"
   path   = "oidc/oidc-provider"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     url = local.issuer
 
     client_id_list = local.client_id_list
@@ -139,13 +134,12 @@ unit "oidc_provider" {
 }
 
 unit "plan_iam_role" {
-  source = "${local.terragrunt_scale_catalog_url}//units/aws/oidc/iam-oidc-role?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/aws/oidc/iam-oidc-role"
   path   = "oidc/plan/iam-role"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     iam_openid_connect_provider_config_path = "../../oidc-provider"
 
     // Used to generate accurate mock values; actual values come from dependencies
@@ -168,13 +162,12 @@ unit "plan_iam_role" {
 }
 
 unit "plan_iam_policy" {
-  source = "${local.terragrunt_scale_catalog_url}//units/aws/oidc/iam-policy?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/aws/oidc/iam-policy"
   path   = "oidc/plan/iam-policy"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     name = "${local.oidc_resource_prefix}-plan"
 
     policy = local.plan_iam_policy
@@ -184,13 +177,12 @@ unit "plan_iam_policy" {
 }
 
 unit "plan_iam_role_policy_attachment" {
-  source = "${local.terragrunt_scale_catalog_url}//units/aws/oidc/iam-role-policy-attachment?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/aws/oidc/iam-role-policy-attachment"
   path   = "oidc/plan/iam-role-policy-attachment"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     iam_role_config_path   = "../iam-role"
     iam_policy_config_path = "../iam-policy"
 
@@ -204,13 +196,12 @@ unit "plan_iam_role_policy_attachment" {
 }
 
 unit "apply_iam_role" {
-  source = "${local.terragrunt_scale_catalog_url}//units/aws/oidc/iam-oidc-role?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/aws/oidc/iam-oidc-role"
   path   = "oidc/apply/iam-role"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     iam_openid_connect_provider_config_path = "../../oidc-provider"
 
     // Used to generate accurate mock values; actual values come from dependencies
@@ -233,13 +224,12 @@ unit "apply_iam_role" {
 }
 
 unit "apply_iam_policy" {
-  source = "${local.terragrunt_scale_catalog_url}//units/aws/oidc/iam-policy?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/aws/oidc/iam-policy"
   path   = "oidc/apply/iam-policy"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     iam_role_config_path = "../iam-role"
 
     name = "${local.oidc_resource_prefix}-apply"
@@ -251,13 +241,12 @@ unit "apply_iam_policy" {
 }
 
 unit "apply_iam_role_policy_attachment" {
-  source = "${local.terragrunt_scale_catalog_url}//units/aws/oidc/iam-role-policy-attachment?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/aws/oidc/iam-role-policy-attachment"
   path   = "oidc/apply/iam-role-policy-attachment"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     iam_role_config_path   = "../iam-role"
     iam_policy_config_path = "../iam-policy"
 

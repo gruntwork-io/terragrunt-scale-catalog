@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/gcp/storage-bucket-iam-member?ref=${values.ref}"
+  source = "../../../..//modules/gcp/storage-bucket-iam-member"
+
+  update_source_with_cas = true
 }
 
 dependency "service_account" {

@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/gcp/project-iam-member?ref=${values.ref}"
+  source = "../../../..//modules/gcp/project-iam-member"
+
+  update_source_with_cas = true
 }
 
 generate "import" {

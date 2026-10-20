@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/azure/entra-id-service-principal?ref=${values.ref}"
+  source = "../../../..//modules/azure/entra-id-service-principal"
+
+  update_source_with_cas = true
 }
 
 dependency "app" {

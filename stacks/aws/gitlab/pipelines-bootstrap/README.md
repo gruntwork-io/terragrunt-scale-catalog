@@ -41,8 +41,6 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 
 | Name | Description | Default |
 |------|-------------|---------|
-| `terragrunt_scale_catalog_url` | URL of this catalog | `github.com/gruntwork-io/terragrunt-scale-catalog` |
-| `terragrunt_scale_catalog_ref` | Git ref to use | `main` |
 | `oidc_resource_prefix` | Prefix for IAM resources | `pipelines` |
 | `gitlab_server_domain` | GitLab server domain | `gitlab.com` |
 | `oidc_provider_url` | Full OIDC provider URL | `https://gitlab.com` |
