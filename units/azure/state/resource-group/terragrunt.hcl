@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/azure/resource-group?ref=${values.ref}"
+  source = "../../../..//modules/azure/resource-group"
+
+  update_source_with_cas = true
 }
 
 inputs = {

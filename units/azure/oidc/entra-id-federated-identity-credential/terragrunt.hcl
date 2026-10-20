@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/azure/entra-id-federated-identity-credential?ref=${values.ref}"
+  source = "../../../..//modules/azure/entra-id-federated-identity-credential"
+
+  update_source_with_cas = true
 }
 
 dependency "app" {

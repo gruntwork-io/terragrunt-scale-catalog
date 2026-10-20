@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/azure//storage-container?ref=${values.ref}"
+  source = "../../../..//modules/azure/storage-container"
+
+  update_source_with_cas = true
 }
 
 dependency "storage_account" {
