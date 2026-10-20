@@ -2,7 +2,7 @@ variables:
   - name: TerragruntVersion
     type: string
     description: The version of Terragrunt to use.
-    default: "1.0.0"
+    default: "1.2.0"
 
   - name: IaCTool
     type: enum

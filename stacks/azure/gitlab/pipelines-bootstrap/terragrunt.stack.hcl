@@ -1,8 +1,4 @@
 locals {
-  // Source resolution
-  terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
-  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.13.2")
-
   // State values
   subscription_id = values.subscription_id
 
@@ -81,38 +77,35 @@ locals {
 // Plan units
 
 unit "plan_app" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-application?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/entra-id-application"
   path   = "oidc/plan/app"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     display_name = "${local.oidc_resource_prefix}-plan"
     description  = "Entra ID application used by Gruntwork Pipelines for plans"
   }
 }
 
 unit "plan_service_principal" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-service-principal?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/entra-id-service-principal"
   path   = "oidc/plan/service-principal"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     app_config_path = "../app"
   }
 }
 
 unit "plan_flexible_federated_identity_credential" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-flexible-federated-identity-credential?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/entra-id-flexible-federated-identity-credential"
   path   = "oidc/plan/flexible-federated-identity-credential"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     app_config_path = "../app"
 
     display_name = "${local.oidc_resource_prefix}-plan"
@@ -126,13 +119,12 @@ unit "plan_flexible_federated_identity_credential" {
 }
 
 unit "plan_custom_role_definition" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/custom-role-definition?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/custom-role-definition"
   path   = "oidc/plan/custom-role-definition"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     name        = "${local.oidc_resource_prefix}-plan-custom-role"
     description = "Custom role for Gruntwork Pipelines plan service principal with read-only permissions"
 
@@ -141,13 +133,12 @@ unit "plan_custom_role_definition" {
 }
 
 unit "plan_service_principal_to_plan_custom_role_assignment" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/service-principal-to-sub-role-assignment?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/service-principal-to-sub-role-assignment"
   path   = "oidc/plan/service-principal-to-plan-custom-role-assignment"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_principal_config_path = "../service-principal"
 
     role_definition_name = "${local.oidc_resource_prefix}-plan-custom-role"
@@ -156,13 +147,12 @@ unit "plan_service_principal_to_plan_custom_role_assignment" {
 }
 
 unit "plan_service_principal_to_state_contributor_role_assignment" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/service-principal-to-scope-role-assignment?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/service-principal-to-scope-role-assignment"
   path   = "oidc/plan/service-principal-to-state-contributor-role-assignment"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_principal_config_path = "../service-principal"
     scope                         = local.state_storage_account_id
 
@@ -174,38 +164,35 @@ unit "plan_service_principal_to_state_contributor_role_assignment" {
 // Apply units
 
 unit "apply_app" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-application?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/entra-id-application"
   path   = "oidc/apply/app"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     display_name = "${local.oidc_resource_prefix}-apply"
     description  = "Entra ID application used by Gruntwork Pipelines for applies and destroys"
   }
 }
 
 unit "apply_service_principal" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-service-principal?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/entra-id-service-principal"
   path   = "oidc/apply/service-principal"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     app_config_path = "../app"
   }
 }
 
 unit "apply_federated_identity_credential" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-federated-identity-credential?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/entra-id-federated-identity-credential"
   path   = "oidc/apply/federated-identity-credential"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     app_config_path = "../app"
 
     display_name = "${local.oidc_resource_prefix}-apply"
@@ -219,13 +206,12 @@ unit "apply_federated_identity_credential" {
 }
 
 unit "apply_custom_role_definition" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/custom-role-definition?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/custom-role-definition"
   path   = "oidc/apply/custom-role-definition"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     name        = "${local.oidc_resource_prefix}-apply-custom-role"
     description = "Custom role for Gruntwork Pipelines apply service principal with deployment permissions"
 
@@ -234,13 +220,12 @@ unit "apply_custom_role_definition" {
 }
 
 unit "apply_service_principal_to_apply_custom_role_assignment" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/service-principal-to-sub-role-assignment?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/azure/oidc/service-principal-to-sub-role-assignment"
   path   = "oidc/apply/service-principal-to-apply-custom-role-assignment"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_principal_config_path = "../service-principal"
 
     role_definition_name = "${local.oidc_resource_prefix}-apply-custom-role"

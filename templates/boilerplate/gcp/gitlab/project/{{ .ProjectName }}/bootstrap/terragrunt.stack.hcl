@@ -9,8 +9,6 @@ stack "bootstrap" {
   path   = "bootstrap"
 
   values = {
-    terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
-
     project_id     = "{{ .GCPProjectID }}"
     project_number = "{{ .GCPProjectNumber }}"
 

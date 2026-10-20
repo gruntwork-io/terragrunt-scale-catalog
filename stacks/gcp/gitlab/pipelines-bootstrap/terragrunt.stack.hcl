@@ -1,8 +1,4 @@
 locals {
-  // Source resolution
-  terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
-  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.13.2")
-
   // Project values
   project_id     = values.project_id
   project_number = values.project_number
@@ -92,13 +88,12 @@ locals {
 
 // Workload Identity Pool (shared by plan and apply)
 unit "workload_identity_pool" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/workload-identity-pool?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/workload-identity-pool"
   path   = "oidc/gitlab/workload-identity-pool"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     project_id                = local.project_id
     workload_identity_pool_id = local.workload_identity_pool_id
     display_name              = "GitLab CI Pool"
@@ -110,13 +105,12 @@ unit "workload_identity_pool" {
 
 // Workload Identity Pool Provider
 unit "workload_identity_pool_provider" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/workload-identity-pool-provider?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/workload-identity-pool-provider"
   path   = "oidc/gitlab/workload-identity-pool-provider"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     workload_identity_pool_config_path = "../workload-identity-pool"
 
     project_id                         = local.project_id
@@ -135,13 +129,12 @@ unit "workload_identity_pool_provider" {
 
 // Plan Service Account
 unit "plan_service_account" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/service-account?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/service-account"
   path   = "oidc/gitlab/plan/service-account"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     project_id   = local.project_id
     account_id   = "${local.oidc_resource_prefix}-plan"
     display_name = "Pipelines Plan Service Account"
@@ -153,13 +146,12 @@ unit "plan_service_account" {
 
 // Plan Service Account Workload Identity Binding (allows any pipeline run from the project)
 unit "plan_workload_identity_binding" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/service-account-iam-binding?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/service-account-iam-binding"
   path   = "oidc/gitlab/plan/workload-identity-binding"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_account_config_path = "../service-account"
 
     member = local.plan_member
@@ -170,13 +162,12 @@ unit "plan_workload_identity_binding" {
 
 // Plan IAM Role Bindings
 unit "plan_project_iam_bindings" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/project-iam-member?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/project-iam-member"
   path   = "oidc/gitlab/plan/project-iam-bindings"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_account_config_path = "../service-account"
 
     project_id = local.project_id
@@ -189,13 +180,12 @@ unit "plan_project_iam_bindings" {
 // Plan State Bucket Custom Role (bucket-scoped, only when state_bucket_name is provided)
 // Combines storage.objectUser permissions with storage.buckets.getIamPolicy for least-privilege plan access
 unit "plan_state_bucket_custom_role" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/custom-role?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/custom-role"
   path   = "oidc/gitlab/plan/state-bucket-custom-role"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     project_id  = local.project_id
     role_id     = local.state_bucket_custom_role_id
     title       = "Pipelines Plan State Bucket Role"
@@ -215,13 +205,12 @@ unit "plan_state_bucket_custom_role" {
 
 // Plan State Bucket IAM Binding (bucket-scoped, only when state_bucket_name is provided)
 unit "plan_state_bucket_iam_binding" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/storage-bucket-custom-role-iam-member?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/storage-bucket-custom-role-iam-member"
   path   = "oidc/gitlab/plan/state-bucket-iam-binding"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_account_config_path = "../service-account"
     custom_role_config_path     = "../state-bucket-custom-role"
 
@@ -233,13 +222,12 @@ unit "plan_state_bucket_iam_binding" {
 
 // Apply Service Account
 unit "apply_service_account" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/service-account?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/service-account"
   path   = "oidc/gitlab/apply/service-account"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     project_id   = local.project_id
     account_id   = "${local.oidc_resource_prefix}-apply"
     display_name = "Pipelines Apply Service Account"
@@ -251,13 +239,12 @@ unit "apply_service_account" {
 
 // Apply Service Account Workload Identity Binding (restricted to deploy branch)
 unit "apply_workload_identity_binding" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/service-account-iam-binding?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/service-account-iam-binding"
   path   = "oidc/gitlab/apply/workload-identity-binding"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_account_config_path = "../service-account"
 
     member = local.apply_member
@@ -268,13 +255,12 @@ unit "apply_workload_identity_binding" {
 
 // Apply IAM Role Bindings
 unit "apply_project_iam_bindings" {
-  source = "${local.terragrunt_scale_catalog_url}//units/gcp/oidc/project-iam-member?ref=${local.terragrunt_scale_catalog_ref}"
+  source = "../../../..//units/gcp/oidc/project-iam-member"
   path   = "oidc/gitlab/apply/project-iam-bindings"
 
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
+  update_source_with_cas = true
 
+  values = {
     service_account_config_path = "../service-account"
 
     project_id = local.project_id
