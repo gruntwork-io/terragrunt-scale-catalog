@@ -6,12 +6,6 @@ This Terragrunt stack bootstraps Azure infrastructure for GitHub Actions with OI
 
 ## What This Stack Creates
 
-### State Storage Resources
-
-- Azure Resource Group for state management
-- Azure Storage Account for OpenTofu state
-- Storage Container for state files
-
 ### OIDC Resources for Plan Operations
 
 - Entra ID Application for plan operations
@@ -39,9 +33,9 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 
 | Name | Description | Example |
 |------|-------------|---------|
-| `location` | Azure region for resources | `East US` |
-| `state_resource_group_name` | Resource group for state storage | `tofu-state-rg` |
-| `state_storage_account_name` | Storage account name (globally unique) | `tfstate12345678` |
+| `subscription_id` | ID of the subscription that holds the state storage account | `11111111-1111-1111-1111-111111111111` |
+| `state_resource_group_name` | Resource group of the state storage account | `tofu-state-rg` |
+| `state_storage_account_name` | Name of the state storage account | `tfstate12345678` |
 | `github_org_name` | GitHub organization or username | `my-org` |
 | `github_repo_name` | GitHub repository name | `infrastructure` |
 
@@ -51,7 +45,6 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 |------|-------------|---------|
 | `terragrunt_scale_catalog_url` | URL of this catalog | `github.com/gruntwork-io/terragrunt-scale-catalog` |
 | `terragrunt_scale_catalog_ref` | Git ref to use | `main` |
-| `state_storage_container_name` | Container name for state files | `tfstate` |
 | `oidc_resource_prefix` | Prefix for Entra ID resources | `pipelines` |
 | `github_token_actions_domain` | GitHub Actions token domain | `token.actions.githubusercontent.com` |
 | `github_org_id` | Numeric GitHub organization/user ID. Required for all repos created on or after 2026-07-15 (see [Immutable Subject Claims](#immutable-subject-claims) below); leave blank for existing repos that haven't opted in. Must be set together with `github_repo_id`. | `1234567` |
@@ -83,7 +76,7 @@ flowchart TD
         D --> F[State Storage]
         E --> F[State Storage]
 
-        F[State Storage Resources<br/>Resource Group<br/>Storage Account<br/>Storage Container]
+        F[State Storage Account]
     end
 ```
 
@@ -235,8 +228,6 @@ This stack implements least-privilege access through custom roles:
 | apply_app.client_id | Client ID of the apply application |
 | apply_app.id | Object ID of the apply application |
 | apply_service_principal.object_id | Object ID of the apply service principal |
-| resource_group.name | Name of the state storage resource group |
-| storage_account.id | ID of the state storage account |
 
 ## Related Documentation
 

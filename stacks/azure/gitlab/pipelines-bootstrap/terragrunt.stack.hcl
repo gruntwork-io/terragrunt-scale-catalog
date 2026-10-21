@@ -1,14 +1,15 @@
 locals {
   // Source resolution
   terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
-  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.13.2")
+  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.14.0")
 
   // State values
-  location = values.location
+  subscription_id = values.subscription_id
 
-  state_resource_group_name    = values.state_resource_group_name
-  state_storage_account_name   = values.state_storage_account_name
-  state_storage_container_name = try(values.state_storage_container_name, "tfstate")
+  state_resource_group_name  = values.state_resource_group_name
+  state_storage_account_name = values.state_storage_account_name
+
+  state_storage_account_id = "/subscriptions/${local.subscription_id}/resourceGroups/${local.state_resource_group_name}/providers/Microsoft.Storage/storageAccounts/${local.state_storage_account_name}"
 
   // OIDC values
   oidc_resource_prefix = try(values.oidc_resource_prefix, "pipelines")
@@ -73,51 +74,6 @@ locals {
     values.apply_custom_role_actions,
     local.default_apply_custom_role_actions,
   )
-}
-
-// State units
-
-unit "resource_group" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/state/resource-group?ref=${local.terragrunt_scale_catalog_ref}"
-  path   = "state/resource-group"
-
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
-
-    name     = local.state_resource_group_name
-    location = local.location
-  }
-}
-
-unit "storage_account" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/state/storage-account?ref=${local.terragrunt_scale_catalog_ref}"
-
-  path = "state/storage-account"
-
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
-
-    resource_group_config_path = "../resource-group"
-
-    name     = local.state_storage_account_name
-    location = local.location
-  }
-}
-
-unit "storage_container" {
-  source = "${local.terragrunt_scale_catalog_url}//units/azure/state/storage-container?ref=${local.terragrunt_scale_catalog_ref}"
-  path   = "state/storage-container"
-
-  values = {
-    base_url = local.terragrunt_scale_catalog_url
-    ref      = local.terragrunt_scale_catalog_ref
-
-    storage_account_config_path = "../storage-account"
-
-    name = local.state_storage_container_name
-  }
 }
 
 // OIDC units
@@ -208,7 +164,7 @@ unit "plan_service_principal_to_state_contributor_role_assignment" {
     ref      = local.terragrunt_scale_catalog_ref
 
     service_principal_config_path = "../service-principal"
-    scope_config_path             = "../../../state/storage-account"
+    scope                         = local.state_storage_account_id
 
     role_definition_name = local.plan_service_principal_to_state_role_definition_assignment
     description          = "Assign Contributor role to service principal at the state scope"
