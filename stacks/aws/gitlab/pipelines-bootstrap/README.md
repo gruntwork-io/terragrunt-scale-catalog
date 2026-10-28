@@ -54,6 +54,9 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | `bootstrap_iam_policy` | Policy profile to load (`default` or `restrictive`) | `default` |
 | `plan_iam_policy` | Custom plan policy JSON | See default below |
 | `apply_iam_policy` | Custom apply policy JSON | See default below |
+| `max_session_duration` | Maximum session duration in seconds for the plan and apply roles | `43200` (12 hours) |
+| `plan_max_session_duration` | Maximum session duration in seconds for the plan role | `max_session_duration` |
+| `apply_max_session_duration` | Maximum session duration in seconds for the apply role | `max_session_duration` |
 
 ### Default IAM Policies
 
