@@ -33,6 +33,10 @@ locals {
   sub_plan_value  = try(values.sub_plan_value, "project_path:${local.gitlab_group_name}/${local.gitlab_project_name}:*")
   sub_apply_value = try(values.sub_apply_value, "project_path:${local.gitlab_group_name}/${local.gitlab_project_name}:ref_type:branch:ref:${local.deploy_branch}")
 
+  max_session_duration       = try(values.max_session_duration, 12 * 60 * 60)
+  plan_max_session_duration  = try(values.plan_max_session_duration, local.max_session_duration)
+  apply_max_session_duration = try(values.apply_max_session_duration, local.max_session_duration)
+
   state_bucket_name = values.state_bucket_name
 
   terraform_locks_table_name = try(values.terraform_locks_table_name, "terraform-locks")
@@ -114,6 +118,8 @@ unit "plan_iam_role" {
     sub_key   = local.sub_key
     sub_value = local.sub_plan_value
 
+    max_session_duration = local.plan_max_session_duration
+
     import_existing = local.plan_iam_role_import_existing
   }
 }
@@ -170,6 +176,8 @@ unit "apply_iam_role" {
 
     sub_key   = local.sub_key
     sub_value = local.sub_apply_value
+
+    max_session_duration = local.apply_max_session_duration
 
     import_existing = local.apply_iam_role_import_existing
   }
