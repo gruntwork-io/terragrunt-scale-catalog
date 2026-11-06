@@ -41,8 +41,6 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 
 | Name | Description | Default |
 |------|-------------|---------|
-| `terragrunt_scale_catalog_url` | URL of this catalog | `github.com/gruntwork-io/terragrunt-scale-catalog` |
-| `terragrunt_scale_catalog_ref` | Git ref to use | `main` |
 | `oidc_resource_prefix` | Prefix for IAM resources | `pipelines` |
 | `github_token_actions_domain` | GitHub Actions token domain | `token.actions.githubusercontent.com` |
 | `github_server_domain` | GitHub server domain (for Enterprise) | `github.com` |

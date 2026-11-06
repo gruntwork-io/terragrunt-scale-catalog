@@ -177,7 +177,7 @@ if [ "${RB_out_plan_imports_exclude_oidc_provider}" = "true" ] && [ -n "$RB_Issu
 fi
 
 pick_version "Terragrunt" \
-  "$RB_TerragruntVersion" "$RB_out_resolve_versions_terragrunt_version" "1.0.0"
+  "$RB_TerragruntVersion" "$RB_out_resolve_versions_terragrunt_version" "1.2.0"
 TERRAGRUNT_VERSION="$PICKED"
 
 pick_version "OpenTofu" \

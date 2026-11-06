@@ -9,14 +9,16 @@ exclude {
 }
 
 terraform {
-  source = "${values.base_url}//modules/aws/iam-openid-connect-provider?ref=${values.ref}"
+  source = "../../../..//modules/aws/iam-openid-connect-provider"
+
+  update_source_with_cas = true
 }
 
-generate "import"  {
-  disable = values.import_arn == ""
-  path = "import.tf"
+generate "import" {
+  disable   = values.import_arn == ""
+  path      = "import.tf"
   if_exists = "overwrite_terragrunt"
-  contents = <<EOF
+  contents  = <<EOF
 import {
   to = aws_iam_openid_connect_provider.identity_provider
   id = "${values.import_arn}"
