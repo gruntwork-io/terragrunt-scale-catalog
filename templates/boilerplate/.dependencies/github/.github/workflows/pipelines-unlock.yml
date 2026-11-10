@@ -19,7 +19,7 @@ on:
         required: false
         type: string
       unlock_all:
-        description: "Forcibly reset all locks by deleting the dynamodb table"
+        description: "Forcibly reset all locks: deletes the DynamoDB lock table (AWS) or each unit's lock object (GCS)"
         required: false
         type: boolean
 
