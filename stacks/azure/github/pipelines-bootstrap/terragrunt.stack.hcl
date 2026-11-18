@@ -70,6 +70,25 @@ locals {
     "Microsoft.Authorization/roleDefinitions/*",
     "Microsoft.Authorization/locks/read",
     "Microsoft.Authorization/policyAssignments/read",
+
+    // Services teams commonly deploy, comparable to the GCP and AWS defaults.
+    "Microsoft.Compute/*",
+    "Microsoft.Network/*",
+    "Microsoft.ContainerService/*",
+    "Microsoft.ContainerRegistry/*",
+    "Microsoft.App/*",
+    "Microsoft.Web/*",
+    "Microsoft.Sql/*",
+    "Microsoft.DBforPostgreSQL/*",
+    "Microsoft.DBforMySQL/*",
+    "Microsoft.DocumentDB/*",
+    "Microsoft.Cache/*",
+    "Microsoft.KeyVault/*",
+    "Microsoft.ServiceBus/*",
+    "Microsoft.EventHub/*",
+    "Microsoft.ManagedIdentity/*",
+    "Microsoft.Insights/*",
+    "Microsoft.OperationalInsights/*",
   ]
 
   plan_custom_role_actions = try(

@@ -107,7 +107,7 @@ This only allows applies from the `main` branch.
 
 ## Custom Role Permissions
 
-This stack creates custom Azure RBAC roles that provide least-privilege access for ongoing maintenance of bootstrap resources.
+This stack creates custom Azure RBAC roles for Pipelines: a read-only plan role, and an apply role that covers the bootstrap resources and commonly used services.
 
 ### Plan Custom Role (Read-Only)
 
@@ -132,8 +132,18 @@ Permissions granted:
 - `Microsoft.Storage/storageAccounts/*` - Manage storage accounts and all services
 - `Microsoft.Authorization/roleAssignments/*` - Manage role assignments
 - `Microsoft.Authorization/roleDefinitions/*` - Manage custom role definitions
+- Common workload services:
+  - `Microsoft.Compute/*` - Virtual machines, disks, images, scale sets
+  - `Microsoft.Network/*` - Virtual networks, NSGs, load balancers, public IPs, private endpoints, Application Gateway, DNS and private DNS zones
+  - `Microsoft.ContainerService/*`, `Microsoft.ContainerRegistry/*`, `Microsoft.App/*` - AKS, container registries, Container Apps
+  - `Microsoft.Web/*` - App Service and Functions
+  - `Microsoft.Sql/*`, `Microsoft.DBforPostgreSQL/*`, `Microsoft.DBforMySQL/*`, `Microsoft.DocumentDB/*`, `Microsoft.Cache/*` - Databases and caches
+  - `Microsoft.KeyVault/*` - Key vaults
+  - `Microsoft.ServiceBus/*`, `Microsoft.EventHub/*` - Messaging
+  - `Microsoft.ManagedIdentity/*` - User-assigned managed identities
+  - `Microsoft.Insights/*`, `Microsoft.OperationalInsights/*` - Monitoring, alerts, diagnostic settings, Log Analytics
 
-**Purpose**: Create, update, and destroy all bootstrap stack resources.
+**Purpose**: Create, update, and destroy the bootstrap resources and the services teams commonly deploy, comparable to the GCP and AWS defaults. Override `apply_custom_role_actions` to narrow or widen it.
 
 ### Customizing Permissions
 
