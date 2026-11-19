@@ -1,5 +1,5 @@
 #!/bin/bash
-# Plan the bootstrap stack: the GitHub OIDC provider and the plan/apply IAM roles.
+# Plan the pipelines-identity stack: the GitHub OIDC provider and the plan/apply IAM roles.
 set -euo pipefail
 
 # Values collected from the form can arrive wrapped in quotes or padded with spaces.
@@ -37,7 +37,7 @@ if ! aws_account=$(aws sts get-caller-identity --output text --query 'Account' 2
 fi
 log_info "Authenticated to AWS account ${aws_account}."
 
-cd "$REPO_FILES/${RB_AccountName}/_global/bootstrap"
+cd "$REPO_FILES/${RB_AccountName}/_global/pipelines-identity"
 
-log_info "Planning the bootstrap stack in ${RB_AccountName}/_global/bootstrap ..."
+log_info "Planning the pipelines-identity stack in ${RB_AccountName}/_global/pipelines-identity ..."
 terragrunt run --all --non-interactive --provider-cache --backend-bootstrap plan

@@ -2,7 +2,7 @@
 
 Boilerplate template that scaffolds the subscription-level bootstrap configuration for Terragrunt Scale on Azure with GitLab CI.
 
-Rendering this template produces a `{{ .SubscriptionName }}/bootstrap/` directory containing a `terragrunt.stack.hcl` that references the [`stacks/azure/gitlab/pipelines-bootstrap`](../../../../stacks/azure/gitlab/pipelines-bootstrap) stack. Applying that stack provisions the Entra ID application, service principal, federated identity credentials, and role assignments that GitLab CI jobs use to authenticate to Azure.
+Rendering this template produces a `{{ .SubscriptionName }}/pipelines-identity/` directory containing a `terragrunt.stack.hcl` that references the [`stacks/azure/gitlab/pipelines-identity`](../../../../stacks/azure/gitlab/pipelines-identity) stack. Applying that stack provisions the Entra ID application, service principal, federated identity credentials, and role assignments that GitLab CI jobs use to authenticate to Azure.
 
 This template is typically pulled in as a dependency of the sibling [`infrastructure-live`](../infrastructure-live) template, but it can also be rendered on its own to add another subscription to an existing Terragrunt Scale repository.
 
@@ -27,7 +27,7 @@ boilerplate \
 | `GitLabProjectName` | yes | | Project name; only CI jobs in this project may authenticate. |
 | `AzureLocation` | yes | | Azure region for the subscription's state-backend resources. |
 | `DeployBranch` | no | `main` | Branch granted the apply role. |
-| `TerragruntScaleCatalogRef` | no | `v1.14.0` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.15.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix applied to the Entra ID resources. |
 | `Issuer` | no | computed | Override for the OIDC issuer URL (useful for self-hosted GitLab). |
 

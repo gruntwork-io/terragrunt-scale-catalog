@@ -2,7 +2,7 @@
 
 Boilerplate template that scaffolds a complete Terragrunt Scale repository for GCP with GitLab CI.
 
-Rendering this template produces the full repository layout: a root `root.hcl`, the `.gruntwork/` metadata directory, a GitLab CI pipeline (`.gitlab-ci.yml`) with support for plan/apply, drift detection (optional), and unlock, a `.mise.toml`, a `.gitignore`, and the first project's bootstrap stack.
+Rendering this template produces the full repository layout: a root `root.hcl`, the `.gruntwork/` metadata directory, a GitLab CI pipeline (`.gitlab-ci.yml`) with support for plan/apply, drift detection (optional), and unlock, a `.mise.toml`, a `.gitignore`, and the first project's pipelines-identity stack.
 
 ## Usage
 
@@ -36,9 +36,9 @@ This template is a thin composition layer. It renders by combining these depende
 1. [`.dependencies/common`](../../../.dependencies/common) — `.gruntwork/repository.hcl`, `.mise.toml`, `.gitignore`.
 2. [`.dependencies/gitlab`](../../../.dependencies/gitlab) — `.gitlab-ci.yml` pipeline.
 3. [`.dependencies/gcp/base`](../../../.dependencies/gcp/base) — root `root.hcl` configuring the GCS remote state backend and Google provider. This layer deliberately comes after `common` because it overrides a subset of `common`'s files.
-4. [`../project`](../project) — the project-level bootstrap stack for `{{ .ProjectName }}`.
+4. [`../project`](../project) — the project-level pipelines-identity stack for `{{ .ProjectName }}`.
 
-After rendering, commit the output, then `cd` into `{{ .ProjectName }}/bootstrap` and run `terragrunt stack run apply` to provision the Workload Identity infrastructure.
+After rendering, commit the output, then `cd` into `{{ .ProjectName }}/pipelines-identity` and run `terragrunt stack run apply` to provision the Workload Identity infrastructure.
 
 ## How It Works
 

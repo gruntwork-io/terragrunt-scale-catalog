@@ -11,7 +11,7 @@ wizard. It is the no-cloud sibling of [`../infrastructure-live`](../infrastructu
   `authentication {}` block (from `.dependencies/aws/account-no-cloud`).
 
 It deliberately does **not** render the S3 remote-state root (`root.hcl`), `account.hcl`/`region.hcl`,
-or the bootstrap stack (OIDC provider + plan/apply IAM roles) — all of which require cloud credentials
+or the pipelines-identity stack (OIDC provider + plan/apply IAM roles) — all of which require cloud credentials
 the customer has not yet provided.
 
 ## Why
@@ -22,7 +22,7 @@ authorizing their cloud. The tutorial unit dropped on top of this skeleton is a 
 
 Once the customer authorizes their cloud in the **"Connect to your cloud"** wizard, the sibling
 [`../cloud-config`](../cloud-config) template is layered on top to add the S3 state backend, the
-bootstrap stack, and the real `authentication { aws_oidc { ... } }` config.
+pipelines-identity stack, and the real `authentication { aws_oidc { ... } }` config.
 
 ## Variables
 

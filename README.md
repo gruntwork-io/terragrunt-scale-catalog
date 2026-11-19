@@ -79,12 +79,12 @@ Terragrunt unit configurations that wrap modules with specific configurations an
 
 Terragrunt stack configurations that compose multiple units into complete infrastructure setups. Stacks represent end-to-end solutions.
 
-- **`stacks/aws/github/pipelines-bootstrap/`** - Bootstrap AWS resources for Gruntwork Pipelines (GitHub Actions) with OIDC
-- **`stacks/aws/gitlab/pipelines-bootstrap/`** - Bootstrap AWS resources for Gruntwork Pipelines (GitLab CI) with OIDC
-- **`stacks/azure/github/pipelines-bootstrap/`** - Bootstrap Azure resources for Gruntwork Pipelines (GitHub Actions) with OIDC
-- **`stacks/azure/gitlab/pipelines-bootstrap/`** - Bootstrap Azure resources for Gruntwork Pipelines (GitLab CI) with OIDC
-- **`stacks/gcp/github/pipelines-bootstrap/`** - Bootstrap GCP resources for Gruntwork Pipelines (GitHub Actions) with OIDC
-- **`stacks/gcp/gitlab/pipelines-bootstrap/`** - Bootstrap GCP resources for Gruntwork Pipelines (GitLab CI) with OIDC
+- **`stacks/aws/github/pipelines-identity/`** - Bootstrap AWS resources for Gruntwork Pipelines (GitHub Actions) with OIDC
+- **`stacks/aws/gitlab/pipelines-identity/`** - Bootstrap AWS resources for Gruntwork Pipelines (GitLab CI) with OIDC
+- **`stacks/azure/github/pipelines-identity/`** - Bootstrap Azure resources for Gruntwork Pipelines (GitHub Actions) with OIDC
+- **`stacks/azure/gitlab/pipelines-identity/`** - Bootstrap Azure resources for Gruntwork Pipelines (GitLab CI) with OIDC
+- **`stacks/gcp/github/pipelines-identity/`** - Bootstrap GCP resources for Gruntwork Pipelines (GitHub Actions) with OIDC
+- **`stacks/gcp/gitlab/pipelines-identity/`** - Bootstrap GCP resources for Gruntwork Pipelines (GitLab CI) with OIDC
 
 ### Templates (`templates/`)
 
@@ -98,14 +98,14 @@ Boilerplate repository templates that include all necessary Terragrunt configura
 
 - **`aws/github/`** - Complete AWS + GitHub Actions setup
   - `account/` - Account-level bootstrap configuration
-    - `{{ .AccountName }}/_global/bootstrap/` - Bootstrap stack configuration
+    - `{{ .AccountName }}/_global/pipelines-identity/` - pipelines-identity stack configuration
     - `boilerplate.yml` - Template variables and dependencies
   - `infrastructure-live/` - Infrastructure live repository structure
     - `boilerplate.yml` - Repository-level dependencies and configuration
 
 - **`aws/gitlab/`** - Complete AWS + GitLab CI setup
   - `account/` - Account-level bootstrap configuration
-    - `{{ .AccountName }}/_global/bootstrap/` - Bootstrap stack configuration
+    - `{{ .AccountName }}/_global/pipelines-identity/` - pipelines-identity stack configuration
     - `boilerplate.yml` - Template variables and dependencies
   - `infrastructure-live/` - Infrastructure live repository structure
     - `boilerplate.yml` - Repository-level dependencies and configuration
@@ -114,14 +114,14 @@ Boilerplate repository templates that include all necessary Terragrunt configura
 
 - **`azure/github/`** - Complete Azure + GitHub Actions setup
   - `subscription/` - Subscription-level bootstrap configuration
-    - `{{ .SubscriptionName }}/bootstrap/` - Bootstrap stack configuration
+    - `{{ .SubscriptionName }}/pipelines-identity/` - pipelines-identity stack configuration
     - `boilerplate.yml` - Template variables and dependencies
   - `infrastructure-live/` - Infrastructure live repository structure
     - `boilerplate.yml` - Repository-level dependencies and configuration
 
 - **`azure/gitlab/`** - Complete Azure + GitLab CI setup
   - `subscription/` - Subscription-level bootstrap configuration
-    - `{{ .SubscriptionName }}/bootstrap/` - Bootstrap stack configuration
+    - `{{ .SubscriptionName }}/pipelines-identity/` - pipelines-identity stack configuration
     - `boilerplate.yml` - Template variables and dependencies
   - `infrastructure-live/` - Infrastructure live repository structure
     - `boilerplate.yml` - Repository-level dependencies and configuration
@@ -130,14 +130,14 @@ Boilerplate repository templates that include all necessary Terragrunt configura
 
 - **`gcp/github/`** - Complete GCP + GitHub Actions setup
   - `project/` - Project-level bootstrap configuration
-    - `{{ .ProjectName }}/bootstrap/` - Bootstrap stack configuration
+    - `{{ .ProjectName }}/pipelines-identity/` - pipelines-identity stack configuration
     - `boilerplate.yml` - Template variables and dependencies
   - `infrastructure-live/` - Infrastructure live repository structure
     - `boilerplate.yml` - Repository-level dependencies and configuration
 
 - **`gcp/gitlab/`** - Complete GCP + GitLab CI setup
   - `project/` - Project-level bootstrap configuration
-    - `{{ .ProjectName }}/bootstrap/` - Bootstrap stack configuration
+    - `{{ .ProjectName }}/pipelines-identity/` - pipelines-identity stack configuration
     - `boilerplate.yml` - Template variables and dependencies
   - `infrastructure-live/` - Infrastructure live repository structure
     - `boilerplate.yml` - Repository-level dependencies and configuration

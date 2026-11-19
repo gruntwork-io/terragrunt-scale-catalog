@@ -1,4 +1,4 @@
-// Bootstrap stack: provisions the GitHub OIDC provider and plan/apply IAM roles in this environment.
+// pipelines-identity stack: provisions the GitHub OIDC provider and plan/apply IAM roles in this environment.
 // Terragrunt Stacks: https://docs.terragrunt.com/features/stacks/
 
 locals {
@@ -7,10 +7,10 @@ locals {
   account_hcl = read_terragrunt_config(find_in_parent_folders("account.hcl"))
 }
 
-stack "bootstrap" {
+stack "pipelines_identity" {
   // To upgrade: update the ?ref= tag and review https://github.com/gruntwork-io/terragrunt-scale-catalog/releases
-  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/aws/github/pipelines-bootstrap?ref={{ .TerragruntScaleCatalogRef }}"
-  path   = "bootstrap"
+  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/aws/github/pipelines-identity?ref={{ .TerragruntScaleCatalogRef }}"
+  path   = "pipelines-identity"
 
   values = {
     // Should match the ?ref= above.

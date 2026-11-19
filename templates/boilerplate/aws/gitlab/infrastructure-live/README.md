@@ -2,7 +2,7 @@
 
 Boilerplate template that scaffolds a complete Terragrunt Scale repository for AWS with GitLab CI.
 
-Rendering this template produces the full repository layout: a root `root.hcl`, the `.gruntwork/` metadata directory, a `.gitlab-ci.yml` pipeline, a `.mise.toml`, a `.gitignore`, and the first account's bootstrap stack.
+Rendering this template produces the full repository layout: a root `root.hcl`, the `.gruntwork/` metadata directory, a `.gitlab-ci.yml` pipeline, a `.mise.toml`, a `.gitignore`, and the first account's pipelines-identity stack.
 
 ## Usage
 
@@ -24,9 +24,9 @@ This template renders by combining these dependency templates, in order:
 1. [`.dependencies/common`](../../../.dependencies/common) — `.gruntwork/repository.hcl`, `.mise.toml`, `.gitignore`.
 2. [`.dependencies/gitlab`](../../../.dependencies/gitlab) — `.gitlab-ci.yml`.
 3. [`.dependencies/aws/base`](../../../.dependencies/aws/base) — root `root.hcl` configuring the AWS remote state backend.
-4. [`../account`](../account) — the account-level bootstrap stack for `{{ .AccountName }}`.
+4. [`../account`](../account) — the account-level pipelines-identity stack for `{{ .AccountName }}`.
 
-After rendering, commit the output, then `cd` into `{{ .AccountName }}/_global/bootstrap` and run `terragrunt stack run apply` to provision the OIDC infrastructure.
+After rendering, commit the output, then `cd` into `{{ .AccountName }}/_global/pipelines-identity` and run `terragrunt stack run apply` to provision the OIDC infrastructure.
 
 ## How It Works
 

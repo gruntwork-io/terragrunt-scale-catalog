@@ -64,7 +64,7 @@ variables:
     type: string
     description: >-
       Full resource path of the Workload Identity Provider that Pipelines authenticates against.
-      Defaults to the provider the bootstrap stack creates; set it to authenticate against an
+      Defaults to the provider the pipelines-identity stack creates; set it to authenticate against an
       existing provider instead.
     default: "projects/{{ .GCPProjectNumber }}/locations/global/workloadIdentityPools/{{ .EffectiveWorkloadIdentityPoolID }}/providers/{{ .EffectiveWorkloadIdentityPoolProviderID }}"
     order: 11
@@ -72,7 +72,7 @@ variables:
   - name: PlanServiceAccountEmail
     type: string
     description: >-
-      Email of the service account Pipelines uses for plans. Defaults to the account the bootstrap
+      Email of the service account Pipelines uses for plans. Defaults to the account the pipelines-identity
       stack creates; set it to use an existing service account instead.
     default: "{{ .OIDCResourcePrefix }}-plan@{{ .GCPProjectID }}.iam.gserviceaccount.com"
     order: 12
@@ -80,7 +80,7 @@ variables:
   - name: ApplyServiceAccountEmail
     type: string
     description: >-
-      Email of the service account Pipelines uses for applies. Defaults to the account the bootstrap
+      Email of the service account Pipelines uses for applies. Defaults to the account the pipelines-identity
       stack creates; set it to use an existing service account instead.
     default: "{{ .OIDCResourcePrefix }}-apply@{{ .GCPProjectID }}.iam.gserviceaccount.com"
     order: 13

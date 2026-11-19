@@ -2,7 +2,7 @@
 
 Boilerplate template that scaffolds the account-level bootstrap configuration for Terragrunt Scale on AWS with GitHub Actions.
 
-Rendering this template produces a `{{ .AccountName }}/_global/bootstrap/` directory containing a `terragrunt.stack.hcl` that references the [`stacks/aws/github/pipelines-bootstrap`](../../../../stacks/aws/github/pipelines-bootstrap) stack. Applying that stack provisions an OIDC provider and the `plan`/`apply` IAM roles that GitHub Actions workflows assume.
+Rendering this template produces a `{{ .AccountName }}/_global/pipelines-identity/` directory containing a `terragrunt.stack.hcl` that references the [`stacks/aws/github/pipelines-identity`](../../../../stacks/aws/github/pipelines-identity) stack. Applying that stack provisions an OIDC provider and the `plan`/`apply` IAM roles that GitHub Actions workflows assume.
 
 This template is typically pulled in as a dependency of the sibling [`infrastructure-live`](../infrastructure-live) template, but it can also be rendered on its own to add another account to an existing Terragrunt Scale repository.
 
@@ -27,7 +27,7 @@ boilerplate \
 | `GitHubOrgName` | yes | | GitHub organization that owns the repository. |
 | `GitHubRepoName` | yes | | Repository name; only workflows in this repo may assume the IAM roles. |
 | `DeployBranch` | no | `main` | Branch granted the apply role. |
-| `TerragruntScaleCatalogRef` | no | `v1.14.0` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.15.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix for the IAM role names (`<prefix>-plan`, `<prefix>-apply`). |
 | `Issuer` | no | computed | Override for the OIDC issuer URL. |
 | `AdditionalAudiences` | no | `[]` | Extra audiences appended to `sts.amazonaws.com`. |

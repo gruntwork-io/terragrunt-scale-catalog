@@ -135,7 +135,7 @@ pick_version() {
 }
 
 pick_version "terragrunt-scale-catalog" \
-  "$RB_TerragruntScaleCatalogRef" "$RB_out_resolve_versions_catalog_ref" "v1.13.1"
+  "$RB_TerragruntScaleCatalogRef" "$RB_out_resolve_versions_catalog_ref" "v1.15.0"
 CATALOG_REF="$PICKED"
 
 # The dropdown can only offer published releases, so testing an unreleased catalog needs a way past
@@ -157,7 +157,7 @@ fi
 # to authenticate. Ask the catalog actually in use rather than assuming: this then stops refusing on
 # its own once a release carries the fix, and allows a branch that already has it.
 if [ "${RB_out_plan_imports_exclude_oidc_provider}" = "true" ] && [ -n "$RB_Issuer" ]; then
-  stack_url="https://raw.githubusercontent.com/gruntwork-io/terragrunt-scale-catalog/${CATALOG_REF}/stacks/aws/github/pipelines-bootstrap/terragrunt.stack.hcl"
+  stack_url="https://raw.githubusercontent.com/gruntwork-io/terragrunt-scale-catalog/${CATALOG_REF}/stacks/aws/github/pipelines-identity/terragrunt.stack.hcl"
   if ! command -v curl >/dev/null 2>&1; then
     log_error "Cannot check whether catalog ${CATALOG_REF} builds the provider mock from the issuer"
     log_error "(curl is not installed), and getting it wrong creates roles nothing can assume."
@@ -260,21 +260,21 @@ log_info "Rendering aws/github/${TEMPLATE} template (ref ${CATALOG_REF})..."
 
 
 # --- Customer-owned IAM policy documents -------------------------
-# The catalog's pipelines-bootstrap stack builds its plan/apply policies from JSON templates that
+# The catalog's pipelines-identity stack builds its plan/apply policies from JSON templates that
 # ship inside the stack source, read via get_parent_terragrunt_dir(). Inside the FETCHED copy of that
-# stack, that function resolves to <bootstrap>/.terragrunt-stack/bootstrap/ — and every file there is
+# stack, that function resolves to <pipelines-identity>/.terragrunt-stack/pipelines-identity/ — and every file there is
 # listed in .terragrunt-stack-manifest, so Terragrunt deletes and re-copies it on each
 # `terragrunt stack generate`. There is therefore no way to customise those documents in place.
 #
 # What the stack does support is a values override:
 #     plan_iam_policy = try(values.plan_iam_policy, local.default_plan_iam_policy)
 # so the documents are fetched at $CATALOG_REF, substituted here (this runbook already knows the
-# partition, the state bucket and the locks table), written into the account's bootstrap folder as
+# partition, the state bucket and the locks table), written into the account's pipelines-identity folder as
 # plain JSON, and wired up with file() rather than templatefile() — so a customer editing them later
 # can use IAM's own ${aws:...} policy variables without Terraform reading them as template syntax.
 write_policy_overrides() {
-  bootstrap_dir="${RB_AccountName}/_global/bootstrap"
-  stack_hcl="${bootstrap_dir}/terragrunt.stack.hcl"
+  identity_dir="${RB_AccountName}/_global/pipelines-identity"
+  stack_hcl="${identity_dir}/terragrunt.stack.hcl"
 
   if [ ! -f "$stack_hcl" ]; then
     log_error "Expected ${stack_hcl} after rendering the ${TEMPLATE} template, but it is not there."
@@ -307,13 +307,13 @@ write_policy_overrides() {
   locks_table="terraform-locks"
 
   for kind in plan apply; do
-    dest="${bootstrap_dir}/${kind}_iam_policy.json"
+    dest="${identity_dir}/${kind}_iam_policy.json"
     if [ -f "$dest" ]; then
       log_info "${dest} already exists; keeping this repository's copy."
       continue
     fi
 
-    url="https://raw.githubusercontent.com/gruntwork-io/terragrunt-scale-catalog/${CATALOG_REF}/stacks/aws/github/pipelines-bootstrap/default_${kind}_iam_policy.json"
+    url="https://raw.githubusercontent.com/gruntwork-io/terragrunt-scale-catalog/${CATALOG_REF}/stacks/aws/github/pipelines-identity/default_${kind}_iam_policy.json"
     if ! curl -fsSL "$url" -o "${dest}.tmp"; then
       log_error "Could not fetch default_${kind}_iam_policy.json from catalog ${CATALOG_REF}:"
       log_error "  ${url}"
@@ -485,7 +485,7 @@ touch .gitignore
 grep -qxF '.terragrunt-cache' .gitignore || echo '.terragrunt-cache' >> .gitignore
 grep -qxF '.terragrunt-stack' .gitignore || echo '.terragrunt-stack' >> .gitignore
 
-log_info "Generated ${RB_AccountName}/_global/bootstrap/ and .gruntwork/environment-${RB_AccountName}.hcl"
+log_info "Generated ${RB_AccountName}/_global/pipelines-identity/ and .gruntwork/environment-${RB_AccountName}.hcl"
 
 # The account template does NOT create .gruntwork/repository.hcl (only infrastructure-live does), so
 # an existing repo adopting Pipelines needs it here. Written only if absent, so bootstrapping another
@@ -813,7 +813,7 @@ runs `terragrunt apply`. Nothing is applied from a laptop in normal operation.
 ├── root.hcl
 ├── .mise.toml
 ├── .gitignore
-├── pipelines-bootstrap-example.svg
+├── pipelines-identity-example.svg
 ├── .gruntwork/
 │   ├── repository.hcl
 │   └── environment-<account>.hcl
@@ -824,11 +824,11 @@ runs `terragrunt apply`. Nothing is applied from a laptop in normal operation.
 │       └── pipelines-drift-detection.yml
 └── <account>/
     ├── README.md
-    ├── pipelines-bootstrap.svg
+    ├── pipelines-identity.svg
     ├── account.hcl
     └── _global/
         ├── region.hcl
-        └── bootstrap/
+        └── pipelines-identity/
             ├── terragrunt.stack.hcl
             ├── plan_iam_policy.json
             └── apply_iam_policy.json
@@ -844,14 +844,14 @@ runs `terragrunt apply`. Nothing is applied from a laptop in normal operation.
 | `.github/workflows/pipelines.yml` | Plan on pull requests, apply on merge to `__RB_BRANCH__` |
 | `.github/workflows/pipelines-unlock.yml` | Manually release a stuck state lock |
 | `.github/workflows/pipelines-drift-detection.yml` | Scheduled drift detection, if enabled |
-| `pipelines-bootstrap-example.svg` | The illustration in the bootstrap section below |
+| `pipelines-identity-example.svg` | The illustration in the bootstrap section below |
 | `<account>/README.md` | What this account's bootstrap provisioned, with its identifiers |
-| `<account>/pipelines-bootstrap.svg` | The same, drawn with this account's real values |
+| `<account>/pipelines-identity.svg` | The same, drawn with this account's real values |
 | `<account>/account.hcl` | Account-level values: account id, state bucket |
 | `<account>/_global/region.hcl` | Region-level values for global resources |
-| `<account>/_global/bootstrap/terragrunt.stack.hcl` | The bootstrap stack (see below) |
-| `<account>/_global/bootstrap/plan_iam_policy.json` | What the plan role may do — yours to edit |
-| `<account>/_global/bootstrap/apply_iam_policy.json` | What the apply role may do — yours to edit |
+| `<account>/_global/pipelines-identity/terragrunt.stack.hcl` | The pipelines-identity stack (see below) |
+| `<account>/_global/pipelines-identity/plan_iam_policy.json` | What the plan role may do — yours to edit |
+| `<account>/_global/pipelines-identity/apply_iam_policy.json` | What the apply role may do — yours to edit |
 
 Each additional account is another top-level directory with the same shape, plus its own
 `.gruntwork/environment-<account>.hcl`.
@@ -866,7 +866,7 @@ repository.
 `tf_binary` (this repository uses **__RB_TOOL__**). `.gruntwork/environment-<account>.hcl` maps an
 environment to the cloud account it deploys into and the roles Pipelines assumes for plan and apply.
 
-**The bootstrap stack** (`<account>/_global/bootstrap/terragrunt.stack.hcl`) provisions what
+**The pipelines-identity stack** (`<account>/_global/pipelines-identity/terragrunt.stack.hcl`) provisions what
 Pipelines needs before it can deploy anything into the account:
 
 - an IAM OpenID Connect provider trusting GitHub Actions,
@@ -880,10 +880,10 @@ when the account was bootstrapped: edit one, open a pull request, and the plan n
 permissions change. Because the stack reads these files, a later catalog upgrade will not alter
 them — to pick up policy changes from a release, diff against that release's defaults and merge.
 
-![Example bootstrap topology](pipelines-bootstrap-example.svg)
+![Example bootstrap topology](pipelines-identity-example.svg)
 
 *Example labels. Every account bootstrapped into this repository also gets its own copy of this
-diagram, drawn with that account's real identifiers, at `<account>/pipelines-bootstrap.svg`.*
+diagram, drawn with that account's real identifiers, at `<account>/pipelines-identity.svg`.*
 
 It is applied once, when the account is onboarded. After that it is ordinary configuration: changes
 to it go through the same plan/apply flow as anything else.
@@ -899,7 +899,7 @@ upgrading Pipelines is a version bump in `.github/workflows/pipelines.yml`.
 ```bash
 mise trust                      # allow mise to load this repo's config
 mise install                    # install the pinned tool versions
-cd <account>/_global/bootstrap
+cd <account>/_global/pipelines-identity
 terragrunt run --all plan       # see what would change
 ```
 
@@ -935,7 +935,7 @@ rm -f "$TARGET.bak"
 # ASCII only: the app's SVG preview does btoa(svgText), which throws above U+00FF and then renders
 # nothing. Angle brackets in the placeholder labels are written as entities.
 write_example_diagram() {
-  cat > pipelines-bootstrap-example.svg <<'SVGEOF'
+  cat > pipelines-identity-example.svg <<'SVGEOF'
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="628" viewBox="0 0 760 628" font-family="Helvetica, Arial, sans-serif">
   <rect width="760" height="628" fill="#ffffff"/>
   <text x="380" y="34" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a1a1a">Gruntwork Pipelines bootstrap</text>
@@ -992,7 +992,7 @@ write_example_diagram() {
   <text x="380" y="559" text-anchor="middle" font-size="11" fill="#444444">&lt;state-bucket&gt;</text>
   <text x="380" y="575" text-anchor="middle" font-size="10" fill="#666666">one state file per unit</text>
 
-  <text x="380" y="610" text-anchor="middle" font-size="10" fill="#999999">Example. Each account has its own diagram at &lt;account&gt;/pipelines-bootstrap.svg</text>
+  <text x="380" y="610" text-anchor="middle" font-size="10" fill="#999999">Example. Each account has its own diagram at &lt;account&gt;/pipelines-identity.svg</text>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1001,7 +1001,7 @@ write_example_diagram() {
   </defs>
 </svg>
 SVGEOF
-  log_info "Wrote pipelines-bootstrap-example.svg (illustrates the README's bootstrap section)."
+  log_info "Wrote pipelines-identity-example.svg (illustrates the README's bootstrap section)."
 }
 
 write_example_diagram
@@ -1034,7 +1034,7 @@ if [ "$TARGET" = "README.template.md" ]; then
   exit 0
 fi
 
-log_info "Wrote README.md describing the repository layout, bootstrap stack, workflows and Pipelines config."
+log_info "Wrote README.md describing the repository layout, pipelines-identity stack, workflows and Pipelines config."
 exit 0
 )
 

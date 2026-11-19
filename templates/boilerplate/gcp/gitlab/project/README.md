@@ -2,7 +2,7 @@
 
 Boilerplate template that scaffolds the project-level bootstrap configuration for Terragrunt Scale on GCP with GitLab CI.
 
-Rendering this template produces a `{{ .ProjectName }}/bootstrap/` directory containing a `terragrunt.stack.hcl` that references the [`stacks/gcp/gitlab/pipelines-bootstrap`](../../../../stacks/gcp/gitlab/pipelines-bootstrap) stack. Applying that stack provisions a Workload Identity Pool, Workload Identity Pool Provider, and the `plan`/`apply` service accounts with IAM bindings that GitLab CI pipelines use to authenticate to GCP.
+Rendering this template produces a `{{ .ProjectName }}/pipelines-identity/` directory containing a `terragrunt.stack.hcl` that references the [`stacks/gcp/gitlab/pipelines-identity`](../../../../stacks/gcp/gitlab/pipelines-identity) stack. Applying that stack provisions a Workload Identity Pool, Workload Identity Pool Provider, and the `plan`/`apply` service accounts with IAM bindings that GitLab CI pipelines use to authenticate to GCP.
 
 This template is typically pulled in as a dependency of the sibling [`infrastructure-live`](../infrastructure-live) template, but it can also be rendered on its own to add another project to an existing Terragrunt Scale repository.
 
@@ -33,7 +33,7 @@ boilerplate \
 | `GCPRegion` | yes | | GCP region used to configure the Google provider and GCS state backend. |
 | `StateBucketName` | yes | | Name of the GCS bucket used for storing OpenTofu state. Must be globally unique. Also used to grant the plan service account `roles/storage.objectUser` scoped to this bucket for state locking. |
 | `DeployBranch` | no | `main` | Branch granted the apply service account binding. |
-| `TerragruntScaleCatalogRef` | no | `v1.14.0` | Git ref of this catalog to pin the stack source to. |
+| `TerragruntScaleCatalogRef` | no | `v1.15.0` | Git ref of this catalog to pin the stack source to. |
 | `OIDCResourcePrefix` | no | `pipelines` | Prefix applied to Workload Identity Pool and service account resources. |
 | `GitLabServerDomain` | no | `""` | Domain of your GitLab server. Leave empty to use `gitlab.com`; set for self-hosted instances. |
 | `Issuer` | no | computed | Override for the OIDC issuer URL; defaults to `https://<GitLabServerDomain>`. |

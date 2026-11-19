@@ -4,9 +4,9 @@ locals {
   project_hcl = read_terragrunt_config(find_in_parent_folders("project.hcl"))
 }
 
-stack "bootstrap" {
-  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/gcp/github/pipelines-bootstrap?ref={{ .TerragruntScaleCatalogRef }}"
-  path   = "bootstrap"
+stack "pipelines_identity" {
+  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/gcp/github/pipelines-identity?ref={{ .TerragruntScaleCatalogRef }}"
+  path   = "pipelines-identity"
 
   values = {
     terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"

@@ -2,7 +2,7 @@
 # auth-less ../infrastructure-live-no-cloud template. See README.md for the full flow and variables.
 # Adds everything deferred until the customer authorizes their cloud:
 #   - aws-base       -> the S3 remote-state root.hcl (state backend + AWS provider generation)
-#   - account        -> account.hcl/region.hcl, the bootstrap stack (OIDC provider + plan/apply IAM
+#   - account        -> account.hcl/region.hcl, the pipelines-identity stack (OIDC provider + plan/apply IAM
 #                       roles), and a real Pipelines environment with authentication { aws_oidc { ... } }
 #
 # The Pipelines workflows + repository.hcl already exist from the no-cloud bootstrap, so this template

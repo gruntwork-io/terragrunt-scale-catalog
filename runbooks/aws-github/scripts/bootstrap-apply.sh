@@ -1,5 +1,5 @@
 #!/bin/bash
-# Apply the bootstrap stack. This creates real AWS resources (OIDC provider + IAM roles)
+# Apply the pipelines-identity stack. This creates real AWS resources (OIDC provider + IAM roles)
 # and the S3 state bucket. Review the plan output above before running this.
 set -euo pipefail
 
@@ -45,9 +45,9 @@ if ! aws_account=$(aws sts get-caller-identity --output text --query 'Account' 2
 fi
 log_info "Authenticated to AWS account ${aws_account}."
 
-cd "$REPO_FILES/${RB_AccountName}/_global/bootstrap"
+cd "$REPO_FILES/${RB_AccountName}/_global/pipelines-identity"
 
-log_info "Applying the bootstrap stack..."
+log_info "Applying the pipelines-identity stack..."
 terragrunt run --all --non-interactive --provider-cache apply
 
 log_info "Bootstrap apply complete. The plan/apply IAM roles now exist in account ${RB_out_read_details_aws_account_id}."
@@ -203,7 +203,7 @@ svg_escape() {
 }
 
 write_diagram() {
-  local dir="$REPO_FILES/${RB_AccountName}" file="$REPO_FILES/${RB_AccountName}/pipelines-bootstrap.svg"
+  local dir="$REPO_FILES/${RB_AccountName}" file="$REPO_FILES/${RB_AccountName}/pipelines-identity.svg"
   mkdir -p "$dir" || { log_warn "Could not create ${dir}; skipping the diagram."; return 0; }
 
   # The box fits roughly 78 characters at this font size; clip rather than overflow it.
@@ -293,9 +293,9 @@ SVGEOF
   rm -f "$file.bak"
 
   if grep -q '__RB_' "$file"; then
-    log_warn "The diagram still has unsubstituted placeholders; wrote it anyway at ${RB_AccountName}/pipelines-bootstrap.svg."
+    log_warn "The diagram still has unsubstituted placeholders; wrote it anyway at ${RB_AccountName}/pipelines-identity.svg."
   else
-    log_info "Wrote ${RB_AccountName}/pipelines-bootstrap.svg (shown as an image in the Changed files panel)."
+    log_info "Wrote ${RB_AccountName}/pipelines-identity.svg (shown as an image in the Changed files panel)."
   fi
 }
 
@@ -348,7 +348,7 @@ write_account_readme() {
 
 Gruntwork Pipelines is bootstrapped for this environment in AWS account `__RB_ACCOUNT__`.
 
-![What the bootstrap provisioned](pipelines-bootstrap.svg)
+![What the bootstrap provisioned](pipelines-identity.svg)
 
 ## Identifiers
 
@@ -367,12 +367,12 @@ Gruntwork Pipelines is bootstrapped for this environment in AWS account `__RB_AC
 ## How this account is deployed
 
 Pipelines assumes the plan role on pull requests and the apply role on merges to
-`__RB_BRANCH__`, for changes under `__RB_ACCOUNT_NAME__/`. The bootstrap stack that created these
-resources is in `__RB_ACCOUNT_NAME__/_global/bootstrap`.
+`__RB_BRANCH__`, for changes under `__RB_ACCOUNT_NAME__/`. The pipelines-identity stack that created these
+resources is in `__RB_ACCOUNT_NAME__/_global/pipelines-identity`.
 
 ## What those roles may do
 
-Two documents in `__RB_ACCOUNT_NAME__/_global/bootstrap/` define the permissions:
+Two documents in `__RB_ACCOUNT_NAME__/_global/pipelines-identity/` define the permissions:
 
 | | |
 |---|---|

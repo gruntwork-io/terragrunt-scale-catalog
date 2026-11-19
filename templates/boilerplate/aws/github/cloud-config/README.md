@@ -8,7 +8,7 @@ It is applied **on top of** a repo that was already bootstrapped with the auth-l
 
 - `root.hcl` — S3 remote-state backend + AWS provider generation (from `.dependencies/aws/base`).
 - `<AccountName>/account.hcl`, `<AccountName>/_global/region.hcl` — state bucket + region config.
-- `<AccountName>/_global/bootstrap/terragrunt.stack.hcl` — the bootstrap stack that provisions the
+- `<AccountName>/_global/pipelines-identity/terragrunt.stack.hcl` — the pipelines-identity stack that provisions the
   GitHub OIDC provider and the plan/apply IAM roles.
 - `.gruntwork/environment-<AccountName>.hcl` — a real Pipelines environment with
   `authentication { aws_oidc { ... } }` pointing at the bootstrapped roles.
@@ -20,7 +20,7 @@ no-cloud bootstrap.
 
 The onboarding flow defers all cloud-credentialed setup until the customer authorizes their cloud, so
 they can reach a working `plan`/`apply` first. `infrastructure-live-no-cloud` ships the auth-less
-skeleton; this template fills in the S3 state, the bootstrap stack, and the real OIDC auth once cloud
+skeleton; this template fills in the S3 state, the pipelines-identity stack, and the real OIDC auth once cloud
 access is available. Keeping them as two templates avoids conditional rendering inside a single
 template and keeps the existing [`../infrastructure-live`](../infrastructure-live) untouched.
 

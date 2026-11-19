@@ -44,7 +44,7 @@ The runbook walks this arc:
    tool versions it pins, adds the Pipelines CI workflows, and writes a README. A repo being scaffolded
    gets its CI workflow from the `infrastructure-live` template; a repo that already runs Terragrunt
    Scale has it added without clobbering customizations.
-7. **Provision** — `terragrunt` plan then apply the bootstrap stack (OIDC trust + state backend).
+7. **Provision** — `terragrunt` plan then apply the pipelines-identity stack (OIDC trust + state backend).
 8. **Open a PR / MR** and run **post-flight checks** that the OIDC resources and generated files exist.
 
 ## Automated for you
