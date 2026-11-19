@@ -1,15 +1,18 @@
 locals {
+  // To upgrade: update this tag and review https://github.com/gruntwork-io/terragrunt-scale-catalog/releases
+  terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
+
   // Read from parent configurations instead of defining these values locally
   // so that other stacks and units in this directory can reuse the same configurations.
   project_hcl = read_terragrunt_config(find_in_parent_folders("project.hcl"))
 }
 
 stack "pipelines_identity" {
-  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/gcp/github/pipelines-identity?ref={{ .TerragruntScaleCatalogRef }}"
+  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/gcp/github/pipelines-identity?ref=${local.terragrunt_scale_catalog_ref}"
   path   = "pipelines-identity"
 
   values = {
-    terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
+    terragrunt_scale_catalog_ref = local.terragrunt_scale_catalog_ref
 
     project_id     = "{{ .GCPProjectID }}"
     project_number = "{{ .GCPProjectNumber }}"

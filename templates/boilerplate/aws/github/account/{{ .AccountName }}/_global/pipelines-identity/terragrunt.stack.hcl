@@ -2,19 +2,20 @@
 // Terragrunt Stacks: https://docs.terragrunt.com/features/stacks/
 
 locals {
+  // To upgrade: update this tag and review https://github.com/gruntwork-io/terragrunt-scale-catalog/releases
+  terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
+
   // Read from parent configurations instead of defining these values locally
   // so that other stacks and units in this directory can reuse the same configurations.
   account_hcl = read_terragrunt_config(find_in_parent_folders("account.hcl"))
 }
 
 stack "pipelines_identity" {
-  // To upgrade: update the ?ref= tag and review https://github.com/gruntwork-io/terragrunt-scale-catalog/releases
-  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/aws/github/pipelines-identity?ref={{ .TerragruntScaleCatalogRef }}"
+  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/aws/github/pipelines-identity?ref=${local.terragrunt_scale_catalog_ref}"
   path   = "pipelines-identity"
 
   values = {
-    // Should match the ?ref= above.
-    terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
+    terragrunt_scale_catalog_ref = local.terragrunt_scale_catalog_ref
 
     aws_account_id = "{{ .AWSAccountID }}"
     aws_partition  = "{{ .Partition }}"
