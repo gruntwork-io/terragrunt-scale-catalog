@@ -1,0 +1,291 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "IamPassRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IamCreateRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateServiceLinkedRole"
+      ],
+      "Resource": "arn:${aws_partition}:iam::*:role/aws-service-role/orgsdatasync.servicecatalog.amazonaws.com/AWSServiceRoleForServiceCatalogOrgsDataSync"
+    },
+    {
+      "Sid": "S3BucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DynamoDBLocksTableAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:*"
+      ],
+      "Resource": "arn:${aws_partition}:dynamodb:*:*:table/${terraform_locks_table_name}"
+    },
+    {
+      "Sid": "OrganizationsDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "organizations:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ControlTowerDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "controltower:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IdentityCenterDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sso:*",
+        "ds:*",
+        "sso-directory:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECSDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ACMDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "acm:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AutoScalingDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "autoscaling:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudTrailDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:*",
+        "logs:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudFrontDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ConfigDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "config:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2DeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ELBDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "elasticloadbalancing:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "GuardDutyDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "guardduty:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "iam:*",
+        "access-analyzer:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KMSDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "kms:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Route53DeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "route53:*",
+        "route53domains:*",
+        "route53resolver:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SecretsManagerDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SNSDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sns:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SQSDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SecurityHubDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "securityhub:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "MacieDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "macie2:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ServiceQuotaDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "servicequotas:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EKSAccess",
+      "Effect": "Allow",
+      "Action": [
+        "eks:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EventBridgeAccess",
+      "Effect": "Allow",
+      "Action": [
+        "events:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SimpleEmailServiceAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ses:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RDSAccess",
+      "Effect": "Allow",
+      "Action": [
+        "rds:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ElasticacheAccess",
+      "Effect": "Allow",
+      "Action": [
+        "elasticache:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ApplicationAutoScalingAccess",
+      "Effect": "Allow",
+      "Action": [
+        "application-autoscaling:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ApiGatewayAccess",
+      "Effect": "Allow",
+      "Action": [
+        "apigateway:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

@@ -1,0 +1,319 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RDSReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "rds:Describe*",
+        "rds:List*",
+        "rds:Download*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchEventsReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "events:Describe*",
+        "events:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SimpleEmailServiceAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ses:Get*",
+        "ses:List*",
+        "ses:Describe*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RDSAccess",
+      "Effect": "Allow",
+      "Action": [
+        "rds:Get*",
+        "rds:List*",
+        "rds:Describe*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ElasticacheAccess",
+      "Effect": "Allow",
+      "Action": [
+        "elasticache:Get*",
+        "elasticache:Describe*",
+        "elasticache:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECSReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:Describe*",
+        "ecs:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ACMReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "acm:DescribeCertificate",
+        "acm:ListCertificates",
+        "acm:GetCertificate",
+        "acm:ListTagsForCertificate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AutoScalingReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "autoscaling:Describe*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudTrailReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:Describe*",
+        "cloudtrail:List*",
+        "cloudtrail:Get*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:Describe*",
+        "cloudwatch:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogsReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "logs:Get*",
+        "logs:Describe*",
+        "logs:List*",
+        "logs:Filter*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ConfigReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "config:Get*",
+        "config:Describe*",
+        "config:List*",
+        "config:Select*",
+        "config:BatchGetResourceConfig"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2ServiceReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "ec2:Get*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchGet*",
+        "ecr:Describe*",
+        "ecr:Get*",
+        "ecr:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ELBReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "elasticloadbalancing:Describe*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "GuardDutyReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "guardduty:Get*",
+        "guardduty:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "iam:Get*",
+        "iam:List*",
+        "iam:PassRole*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMAccessAnalyzerReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "access-analyzer:List*",
+        "access-analyzer:Get*",
+        "access-analyzer:ValidatePolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KMSReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "kms:Describe*",
+        "kms:Get*",
+        "kms:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:Get*",
+        "lambda:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Route53ReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "route53:Get*",
+        "route53:List*",
+        "route53:Test*",
+        "route53domains:Check*",
+        "route53domains:Get*",
+        "route53domains:List*",
+        "route53domains:View*",
+        "route53resolver:Get*",
+        "route53resolver:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3ReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:Get*",
+        "s3:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SecretsManagerReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:Get*",
+        "secretsmanager:List*",
+        "secretsmanager:Describe*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SNSReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sns:Get*",
+        "sns:List*",
+        "sns:Check*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SQSReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:Get*",
+        "sqs:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DynamoDBLocksTableAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:*"
+      ],
+      "Resource": "arn:${aws_partition}:dynamodb:*:*:table/${terraform_locks_table_name}"
+    },
+    {
+      "Sid": "S3StateBucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:*"
+      ],
+      "Resource": [
+        "arn:${aws_partition}:s3:::${state_bucket_name}",
+        "arn:${aws_partition}:s3:::${state_bucket_name}/*"
+      ]
+    },
+    {
+      "Sid": "SecurityHubDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "securityhub:Get*",
+        "securityhub:Describe*",
+        "securityhub:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "MacieDeployAccess",
+      "Effect": "Allow",
+      "Action": [
+        "macie2:Get*",
+        "macie2:Describe*",
+        "macie2:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ServiceQuotaAccess",
+      "Effect": "Allow",
+      "Action": [
+        "servicequotas:Get*",
+        "servicequotas:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ApplicationAutoScalingAccess",
+      "Effect": "Allow",
+      "Action": [
+        "application-autoscaling:Describe*",
+        "application-autoscaling:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ApiGatewayAccess",
+      "Effect": "Allow",
+      "Action": [
+        "apigateway:Get*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
