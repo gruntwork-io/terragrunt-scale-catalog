@@ -2,7 +2,7 @@
 
 Boilerplate template that scaffolds a complete Terragrunt Scale repository for Azure with GitLab CI.
 
-Rendering this template produces the full repository layout: a root `root.hcl`, the `.gruntwork/` metadata directory, a `.gitlab-ci.yml` pipeline, a `.mise.toml`, a `.gitignore`, and the first subscription's bootstrap stack.
+Rendering this template produces the full repository layout: a root `root.hcl`, the `.gruntwork/` metadata directory, a `.gitlab-ci.yml` pipeline, a `.mise.toml`, a `.gitignore`, and the first subscription's pipelines-identity stack.
 
 ## Usage
 
@@ -25,9 +25,9 @@ This template renders by combining these dependency templates, in order:
 1. [`.dependencies/common`](../../../.dependencies/common) — `.gruntwork/repository.hcl`, `.mise.toml`, `.gitignore`.
 2. [`.dependencies/gitlab`](../../../.dependencies/gitlab) — `.gitlab-ci.yml`.
 3. [`.dependencies/azure/base`](../../../.dependencies/azure/base) — root `root.hcl` configuring the Azure remote state backend. This layer deliberately comes after `common` because it overrides a subset of `common`'s files.
-4. [`../subscription`](../subscription) — the subscription-level bootstrap stack for `{{ .SubscriptionName }}`.
+4. [`../subscription`](../subscription) — the subscription-level pipelines-identity stack for `{{ .SubscriptionName }}`.
 
-After rendering, commit the output, then `cd` into `{{ .SubscriptionName }}/bootstrap` and run `terragrunt stack run apply` to provision the OIDC infrastructure.
+After rendering, commit the output, then `cd` into `{{ .SubscriptionName }}/pipelines-identity` and run `terragrunt stack run apply` to provision the OIDC infrastructure.
 
 ## How It Works
 

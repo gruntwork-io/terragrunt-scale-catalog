@@ -11,7 +11,7 @@ environment "{{ .SubscriptionName }}" {
   authentication {
     // Pipelines authenticates via Azure Federated Identity (OIDC). No client secrets are stored.
     // plan client: read-only, used on MRs. apply client: write, used on merge to deploy branch.
-    // Both App Registrations are created by the bootstrap stack in bootstrap/.
+    // Both App Registrations are created by the pipelines-identity stack in pipelines-identity/.
     azure_oidc {
       tenant_id       = "{{ .AzureTenantID }}"
       subscription_id = "{{ .AzureSubscriptionID }}"

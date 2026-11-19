@@ -17,6 +17,8 @@
 set -euo pipefail
 
 readonly CATALOG_URL="https://github.com/gruntwork-io/terragrunt-scale-catalog.git"
+# Older releases generate _global/bootstrap, a folder the runbook scripts no longer use.
+readonly OLDEST_RELEASE="v1.15.0"
 readonly MARKER="  - name: TerragruntScaleCatalogRef"
 readonly END_MARKER="    x-section: Advanced"
 
@@ -27,17 +29,20 @@ esac
 
 cd "$(dirname "$0")/.."
 
-echo "Fetching the ${count} newest terragrunt-scale-catalog releases..."
-tags=$(git ls-remote --tags --refs --sort=-v:refname "$CATALOG_URL" 'v*' 2>/dev/null \
-  | sed 's#.*refs/tags/##' \
-  | head -n "$count")
+echo "Fetching the ${count} newest terragrunt-scale-catalog releases from ${OLDEST_RELEASE} on..."
+all_tags=$(git ls-remote --tags --refs --sort=-v:refname "$CATALOG_URL" 'v*' 2>/dev/null \
+  | sed 's#.*refs/tags/##')
 
-if [ -z "$tags" ]; then
+if [ -z "$all_tags" ]; then
   echo "ERROR: could not list tags from ${CATALOG_URL} (offline?)" >&2
   exit 1
 fi
 
-echo "$tags" | sed 's/^/  /'
+tags=$(while IFS= read -r tag; do
+  if printf '%s\n%s\n' "$OLDEST_RELEASE" "$tag" | sort -V -C; then echo "$tag"; fi
+done <<< "$all_tags" | head -n "$count")
+
+echo "${tags:-(none yet, so the dropdown offers latest only)}" | sed 's/^/  /'
 
 # Build the replacement block. Keep the description free of quote characters:
 # it lives in a single-quoted YAML scalar inside an MDX code fence, and escaping
@@ -52,6 +57,7 @@ block=$(cat <<'HEAD'
 HEAD
 )
 while IFS= read -r tag; do
+  [ -n "$tag" ] || continue
   block="${block}
       - ${tag}"
 done <<< "$tags"

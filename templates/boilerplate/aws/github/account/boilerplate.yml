@@ -55,7 +55,7 @@ variables:
   - name: TerragruntScaleCatalogRef
     type: string
     description: The Git reference of the Terragrunt catalog to use.
-    default: "v1.14.0"
+    default: "v1.15.0"
     order: 8
 
   - name: OIDCResourcePrefix
@@ -78,7 +78,7 @@ variables:
 
   - name: ExcludeOIDCProvider
     type: bool
-    description: Whether to exclude the OIDC provider from the bootstrap stack.
+    description: Whether to exclude the OIDC provider from the pipelines-identity stack.
     default: false
     order: 12
 

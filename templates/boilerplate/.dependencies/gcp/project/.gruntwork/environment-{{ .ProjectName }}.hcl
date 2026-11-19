@@ -11,7 +11,7 @@ environment "{{ .ProjectName }}" {
   authentication {
     // Pipelines authenticates via GCP Federated Workload Identity Provider (OIDC). No static credentials are needed.
     // plan service account: read-only, used on MRs. apply service account: write, used on merge to deploy branch.
-    // Both Service Accounts are created by the bootstrap stack in bootstrap/.
+    // Both Service Accounts are created by the pipelines-identity stack in pipelines-identity/.
     gcp_oidc {
       workload_identity_provider_id = "{{ .WorkloadIdentityProviderResourceID }}"
       plan_service_account_email    = "{{ .PlanServiceAccountEmail }}"

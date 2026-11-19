@@ -2,7 +2,7 @@
 # See README.md for the full onboarding flow and what this renders vs. defers.
 #
 # Differs from ../infrastructure-live: it drops the aws-base dependency (no S3 remote-state root.hcl)
-# and swaps the full `account` dependency (bootstrap stack + state files + aws_oidc) for the slim
+# and swaps the full `account` dependency (pipelines-identity stack + state files + aws_oidc) for the slim
 # account-no-cloud dependency (an environment with `authentication {}` and nothing else). The existing
 # ../infrastructure-live template is left untouched.
 skip_files:

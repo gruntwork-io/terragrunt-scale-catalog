@@ -6,8 +6,8 @@ into a GitHub `infrastructure-live` repository and bootstraps one **AWS** accoun
 It handles both starting points, detected from the repository after it is cloned:
 
 - **no `root.hcl`** — renders the full repository layout (root config, `.mise.toml`, CI workflows,
-  and the first account's bootstrap stack);
-- **`root.hcl` present** — adds only the new account's directory and bootstrap stack.
+  and the first account's pipelines-identity stack);
+- **`root.hcl` present** — adds only the new account's directory and pipelines-identity stack.
 
 Create the repository on GitHub first (tick *Add a README file*) — this runbook selects it, it does not
 create it.
@@ -27,7 +27,7 @@ runbooks open https://github.com/gruntwork-io/terragrunt-scale-catalog/tree/main
 ## After the bootstrap applies
 
 If you chose to **import** an existing OIDC provider, the generated
-`<account>/_global/bootstrap/terragrunt.stack.hcl` keeps an `Import Variables` section naming what
+`<account>/_global/pipelines-identity/terragrunt.stack.hcl` keeps an `Import Variables` section naming what
 was adopted. Once the apply has succeeded, delete that section and commit.
 
 Leaving it is harmless day to day — an import block whose target is already in state is a no-op, and
@@ -38,7 +38,7 @@ object`, including in CI on an unrelated pull request. The generated file carrie
 ## Customising the plan and apply IAM policies
 
 The runbook writes `plan_iam_policy.json` and `apply_iam_policy.json` into
-`<account>/_global/bootstrap/`, alongside `terragrunt.stack.hcl`, and points the stack at them:
+`<account>/_global/pipelines-identity/`, alongside `terragrunt.stack.hcl`, and points the stack at them:
 
 ```hcl
 plan_iam_policy  = file("${get_terragrunt_dir()}/plan_iam_policy.json")

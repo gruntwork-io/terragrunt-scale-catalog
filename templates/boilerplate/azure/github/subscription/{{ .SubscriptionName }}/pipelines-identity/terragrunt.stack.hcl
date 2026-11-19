@@ -1,4 +1,4 @@
-// Bootstrap stack: provisions plan/apply App Registrations (Federated Identity).
+// pipelines-identity stack: provisions plan/apply App Registrations (Federated Identity).
 // Terragrunt Stacks: https://docs.terragrunt.com/features/stacks/
 
 locals {
@@ -7,10 +7,10 @@ locals {
   sub_hcl = read_terragrunt_config(find_in_parent_folders("sub.hcl"))
 }
 
-stack "bootstrap" {
+stack "pipelines_identity" {
   // To upgrade: update the ?ref= tag and review https://github.com/gruntwork-io/terragrunt-scale-catalog/releases
-  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/azure/github/pipelines-bootstrap?ref={{ .TerragruntScaleCatalogRef }}"
-  path   = "bootstrap"
+  source = "github.com/gruntwork-io/terragrunt-scale-catalog//stacks/azure/github/pipelines-identity?ref={{ .TerragruntScaleCatalogRef }}"
+  path   = "pipelines-identity"
 
   values = {
     // Prefix for the App Registrations created: <prefix>-plan and <prefix>-apply.
