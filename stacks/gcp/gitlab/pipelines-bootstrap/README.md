@@ -1,5 +1,7 @@
 # GCP GitLab Pipelines Bootstrap Stack
 
+> **Deprecated.** [`pipelines-identity`](../pipelines-identity) is an exact copy of this stack under a new name. To switch, change `pipelines-bootstrap` to `pipelines-identity` in your stack's `source`. Nothing else changes. This old stack named `pipelines-bootstrap` will be removed in the next major version.
+
 ## Overview
 
 This Terragrunt stack bootstraps GCP infrastructure for GitLab CI with OIDC authentication using Workload Identity Federation. It creates all necessary GCP resources to enable secure, keyless authentication from GitLab CI pipelines to your GCP project for [Gruntwork Pipelines](https://www.gruntwork.io/platform/pipelines).

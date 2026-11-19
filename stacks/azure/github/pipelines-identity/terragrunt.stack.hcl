@@ -1,0 +1,275 @@
+locals {
+  // Source resolution
+  terragrunt_scale_catalog_url = try(values.terragrunt_scale_catalog_url, "github.com/gruntwork-io/terragrunt-scale-catalog")
+  terragrunt_scale_catalog_ref = try(values.terragrunt_scale_catalog_ref, "v1.14.0")
+
+  // State values
+  subscription_id = values.subscription_id
+
+  state_resource_group_name  = values.state_resource_group_name
+  state_storage_account_name = values.state_storage_account_name
+
+  state_storage_account_id = "/subscriptions/${local.subscription_id}/resourceGroups/${local.state_resource_group_name}/providers/Microsoft.Storage/storageAccounts/${local.state_storage_account_name}"
+
+  // OIDC values
+  oidc_resource_prefix = try(values.oidc_resource_prefix, "pipelines")
+
+  github_token_actions_domain = try(values.github_token_actions_domain, "token.actions.githubusercontent.com")
+
+  github_org_name  = values.github_org_name
+  github_repo_name = values.github_repo_name
+
+  // Numeric GitHub org/repo IDs. When both are set, the sub claim is built using GitHub's immutable
+  // subject-claim format (repo:org@org_id/repo@repo_id:...) instead of the legacy name-only format.
+  // See https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/
+  github_org_id  = try(values.github_org_id, "")
+  github_repo_id = try(values.github_repo_id, "")
+
+  use_immutable_subject = local.github_org_id != "" && local.github_repo_id != ""
+
+  github_org_ref  = local.use_immutable_subject ? "${local.github_org_name}@${local.github_org_id}" : local.github_org_name
+  github_repo_ref = local.use_immutable_subject ? "${local.github_repo_name}@${local.github_repo_id}" : local.github_repo_name
+
+  audiences     = try(values.audiences, ["api://AzureADTokenExchange"])
+  issuer        = try(values.issuer, "https://${local.github_token_actions_domain}")
+  deploy_branch = try(values.deploy_branch, "main")
+
+  plan_service_principal_to_sub_role_definition_assignment = try(
+    values.plan_service_principal_to_sub_role_definition_assignment,
+    "Reader",
+  )
+  plan_service_principal_to_state_role_definition_assignment = try(
+    values.plan_service_principal_to_state_role_definition_assignment,
+    "Contributor",
+  )
+  apply_service_principal_to_state_role_definition_assignment = try(
+    values.apply_service_principal_to_state_role_definition_assignment,
+    "Contributor",
+  )
+
+  default_plan_custom_role_actions = [
+    "*/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Resources/deployments/read",
+    "Microsoft.Resources/deployments/operations/read",
+    "Microsoft.Storage/storageAccounts/listKeys/action",
+    "Microsoft.Storage/storageAccounts/blobServices/containers/read",
+  ]
+
+  default_apply_custom_role_actions = [
+    "*/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/*",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Storage/storageAccounts/*",
+    "Microsoft.Storage/storageAccounts/blobServices/*",
+    "Microsoft.Storage/storageAccounts/blobServices/containers/*",
+    "Microsoft.Storage/storageAccounts/fileServices/*",
+    "Microsoft.Storage/storageAccounts/queueServices/*",
+    "Microsoft.Storage/storageAccounts/tableServices/*",
+    "Microsoft.Authorization/roleAssignments/*",
+    "Microsoft.Authorization/roleDefinitions/*",
+    "Microsoft.Authorization/locks/read",
+    "Microsoft.Authorization/policyAssignments/read",
+
+    // Services teams commonly deploy, comparable to the GCP and AWS defaults.
+    "Microsoft.Compute/*",
+    "Microsoft.Network/*",
+    "Microsoft.ContainerService/*",
+    "Microsoft.ContainerRegistry/*",
+    "Microsoft.App/*",
+    "Microsoft.Web/*",
+    "Microsoft.Sql/*",
+    "Microsoft.DBforPostgreSQL/*",
+    "Microsoft.DBforMySQL/*",
+    "Microsoft.DocumentDB/*",
+    "Microsoft.Cache/*",
+    "Microsoft.KeyVault/*",
+    "Microsoft.ServiceBus/*",
+    "Microsoft.EventHub/*",
+    "Microsoft.ManagedIdentity/*",
+    "Microsoft.Insights/*",
+    "Microsoft.OperationalInsights/*",
+  ]
+
+  plan_custom_role_actions = try(
+    values.plan_custom_role_actions,
+    local.default_plan_custom_role_actions,
+  )
+
+  apply_custom_role_actions = try(
+    values.apply_custom_role_actions,
+    local.default_apply_custom_role_actions,
+  )
+}
+
+// OIDC units
+
+// Plan units
+
+unit "plan_app" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-application?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/plan/app"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    display_name = "${local.oidc_resource_prefix}-plan"
+    description  = "Entra ID application used by Gruntwork Pipelines for plans"
+  }
+}
+
+unit "plan_service_principal" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-service-principal?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/plan/service-principal"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    app_config_path = "../app"
+  }
+}
+
+unit "plan_flexible_federated_identity_credential" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-flexible-federated-identity-credential?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/plan/flexible-federated-identity-credential"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    app_config_path = "../app"
+
+    display_name = "${local.oidc_resource_prefix}-plan"
+    description  = "Entra ID flexible federated identity credential used by Gruntwork Pipelines for plans"
+
+    audiences = local.audiences
+    issuer    = local.issuer
+
+    claims_matching_expression_value = "claims['sub'] matches 'repo:${local.github_org_ref}/${local.github_repo_ref}:*'"
+  }
+}
+
+unit "plan_custom_role_definition" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/custom-role-definition?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/plan/custom-role-definition"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    name        = "${local.oidc_resource_prefix}-plan-custom-role"
+    description = "Custom role for Gruntwork Pipelines plan service principal with read-only permissions"
+
+    actions = local.plan_custom_role_actions
+  }
+}
+
+unit "plan_service_principal_to_plan_custom_role_assignment" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/service-principal-to-sub-role-assignment?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/plan/service-principal-to-plan-custom-role-assignment"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    service_principal_config_path = "../service-principal"
+
+    role_definition_name = "${local.oidc_resource_prefix}-plan-custom-role"
+    description          = "Assign custom plan role to service principal at the subscription scope"
+  }
+}
+
+unit "plan_service_principal_to_state_contributor_role_assignment" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/service-principal-to-scope-role-assignment?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/plan/service-principal-to-state-contributor-role-assignment"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    service_principal_config_path = "../service-principal"
+    scope                         = local.state_storage_account_id
+
+    role_definition_name = local.plan_service_principal_to_state_role_definition_assignment
+    description          = "Assign Contributor role to service principal at the state scope"
+  }
+}
+
+// Apply units
+
+unit "apply_app" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-application?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/apply/app"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    display_name = "${local.oidc_resource_prefix}-apply"
+    description  = "Entra ID application used by Gruntwork Pipelines for applies and destroys"
+  }
+}
+
+unit "apply_service_principal" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-service-principal?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/apply/service-principal"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    app_config_path = "../app"
+  }
+}
+
+unit "apply_federated_identity_credential" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/entra-id-federated-identity-credential?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/apply/federated-identity-credential"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    app_config_path = "../app"
+
+    display_name = "${local.oidc_resource_prefix}-apply"
+    description  = "Entra ID federated identity credential used by Gruntwork Pipelines for applies and destroys"
+
+    audiences = local.audiences
+    issuer    = local.issuer
+
+    subject = "repo:${local.github_org_ref}/${local.github_repo_ref}:ref:refs/heads/${local.deploy_branch}"
+  }
+}
+
+unit "apply_custom_role_definition" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/custom-role-definition?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/apply/custom-role-definition"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    name        = "${local.oidc_resource_prefix}-apply-custom-role"
+    description = "Custom role for Gruntwork Pipelines apply service principal with deployment permissions"
+
+    actions = local.apply_custom_role_actions
+  }
+}
+
+unit "apply_service_principal_to_apply_custom_role_assignment" {
+  source = "${local.terragrunt_scale_catalog_url}//units/azure/oidc/service-principal-to-sub-role-assignment?ref=${local.terragrunt_scale_catalog_ref}"
+  path   = "oidc/apply/service-principal-to-apply-custom-role-assignment"
+
+  values = {
+    base_url = local.terragrunt_scale_catalog_url
+    ref      = local.terragrunt_scale_catalog_ref
+
+    service_principal_config_path = "../service-principal"
+
+    role_definition_name = "${local.oidc_resource_prefix}-apply-custom-role"
+    description          = "Assign custom apply role to service principal at the subscription scope"
+  }
+}
