@@ -96,6 +96,14 @@ locals {
     values.apply_custom_role_actions,
     local.default_apply_custom_role_actions,
   )
+
+  // Microsoft Graph application permissions for the Pipelines service principals. Application.Read.All lets
+  // each identity read the other's application, service principal and federated identity credential, so a
+  // Pipelines plan or apply of this stack can refresh all of its units. Neither identity gets write access
+  // to Entra ID by default: a Global Administrator applies changes to the Entra ID resources in this stack.
+  plan_graph_app_roles = try(values.plan_graph_app_roles, ["Application.Read.All"])
+
+  apply_graph_app_roles = try(values.apply_graph_app_roles, ["Application.Read.All"])
 }
 
 // OIDC units
@@ -122,6 +130,19 @@ unit "plan_service_principal" {
 
   values = {
     app_config_path = "../app"
+  }
+}
+
+unit "plan_service_principal_graph_app_role_assignment" {
+  source = "../../../..//units/azure/oidc/service-principal-app-role-assignment"
+  path   = "oidc/plan/service-principal-graph-app-role-assignment"
+
+  update_source_with_cas = true
+
+  values = {
+    service_principal_config_path = "../service-principal"
+
+    app_roles = local.plan_graph_app_roles
   }
 }
 
@@ -209,6 +230,19 @@ unit "apply_service_principal" {
 
   values = {
     app_config_path = "../app"
+  }
+}
+
+unit "apply_service_principal_graph_app_role_assignment" {
+  source = "../../../..//units/azure/oidc/service-principal-app-role-assignment"
+  path   = "oidc/apply/service-principal-graph-app-role-assignment"
+
+  update_source_with_cas = true
+
+  values = {
+    service_principal_config_path = "../service-principal"
+
+    app_roles = local.apply_graph_app_roles
   }
 }
 
