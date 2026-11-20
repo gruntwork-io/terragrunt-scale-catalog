@@ -15,6 +15,7 @@ This Terragrunt stack bootstraps Azure infrastructure for GitHub Actions with OI
 - Flexible Federated Identity Credential (allows any branch on a given repository to assume the role)
 - Custom role definition with read-only permissions for Azure resources
 - Custom role assignment at subscription level
+- Microsoft Graph `Application.Read.All` application permission
 - Contributor role assignment to state storage account
 
 ### OIDC Resources for Apply Operations
@@ -24,6 +25,7 @@ This Terragrunt stack bootstraps Azure infrastructure for GitHub Actions with OI
 - Static Federated Identity Credential (main branch only)
 - Custom role definition with full management permissions for bootstrap resources
 - Custom role assignment at subscription level
+- Microsoft Graph `Application.Read.All` application permission
 
 ## Usage
 
@@ -55,6 +57,8 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | `plan_service_principal_to_sub_role_definition_assignment` | Role for plan SP at subscription level | `Reader` |
 | `plan_service_principal_to_state_role_definition_assignment` | Role for plan SP on state storage | `Contributor` |
 | `apply_service_principal_to_state_role_definition_assignment` | Role for apply SP on state storage | `Contributor` |
+| `plan_graph_app_roles` | Microsoft Graph application permissions granted to the plan SP | `["Application.Read.All"]` |
+| `apply_graph_app_roles` | Microsoft Graph application permissions granted to the apply SP | `["Application.Read.All"]` |
 
 ## Stack Architecture
 
@@ -195,20 +199,15 @@ values = {
 
 ### Entra ID Permissions
 
-**Important**: Azure RBAC custom roles only grant permissions for Azure Resource Manager operations. To manage Entra ID resources (applications, service principals, federated credentials), the user or system performing the bootstrap must have appropriate **Azure AD directory roles** assigned:
+Azure RBAC custom roles only grant permissions for Azure Resource Manager operations. Entra ID resources (applications, service principals, federated credentials) use Microsoft Graph permissions instead.
 
-- **Application Administrator** - Minimum required role
-- **Cloud Application Administrator** - Alternative role
-- **Global Administrator** - Full access (use sparingly)
+**Initial bootstrap**: The user running the stack needs Owner (Azure RBAC) and the **Global Administrator** directory role, or both **Cloud Application Administrator** (to create the applications) and **Privileged Role Administrator** (to grant the Microsoft Graph application permissions below).
 
-These directory roles must be assigned manually by a Global Administrator and are **separate from Azure RBAC roles**.
+**Microsoft Graph application permissions**: The stack grants both service principals `Application.Read.All`, with admin consent. It lets each identity read the other's application, service principal and federated identity credential, so Pipelines can plan and apply this stack after a person applied it. Without it, a Pipelines plan of this stack fails with `403 Authorization_RequestDenied` on the application of the other identity. `Application.Read.All` is read-only, but it reads every application and service principal in the tenant (not client secret values), like the IAM read access the AWS and GCP plan roles have.
 
-**During Initial Bootstrap**: The user running the stack needs Owner (Azure RBAC) + Application Administrator (Directory Role).
+Neither identity can change Entra ID resources by default. When a change to this stack touches its applications, service principals, federated identity credentials or Graph permissions, a Global Administrator applies it, for example from their machine. To change the permissions, set `plan_graph_app_roles` or `apply_graph_app_roles`; an empty list grants none. Do not give the plan identity write permissions: it runs on any branch.
 
-**For Ongoing Maintenance**: The service principals will have:
-
-- Azure resources: Managed via custom RBAC roles (sufficient for all Azure RM resources)
-- Entra ID resources: Require directory role assignment (must be granted separately)
+**Service principal owners**: The principal that creates a service principal owns it. The stack ignores later changes to owners, so a plan does not change them to whoever runs it.
 
 ## Security Considerations
 
