@@ -94,6 +94,11 @@ locals {
   // Custom role ID for plan SA state bucket access (hyphens replaced to satisfy GCP role_id constraints)
   state_bucket_custom_role_id = replace("${local.oidc_resource_prefix}_state_bucket", "-", "_")
 
+  plan_service_account_id     = "${local.oidc_resource_prefix}-plan"
+  apply_service_account_id    = "${local.oidc_resource_prefix}-apply"
+  plan_service_account_email  = "${local.plan_service_account_id}@${local.project_id}.iam.gserviceaccount.com"
+  apply_service_account_email = "${local.apply_service_account_id}@${local.project_id}.iam.gserviceaccount.com"
+
   // Workload Identity principal formats
   // For plan: allow any workflow from the repository (principalSet with attribute filter). This
   // filters on attribute.repository, which maps from assertion.repository and is unaffected by the
@@ -134,6 +139,9 @@ unit "workload_identity_pool_provider" {
 
     workload_identity_pool_config_path = "../workload-identity-pool"
 
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_workload_identity_pool_id = local.workload_identity_pool_id
+
     project_id                         = local.project_id
     workload_identity_pool_provider_id = local.workload_identity_pool_provider_id
     display_name                       = "GitHub Actions Provider"
@@ -158,7 +166,7 @@ unit "plan_service_account" {
     ref      = local.terragrunt_scale_catalog_ref
 
     project_id   = local.project_id
-    account_id   = "${local.oidc_resource_prefix}-plan"
+    account_id   = local.plan_service_account_id
     display_name = "Pipelines Plan Service Account"
     description  = "Service account used by Gruntwork Pipelines for plans"
 
@@ -177,6 +185,9 @@ unit "plan_workload_identity_binding" {
 
     service_account_config_path = "../service-account"
 
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_service_account_name = "projects/${local.project_id}/serviceAccounts/${local.plan_service_account_email}"
+
     member = local.plan_member
 
     import_existing = local.plan_workload_identity_binding_import_existing
@@ -193,6 +204,9 @@ unit "plan_project_iam_bindings" {
     ref      = local.terragrunt_scale_catalog_ref
 
     service_account_config_path = "../service-account"
+
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_service_account_member = "serviceAccount:${local.plan_service_account_email}"
 
     project_id = local.project_id
     roles      = local.plan_roles
@@ -240,6 +254,10 @@ unit "plan_state_bucket_iam_binding" {
     service_account_config_path = "../service-account"
     custom_role_config_path     = "../state-bucket-custom-role"
 
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_service_account_member = "serviceAccount:${local.plan_service_account_email}"
+    mock_custom_role_name       = "projects/${local.project_id}/roles/${local.state_bucket_custom_role_id}"
+
     bucket = local.state_bucket_name
 
     import_existing = local.plan_state_bucket_iam_binding_import_existing
@@ -256,7 +274,7 @@ unit "apply_service_account" {
     ref      = local.terragrunt_scale_catalog_ref
 
     project_id   = local.project_id
-    account_id   = "${local.oidc_resource_prefix}-apply"
+    account_id   = local.apply_service_account_id
     display_name = "Pipelines Apply Service Account"
     description  = "Service account used by Gruntwork Pipelines for applies and destroys"
 
@@ -275,6 +293,9 @@ unit "apply_workload_identity_binding" {
 
     service_account_config_path = "../service-account"
 
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_service_account_name = "projects/${local.project_id}/serviceAccounts/${local.apply_service_account_email}"
+
     member = local.apply_member
 
     import_existing = local.apply_workload_identity_binding_import_existing
@@ -291,6 +312,9 @@ unit "apply_project_iam_bindings" {
     ref      = local.terragrunt_scale_catalog_ref
 
     service_account_config_path = "../service-account"
+
+    // Used to generate accurate mock values; actual values come from dependencies
+    mock_service_account_member = "serviceAccount:${local.apply_service_account_email}"
 
     project_id = local.project_id
     roles      = local.apply_roles

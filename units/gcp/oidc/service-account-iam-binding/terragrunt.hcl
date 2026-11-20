@@ -22,7 +22,7 @@ dependency "service_account" {
   config_path = values.service_account_config_path
 
   mock_outputs = {
-    name = "projects/mock-project/serviceAccounts/mock-sa@mock-project.iam.gserviceaccount.com"
+    name = try(values.mock_service_account_name, "projects/mock-project/serviceAccounts/mock-sa@mock-project.iam.gserviceaccount.com")
   }
 
   mock_outputs_merge_strategy_with_state = "shallow"
