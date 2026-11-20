@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/gcp/workload-identity-pool?ref=${values.ref}"
+  source = "../../../..//modules/gcp/workload-identity-pool"
+
+  update_source_with_cas = true
 }
 
 generate "import" {

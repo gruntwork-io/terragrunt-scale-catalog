@@ -3,14 +3,16 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/aws/iam-oidc-role?ref=${values.ref}"
+  source = "../../../..//modules/aws/iam-oidc-role"
+
+  update_source_with_cas = true
 }
 
 generate "import" {
-  disable = values.import_existing ? false : true
-  path = "import.tf"
+  disable   = values.import_existing ? false : true
+  path      = "import.tf"
   if_exists = "overwrite_terragrunt"
-  contents = <<EOF
+  contents  = <<EOF
 import {
   to = aws_iam_role.role
   id = var.name

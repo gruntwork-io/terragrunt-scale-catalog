@@ -9,8 +9,6 @@ stack "pipelines_identity" {
   path   = "pipelines-identity"
 
   values = {
-    terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
-
     project_id     = "{{ .GCPProjectID }}"
     project_number = "{{ .GCPProjectNumber }}"
 

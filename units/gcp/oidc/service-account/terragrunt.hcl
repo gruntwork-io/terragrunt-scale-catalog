@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/gcp/service-account?ref=${values.ref}"
+  source = "../../../..//modules/gcp/service-account"
+
+  update_source_with_cas = true
 }
 
 generate "import" {

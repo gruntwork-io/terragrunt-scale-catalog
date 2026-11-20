@@ -13,9 +13,6 @@ stack "pipelines_identity" {
   path   = "pipelines-identity"
 
   values = {
-    // Should match the ?ref= above.
-    terragrunt_scale_catalog_ref = "{{ .TerragruntScaleCatalogRef }}"
-
     aws_account_id = "{{ .AWSAccountID }}"
     aws_partition  = "{{ .Partition }}"
 

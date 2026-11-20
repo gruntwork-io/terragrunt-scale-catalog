@@ -3,7 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "${values.base_url}//modules/gcp/custom-role?ref=${values.ref}"
+  source = "../../../..//modules/gcp/custom-role"
+
+  update_source_with_cas = true
 }
 
 generate "import" {
