@@ -12,7 +12,7 @@ dependency "service_account" {
   config_path = values.service_account_config_path
 
   mock_outputs = {
-    member = "serviceAccount:mock-sa@mock-project.iam.gserviceaccount.com"
+    member = try(values.mock_service_account_member, "serviceAccount:mock-sa@mock-project.iam.gserviceaccount.com")
   }
 }
 
@@ -20,7 +20,7 @@ dependency "custom_role" {
   config_path = values.custom_role_config_path
 
   mock_outputs = {
-    role_name = "projects/mock-project/roles/mockRole"
+    role_name = try(values.mock_custom_role_name, "projects/mock-project/roles/mockRole")
   }
 }
 

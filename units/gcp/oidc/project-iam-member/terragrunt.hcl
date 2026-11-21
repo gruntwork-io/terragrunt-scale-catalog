@@ -25,7 +25,7 @@ dependency "service_account" {
   config_path = values.service_account_config_path
 
   mock_outputs = {
-    member = "serviceAccount:mock-sa@mock-project.iam.gserviceaccount.com"
+    member = try(values.mock_service_account_member, "serviceAccount:mock-sa@mock-project.iam.gserviceaccount.com")
   }
 }
 

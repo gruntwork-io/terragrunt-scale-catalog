@@ -24,7 +24,7 @@ dependency "workload_identity_pool" {
   config_path = values.workload_identity_pool_config_path
 
   mock_outputs = {
-    workload_identity_pool_id = "mock-pool-id"
+    workload_identity_pool_id = try(values.mock_workload_identity_pool_id, "mock-pool-id")
   }
 }
 
