@@ -7,7 +7,8 @@ repository {
   deploy_branch_name = "{{ .DeployBranch }}"
 {{- if .PipelinesIgnoreList }}
 
-  // Files Pipelines never plans or applies.
+  // Azure only: Pipelines never plans or applies its own identities (the pipelines-identity stacks).
+  // A Global Administrator applies them instead, so the plan identity needs no Microsoft Graph access.
   // Docs: https://docs.gruntwork.io/2.0/reference/pipelines/ignore-list
   ignore_list = [{{ range $i, $pattern := .PipelinesIgnoreList }}{{ if $i }}, {{ end }}"{{ $pattern }}"{{ end }}]
 {{- end }}

@@ -38,7 +38,7 @@ variables:
 
   - name: PipelinesIgnoreList
     type: list
-    description: Glob patterns of files Pipelines never plans or applies (repository ignore_list). Empty for none.
+    description: Glob patterns of files Pipelines never plans or applies (repository ignore_list). Only the Azure templates set it, to skip the pipelines-identity stacks. AWS and GCP leave it empty.
     default: []
 
   - name: StateLockTimeout

@@ -14,7 +14,7 @@ dependencies:
     template-url: ../../../.dependencies/common
     output-folder: .
     variables:
-      # Pipelines does not plan or apply its own identities for azure: an administrator applies each
+      # Azure only: Pipelines does not plan or apply its own identities. An administrator applies each
       # subscription's pipelines-identity stack (see its README). Planning them would need tenant-wide
       # Microsoft Graph read access for the plan identity, which runs on unmerged pull requests.
       - name: PipelinesIgnoreList
