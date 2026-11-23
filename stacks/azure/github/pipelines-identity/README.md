@@ -146,10 +146,11 @@ Permissions granted:
 - `Microsoft.Resources/subscriptions/resourceGroups/read`
 - `Microsoft.Resources/deployments/read`
 - `Microsoft.Resources/deployments/operations/read`
-- `Microsoft.Storage/storageAccounts/listKeys/action` - Access state storage keys
 - `Microsoft.Storage/storageAccounts/blobServices/containers/read`
 
 **Purpose**: Generate Terraform plans without making any changes.
+
+State access comes from the plan identity's role on the state storage account (`plan_service_principal_to_state_role_definition_assignment`, Contributor by default), which covers only that account.
 
 ### Apply Custom Role (Full Management)
 
