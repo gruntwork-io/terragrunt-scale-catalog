@@ -38,7 +38,7 @@ variables:
     type: string
     description: The Git reference of the Terragrunt Scale catalog to use.
     order: 6
-    default: "v1.15.0"
+    default: "v1.17.0"
 
   - name: OIDCResourcePrefix
     type: string
