@@ -18,4 +18,6 @@ dependency "app" {
 
 inputs = {
   client_id = dependency.app.outputs.client_id
+
+  owners = try(values.owners, [])
 }

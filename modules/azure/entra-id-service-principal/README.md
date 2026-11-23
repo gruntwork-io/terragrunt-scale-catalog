@@ -4,11 +4,14 @@
 
 This OpenTofu module creates a service principal for an Entra ID application. A service principal is the local representation of an application in a specific Azure tenant. It's what you assign Azure RBAC roles and permissions to, enabling the application to access Azure resources.
 
+The service principal has the owners in `owners`, and none by default. An owner can add credentials to the service principal and sign in as it, so a plan shows an owner someone added outside OpenTofu as a change to remove.
+
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|----------|
 | client_id | The client ID (application ID) of the application | `string` | n/a | yes |
+| owners | Object IDs of the users or service principals that own the service principal | `list(string)` | `[]` | no |
 
 ## Outputs
 

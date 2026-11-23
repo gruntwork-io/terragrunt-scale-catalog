@@ -55,6 +55,8 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | `plan_service_principal_to_sub_role_definition_assignment` | Role for plan SP at subscription level | `Reader` |
 | `plan_service_principal_to_state_role_definition_assignment` | Role for plan SP on state storage | `Contributor` |
 | `apply_service_principal_to_state_role_definition_assignment` | Role for apply SP on state storage | `Contributor` |
+| `plan_owners` | Object IDs that own the plan application and service principal | `[]` |
+| `apply_owners` | Object IDs that own the apply application and service principal | `[]` |
 
 ## Stack Architecture
 
@@ -195,20 +197,13 @@ values = {
 
 ### Entra ID Permissions
 
-**Important**: Azure RBAC custom roles only grant permissions for Azure Resource Manager operations. To manage Entra ID resources (applications, service principals, federated credentials), the user or system performing the bootstrap must have appropriate **Azure AD directory roles** assigned:
+Azure RBAC custom roles only grant permissions for Azure Resource Manager operations. The Entra ID resources in this stack (applications, service principals, federated identity credentials) use Microsoft Graph permissions instead, and neither Pipelines identity has any.
 
-- **Application Administrator** - Minimum required role
-- **Cloud Application Administrator** - Alternative role
-- **Global Administrator** - Full access (use sparingly)
+**Who applies this stack**: A **Global Administrator** with Owner (Azure RBAC) on the subscription applies this stack, the first time and for every later change, including changes to roles and scopes.
 
-These directory roles must be assigned manually by a Global Administrator and are **separate from Azure RBAC roles**.
+**Pipelines does not plan or apply this stack**: Pipelines plans pull requests before they are merged, so its plan identity keeps read-only Azure access and no Microsoft Graph permissions. Planning this stack needs more: reading the other identity's application takes the tenant-wide Microsoft Graph `Application.Read.All` permission. Exclude the stack's directory from Pipelines with an [ignore list](https://docs.gruntwork.io/2.0/reference/pipelines/ignore-list) entry, such as `*/_global/bootstrap/**`, and have an administrator plan and apply it. That plan shows any drift.
 
-**During Initial Bootstrap**: The user running the stack needs Owner (Azure RBAC) + Application Administrator (Directory Role).
-
-**For Ongoing Maintenance**: The service principals will have:
-
-- Azure resources: Managed via custom RBAC roles (sufficient for all Azure RM resources)
-- Entra ID resources: Require directory role assignment (must be granted separately)
+**Owners**: The applications and service principals have the owners in `plan_owners` and `apply_owners`, and none by default. An owner can add credentials to an identity and sign in as it, and the apply identity can assign roles on the subscription. A plan shows an owner added outside this stack as a change to remove.
 
 ## Security Considerations
 

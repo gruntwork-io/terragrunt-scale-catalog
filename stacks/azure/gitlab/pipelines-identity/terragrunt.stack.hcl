@@ -89,6 +89,12 @@ locals {
     values.apply_custom_role_actions,
     local.default_apply_custom_role_actions,
   )
+
+  // Owners of the plan and apply applications and service principals. An owner can add credentials and
+  // sign in as the identity, so the default is none: changes to these units are applied by an
+  // administrator, not by Pipelines.
+  plan_owners  = try(values.plan_owners, [])
+  apply_owners = try(values.apply_owners, [])
 }
 
 // OIDC units
@@ -104,6 +110,8 @@ unit "plan_app" {
   values = {
     display_name = "${local.oidc_resource_prefix}-plan"
     description  = "Entra ID application used by Gruntwork Pipelines for plans"
+
+    owners = local.plan_owners
   }
 }
 
@@ -115,6 +123,8 @@ unit "plan_service_principal" {
 
   values = {
     app_config_path = "../app"
+
+    owners = local.plan_owners
   }
 }
 
@@ -191,6 +201,8 @@ unit "apply_app" {
   values = {
     display_name = "${local.oidc_resource_prefix}-apply"
     description  = "Entra ID application used by Gruntwork Pipelines for applies and destroys"
+
+    owners = local.apply_owners
   }
 }
 
@@ -202,6 +214,8 @@ unit "apply_service_principal" {
 
   values = {
     app_config_path = "../app"
+
+    owners = local.apply_owners
   }
 }
 
