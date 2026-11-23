@@ -36,6 +36,11 @@ variables:
     default: true
     order: 4
 
+  - name: PipelinesIgnoreList
+    type: list
+    description: Glob patterns of files Pipelines never plans or applies (repository ignore_list). Only the Azure templates set it, to skip the pipelines-identity stacks. AWS and GCP leave it empty.
+    default: []
+
   - name: StateLockTimeout
     type: string
     description: Duration OpenTofu waits to acquire the state lock before erroring (passed as -lock-timeout). Lets a concurrent plan/apply against shared state wait instead of failing immediately. Default "0s" fails immediately (OpenTofu's own default).

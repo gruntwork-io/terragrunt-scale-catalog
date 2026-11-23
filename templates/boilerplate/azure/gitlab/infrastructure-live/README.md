@@ -29,6 +29,8 @@ This template renders by combining these dependency templates, in order:
 
 After rendering, commit the output, then `cd` into `{{ .SubscriptionName }}/pipelines-identity` and run `terragrunt stack run apply` to provision the OIDC infrastructure.
 
+On Azure, Pipelines does not plan or apply the `pipelines-identity` stacks: the rendered `.gruntwork/repository.hcl` lists `*/pipelines-identity/**` in `ignore_list`. Apply them yourself as a Global Administrator, both the first time and after any change, so the plan identity never needs Microsoft Graph read access. This is Azure only: the AWS and GCP templates do not set an ignore list. `ignore_list` as a list needs Pipelines v4.29.0 or later.
+
 ## How It Works
 
 - `boilerplate.yml` declares the dependency chain above. All variables are inherited from the dependencies.

@@ -5,6 +5,13 @@ repository {
   // Commits on this branch trigger `terragrunt apply`. PRs against it trigger `terragrunt plan`.
   // If you change this, also update the branch trigger in your CI workflow file.
   deploy_branch_name = "{{ .DeployBranch }}"
+{{- if .PipelinesIgnoreList }}
+
+  // Azure only: Pipelines never plans or applies its own identities (the pipelines-identity stacks).
+  // A Global Administrator applies them instead, so the plan identity needs no Microsoft Graph access.
+  // Docs: https://docs.gruntwork.io/2.0/reference/pipelines/ignore-list
+  ignore_list = [{{ range $i, $pattern := .PipelinesIgnoreList }}{{ if $i }}, {{ end }}"{{ $pattern }}"{{ end }}]
+{{- end }}
 
   // The IaC binary Pipelines instructs Terragrunt to use: "opentofu" (recommended) or "terraform".
   // Docs: https://docs.gruntwork.io/2.0/reference/pipelines/configurations-as-code/api#tf_binary
