@@ -6,6 +6,13 @@ dependencies:
   - name: common
     template-url: ../../../.dependencies/common
     output-folder: .
+    variables:
+      # Pipelines does not plan or apply its own identities: an administrator applies each
+      # subscription's pipelines-identity stack (see its README). Planning them would need tenant-wide
+      # Microsoft Graph read access for the plan identity, which runs on unmerged pull requests.
+      - name: PipelinesIgnoreList
+        type: list
+        default: ["*/pipelines-identity/**"]
   - name: gitlab
     template-url: ../../../.dependencies/gitlab
     output-folder: .
