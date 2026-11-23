@@ -19,7 +19,7 @@ tests:
       config.OIDCResourcePrefix: "pipelines"
       config.IncludeDriftDetection: true
       config.OverwriteWorkflows: false
-      config.TerragruntScaleCatalogRef: "v1.15.0"
+      config.TerragruntScaleCatalogRef: "v1.17.0"
     steps:
       - block: check-prerequisites
         expect: skip

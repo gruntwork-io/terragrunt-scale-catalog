@@ -135,7 +135,7 @@ pick_version() {
 }
 
 pick_version "terragrunt-scale-catalog" \
-  "$RB_TerragruntScaleCatalogRef" "$RB_out_resolve_versions_catalog_ref" "v1.15.0"
+  "$RB_TerragruntScaleCatalogRef" "$RB_out_resolve_versions_catalog_ref" "v1.17.0"
 CATALOG_REF="$PICKED"
 
 # The dropdown can only offer published releases, so testing an unreleased catalog needs a way past
