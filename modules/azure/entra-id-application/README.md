@@ -4,12 +4,15 @@
 
 This OpenTofu module creates a Microsoft Entra ID (formerly Azure Active Directory) application. Entra ID applications are used to establish identity and access management for services and users. When combined with federated identity credentials, they enable OIDC-based authentication for CI/CD pipelines.
 
+The application has the owners in `owners`, and none by default. An owner can add credentials to the application and sign in as it, so a plan shows an owner someone added outside OpenTofu as a change to remove.
+
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|----------|
 | display_name | The display name for the Entra ID application | `string` | n/a | yes |
 | description | The description for the Entra ID application | `string` | n/a | yes |
+| owners | Object IDs of the users or service principals that own the application | `list(string)` | `[]` | no |
 
 ## Outputs
 

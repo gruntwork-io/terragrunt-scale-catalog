@@ -11,4 +11,6 @@ terraform {
 inputs = {
   display_name = values.display_name
   description  = values.description
+
+  owners = try(values.owners, [])
 }
