@@ -48,7 +48,6 @@ locals {
     "Microsoft.Resources/subscriptions/resourceGroups/read",
     "Microsoft.Resources/deployments/read",
     "Microsoft.Resources/deployments/operations/read",
-    "Microsoft.Storage/storageAccounts/listKeys/action",
     "Microsoft.Storage/storageAccounts/blobServices/containers/read",
   ]
 
