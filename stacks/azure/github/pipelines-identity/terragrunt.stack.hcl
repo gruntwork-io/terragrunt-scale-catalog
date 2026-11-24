@@ -84,6 +84,17 @@ locals {
     "Microsoft.ManagedIdentity/*",
     "Microsoft.Insights/*",
     "Microsoft.OperationalInsights/*",
+
+    // Subscription baseline: Defender for Cloud plans and alert contacts, budgets and cost anomaly
+    // alerts, and the subscription's own tags. Malware scanning for storage also needs the
+    // roleAssignments actions above.
+    "Microsoft.Security/pricings/*",
+    "Microsoft.Security/securityContacts/*",
+    "Microsoft.Security/register/action",
+    "Microsoft.Consumption/budgets/*",
+    "Microsoft.Consumption/register/action",
+    "Microsoft.CostManagement/scheduledActions/*",
+    "Microsoft.Resources/tags/*",
   ]
 
   plan_custom_role_actions = try(

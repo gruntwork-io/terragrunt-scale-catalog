@@ -145,6 +145,10 @@ Permissions granted:
   - `Microsoft.ServiceBus/*`, `Microsoft.EventHub/*` - Messaging
   - `Microsoft.ManagedIdentity/*` - User-assigned managed identities
   - `Microsoft.Insights/*`, `Microsoft.OperationalInsights/*` - Monitoring, alerts, diagnostic settings, Log Analytics
+- Subscription baseline:
+  - `Microsoft.Security/pricings/*`, `Microsoft.Security/securityContacts/*`, `Microsoft.Security/register/action` - Defender for Cloud plans and alert contacts
+  - `Microsoft.Consumption/budgets/*`, `Microsoft.Consumption/register/action`, `Microsoft.CostManagement/scheduledActions/*` - Budgets and cost anomaly alerts
+  - `Microsoft.Resources/tags/*` - The subscription's own tags
 
 **Purpose**: Create, update, and destroy the bootstrap resources and the services teams commonly deploy, comparable to the GCP and AWS defaults. Override `apply_custom_role_actions` to narrow or widen it.
 
