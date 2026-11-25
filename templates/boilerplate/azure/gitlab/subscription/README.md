@@ -15,6 +15,7 @@ boilerplate \
   --var SubscriptionName=prod \
   --var GitLabGroupName=acme \
   --var GitLabProjectName=infrastructure-live \
+  --var GitLabProjectId=12345678 \
   --var AzureLocation=eastus
 ```
 
@@ -25,6 +26,7 @@ boilerplate \
 | `SubscriptionName` | yes | | Name of the Azure subscription being bootstrapped. |
 | `GitLabGroupName` | yes | | GitLab group that owns the project. |
 | `GitLabProjectName` | yes | | Project name; only CI jobs in this project may authenticate. |
+| `GitLabProjectId` | yes | | Numeric project ID. The plan identity's flexible federated identity credential matches it, because Entra ID requires an immutable claim alongside the name-based `sub`. |
 | `AzureLocation` | yes | | Azure region for the subscription's state-backend resources. |
 | `DeployBranch` | no | `main` | Branch granted the apply role. |
 | `TerragruntScaleCatalogRef` | no | `v1.17.0` | Git ref of this catalog to pin the stack source to. |

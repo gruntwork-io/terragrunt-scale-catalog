@@ -40,6 +40,7 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | `state_storage_account_name` | Name of the state storage account | `tfstate12345678` |
 | `gitlab_group_name` | GitLab group name | `my-group` |
 | `gitlab_project_name` | GitLab project name | `infrastructure` |
+| `gitlab_project_id` | Numeric GitLab project ID. The plan identity's flexible federated identity credential matches the `project_id` claim against it, because Entra ID rejects a GitLab flexible credential that matches only the name-based `sub` claim. Find it on the project's overview page or as `id` from `GET /api/v4/projects/<url-encoded path>`. | `12345678` |
 
 ### Optional
 
@@ -70,7 +71,7 @@ flowchart TD
         C -->|Token validated| D[Plan App & SP]
         C -->|Token validated| E[Apply App & SP]
 
-        D[Plan App & Service Principal<br/>Flexible Credential: project_path:group/project:*<br/>Reader + State Contributor]
+        D[Plan App & Service Principal<br/>Flexible Credential: project_path:group/project:* and project_id<br/>Reader + State Contributor]
         E[Apply App & Service Principal<br/>Static Credential: project_path:group/project:ref_type:branch:ref:main<br/>State Contributor]
 
         D --> F[State Storage]
@@ -87,13 +88,15 @@ flowchart TD
 Uses a **flexible federated identity credential** with claim matching:
 
 ```text
-claims['sub'] matches 'project_path:my-group/my-project:*'
+claims['sub'] matches 'project_path:my-group/my-project:*' and claims['project_id'] eq '12345678'
 ```
 
 This allows plans from:
 
 - Any branch
 - Merge requests
+
+Entra ID rejects a GitLab flexible credential that matches only the `sub` claim, because a project path can be renamed and later reused. The `project_id` claim is assigned once and never reused, so it pins the credential to the original project. See [Mutable subjects in federated identity credentials](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-federated-credential-mutable-subjects).
 
 **Note**: Requires Azure CLI (`az rest` command) due to Beta API usage.
 
