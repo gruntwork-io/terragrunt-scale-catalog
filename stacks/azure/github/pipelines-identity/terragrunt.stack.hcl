@@ -112,6 +112,65 @@ locals {
   // administrator, not by Pipelines.
   plan_owners  = try(values.plan_owners, [])
   apply_owners = try(values.apply_owners, [])
+
+  // Optional access to manage a landing zone's management groups and policy. Each grant is made only
+  // when its scope is set, so a stack that sets none of these makes no assignments at management-group
+  // scope. The scopes must exist before the landing-zone role assignment units apply.
+  management_group_scope        = try(values.management_group_scope, "")
+  policy_scope                  = try(values.policy_scope, "")
+  grantable_role_definition_ids = try(values.grantable_role_definition_ids, [])
+  landing_zone_role_assignment_description = try(
+    values.landing_zone_role_assignment_description,
+    "Gruntwork Pipelines access to manage the landing zone",
+  )
+
+  // Limits the apply identity's Role Based Access Control Administrator to assigning and removing the
+  // roles in grantable_role_definition_ids.
+  grantable_role_definition_id_list = join(", ", local.grantable_role_definition_ids)
+  grantable_roles_condition         = "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${local.grantable_role_definition_id_list}})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${local.grantable_role_definition_id_list}}))"
+
+  plan_landing_zone_role_assignments = merge(
+    local.management_group_scope == "" ? null : {
+      management_group_reader = {
+        scope                = local.management_group_scope
+        role_definition_name = "Management Group Reader"
+        description          = local.landing_zone_role_assignment_description
+      }
+    },
+    local.policy_scope == "" ? null : {
+      policy_reader = {
+        scope                = local.policy_scope
+        role_definition_name = "Reader"
+        description          = local.landing_zone_role_assignment_description
+      }
+    },
+  )
+
+  apply_landing_zone_role_assignments = merge(
+    local.management_group_scope == "" ? null : {
+      management_group_contributor = {
+        scope                = local.management_group_scope
+        role_definition_name = "Management Group Contributor"
+        description          = local.landing_zone_role_assignment_description
+      }
+    },
+    local.policy_scope == "" ? null : {
+      resource_policy_contributor = {
+        scope                = local.policy_scope
+        role_definition_name = "Resource Policy Contributor"
+        description          = local.landing_zone_role_assignment_description
+      }
+    },
+    local.policy_scope == "" || length(local.grantable_role_definition_ids) == 0 ? null : {
+      role_based_access_control_administrator = {
+        scope                = local.policy_scope
+        role_definition_name = "Role Based Access Control Administrator"
+        description          = local.landing_zone_role_assignment_description
+        condition            = local.grantable_roles_condition
+        condition_version    = "2.0"
+      }
+    },
+  )
 }
 
 // OIDC units
@@ -207,6 +266,19 @@ unit "plan_service_principal_to_state_contributor_role_assignment" {
   }
 }
 
+unit "plan_service_principal_to_landing_zone_role_assignments" {
+  source = "../../../..//units/azure/oidc/service-principal-to-role-assignments"
+  path   = "oidc/plan/landing-zone-role-assignments"
+
+  update_source_with_cas = true
+
+  values = {
+    service_principal_config_path = "../service-principal"
+
+    role_assignments = local.plan_landing_zone_role_assignments
+  }
+}
+
 // Apply units
 
 unit "apply_app" {
@@ -280,5 +352,18 @@ unit "apply_service_principal_to_apply_custom_role_assignment" {
 
     role_definition_name = "${local.oidc_resource_prefix}-apply-custom-role"
     description          = "Assign custom apply role to service principal at the subscription scope"
+  }
+}
+
+unit "apply_service_principal_to_landing_zone_role_assignments" {
+  source = "../../../..//units/azure/oidc/service-principal-to-role-assignments"
+  path   = "oidc/apply/landing-zone-role-assignments"
+
+  update_source_with_cas = true
+
+  values = {
+    service_principal_config_path = "../service-principal"
+
+    role_assignments = local.apply_landing_zone_role_assignments
   }
 }

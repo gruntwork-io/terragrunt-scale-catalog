@@ -28,6 +28,7 @@ Reusable OpenTofu modules that define cloud resources. These are the building bl
   - `entra-id-flexible-federated-identity-credential` - Flexible federated identity credential (with claim matching expressions)
   - `entra-id-role-assignment` - Role assignment to a specific scope
   - `entra-id-role-assignment-to-sub` - Role assignment at subscription level
+  - `entra-id-role-assignments` - Several role assignments for one principal, with optional conditions, adopting existing ones
   - `resource-group` - Azure resource group
   - `storage-account` - Azure storage account
   - `storage-container` - Azure storage container
@@ -64,6 +65,7 @@ Terragrunt unit configurations that wrap modules with specific configurations an
   - `entra-id-flexible-federated-identity-credential` - Configured flexible federated identity
   - `service-principal-to-scope-role-assignment` - Role assignment to a specific scope
   - `service-principal-to-sub-role-assignment` - Role assignment at subscription level
+  - `service-principal-to-role-assignments` - Several role assignments for a service principal
 
 - **`units/gcp/oidc/`** - GCP OIDC configuration units
   - `custom-role` - Configured custom IAM role

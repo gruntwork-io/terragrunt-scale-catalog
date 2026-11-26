@@ -16,6 +16,7 @@ This Terragrunt stack bootstraps Azure infrastructure for GitHub Actions with OI
 - Custom role definition with read-only permissions for Azure resources
 - Custom role assignment at subscription level
 - Contributor role assignment to state storage account
+- Optional Management Group Reader and Reader role assignments on management groups (see [Landing-Zone Access](#landing-zone-access))
 
 ### OIDC Resources for Apply Operations
 
@@ -24,6 +25,7 @@ This Terragrunt stack bootstraps Azure infrastructure for GitHub Actions with OI
 - Static Federated Identity Credential (main branch only)
 - Custom role definition with full management permissions for bootstrap resources
 - Custom role assignment at subscription level
+- Optional Management Group Contributor, Resource Policy Contributor and limited Role Based Access Control Administrator role assignments on management groups (see [Landing-Zone Access](#landing-zone-access))
 
 ## Usage
 
@@ -57,6 +59,10 @@ Read the [official Gruntwork Pipelines installation guide](https://docs.gruntwor
 | `apply_service_principal_to_state_role_definition_assignment` | Role for apply SP on state storage | `Contributor` |
 | `plan_owners` | Object IDs that own the plan application and service principal | `[]` |
 | `apply_owners` | Object IDs that own the apply application and service principal | `[]` |
+| `management_group_scope` | Management group whose tree Pipelines manages, usually the tenant root management group. When set, the plan identity gets Management Group Reader and the apply identity Management Group Contributor on it. See [Landing-Zone Access](#landing-zone-access) | `""` |
+| `policy_scope` | Management group where Pipelines manages Azure Policy. When set, the plan identity gets Reader and the apply identity Resource Policy Contributor on it | `""` |
+| `grantable_role_definition_ids` | Role definition IDs (GUIDs) the apply identity may assign and remove at `policy_scope`, such as the roles policy assignments' managed identities need. When set with `policy_scope`, the apply identity gets Role Based Access Control Administrator there, with a condition that allows only these roles | `[]` |
+| `landing_zone_role_assignment_description` | Description of the role assignments above | `Gruntwork Pipelines access to manage the landing zone` |
 
 ## Stack Architecture
 
@@ -209,6 +215,33 @@ Azure RBAC custom roles only grant permissions for Azure Resource Manager operat
 **Pipelines does not plan or apply this stack**: Pipelines plans pull requests before they are merged, so its plan identity keeps read-only Azure access and no Microsoft Graph permissions. Planning this stack needs more: reading the other identity's application takes the tenant-wide Microsoft Graph `Application.Read.All` permission. Exclude the stack's directory from Pipelines with an [ignore list](https://docs.gruntwork.io/2.0/reference/pipelines/ignore-list) entry, such as `*/_global/bootstrap/**`, and have an administrator plan and apply it. That plan shows any drift.
 
 **Owners**: The applications and service principals have the owners in `plan_owners` and `apply_owners`, and none by default. An owner can add credentials to an identity and sign in as it, and the apply identity can assign roles on the subscription. A plan shows an owner added outside this stack as a change to remove.
+
+## Landing-Zone Access
+
+A landing zone's management groups and Azure Policy sit above any one subscription, so Pipelines needs roles on management groups to manage them. Set `management_group_scope`, `policy_scope` and `grantable_role_definition_ids` in the stack of the subscription whose identities deploy them:
+
+```hcl
+values = {
+  management_group_scope = "/providers/Microsoft.Management/managementGroups/<tenant ID>"
+  policy_scope           = "/providers/Microsoft.Management/managementGroups/<intermediate root>"
+
+  # Monitoring Contributor and Log Analytics Contributor
+  grantable_role_definition_ids = [
+    "749f88d5-cbae-40b8-bcfc-e573ddc772fa",
+    "92aaf0da-9dab-42b6-94a3-d43ce8d16293",
+  ]
+}
+```
+
+These role assignments are in the `oidc/plan/landing-zone-role-assignments` and `oidc/apply/landing-zone-role-assignments` units, which make no assignments when the values are unset. The management groups must exist before these units apply, so create them first, or leave these units out of the stack's first apply with a filter such as `--filter '<stack directory>/** | !**/landing-zone-role-assignments'`.
+
+The apply identity's Role Based Access Control Administrator assignment carries this condition, version 2.0, with `<IDs>` the comma-separated `grantable_role_definition_ids`:
+
+```text
+((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {<IDs>})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {<IDs>}))
+```
+
+**Adopting existing assignments**: when the identity already has one of these roles at the same scope, for example from an earlier `az role assignment create`, the next plan imports it instead of creating another. Keep `landing_zone_role_assignment_description` equal to the existing assignment's description, or the plan changes it. Applying these units needs permission to assign roles at the management group scopes, such as User Access Administrator or Owner.
 
 ## Security Considerations
 
