@@ -19,6 +19,11 @@ locals {
   gitlab_group_name   = try(values.gitlab_group_name, "")
   gitlab_project_name = try(values.gitlab_project_name, "")
 
+  // Entra ID rejects a GitLab flexible federated identity credential whose expression matches only the
+  // name-based sub claim, so the plan credential also pins the immutable project ID.
+  // See https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-federated-credential-mutable-subjects
+  gitlab_project_id = values.gitlab_project_id
+
   audiences = try(values.audiences, ["https://${local.gitlab_server_domain}/${local.gitlab_group_name}"])
 
   deploy_branch = try(values.deploy_branch, "main")
@@ -153,7 +158,7 @@ unit "plan_flexible_federated_identity_credential" {
     audiences = local.audiences
     issuer    = local.issuer
 
-    claims_matching_expression_value = "claims['sub'] matches 'project_path:${local.gitlab_group_name}/${local.gitlab_project_name}:*'"
+    claims_matching_expression_value = "claims['sub'] matches 'project_path:${local.gitlab_group_name}/${local.gitlab_project_name}:*' and claims['project_id'] eq '${local.gitlab_project_id}'"
   }
 }
 

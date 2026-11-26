@@ -13,6 +13,7 @@ boilerplate \
   --var SubscriptionName=prod \
   --var GitLabGroupName=acme \
   --var GitLabProjectName=infrastructure-live \
+  --var GitLabProjectId=12345678 \
   --var AzureLocation=eastus
 ```
 

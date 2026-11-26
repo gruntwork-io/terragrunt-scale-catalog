@@ -19,6 +19,7 @@ stack "pipelines_identity" {
     // Only CI pipelines in this GitLab group/project can authenticate via the App Registrations.
     gitlab_group_name   = "{{ .GitLabGroupName }}"
     gitlab_project_name = "{{ .GitLabProjectName }}"
+    gitlab_project_id   = "{{ .GitLabProjectId }}"
     {{- if .DeployBranch }}
 
     deploy_branch = "{{ .DeployBranch }}"
